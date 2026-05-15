@@ -11,7 +11,6 @@
     "tauri": "tauri",
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
-    "test": "npm run lint && npm run lint:rust",
     "lint:rust": "cd src-tauri && cargo clippy -- -D warnings",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\" && cd src-tauri && cargo fmt",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css,json}\" && cd src-tauri && cargo fmt -- --check",
