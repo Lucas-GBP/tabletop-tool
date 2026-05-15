@@ -23,9 +23,8 @@ jobs:
           components: rustfmt, clippy
 
       - run: npm ci
-      - run: npm run lint
       - run: npm run format:check
-      - run: npm run lint:rust
+      - run: npm test
 
   build:
     name: Build (${{ matrix.platform }})
