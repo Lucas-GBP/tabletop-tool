@@ -1,0 +1,20 @@
+# EditorConfig is awesome: https://editorconfig.org
+
+# top-most EditorConfig file
+root = true
+
+# Padrões universais para todos os arquivos
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Arquivos não cobertos por Prettier/rustfmt
+[*.{md,txt,gitignore,env}]
+indent_style = space
+indent_size = 2
+
+# Markdown (permitir trailing whitespace para line breaks)
+[*.md]
+trim_trailing_whitespace = false

@@ -1,0 +1,9 @@
+dist
+build
+node_modules
+src-tauri/target
+*.lock
+package-lock.json
+*.log
+.git
+coverage

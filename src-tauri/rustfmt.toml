@@ -1,0 +1,9 @@
+# rustfmt Configuration
+# Documentação: https://rust-lang.github.io/rustfmt/
+
+edition = "2024"
+newline_style = "Unix"
+
+# Features instáveis (requer Rust nightly):
+# imports_granularity = "Crate"
+# group_imports = "StdExternalCrate"

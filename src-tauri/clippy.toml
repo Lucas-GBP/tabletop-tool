@@ -1,0 +1,10 @@
+# Clippy Configuration
+# Documentação: https://doc.rust-lang.org/clippy/
+
+# Nível de avisos - descomente para ajustar
+# warn = ["clippy::all", "clippy::pedantic"]
+# allow = []
+# deny = []
+
+# Configurações específicas
+cognitive-complexity-threshold = 15
