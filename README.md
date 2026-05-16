@@ -69,12 +69,16 @@ npm run tauri dev     # Tauri + Vite (full app)
 ```bash
 npm run lint          # ESLint (frontend)
 npm run lint:fix      # ESLint com auto-fix
-npm run lint:rust     # Clippy (backend)
+npm run lint:rs       # Clippy (backend)
 
 npm run format        # Prettier + rustfmt (ambos)
-npm run format:check  # Verifica formatação (ambos)
-npm run format:frontend  # Apenas frontend
-npm run format:rust   # Apenas backend
+npm run check:format     # Verifica formatação (ambos)
+npm run check:format:ts  # Verifica formatação do frontend
+npm run check:format:rs  # Verifica formatação do backend
+
+npm run check         # Verifica lint + formatação (ambos)
+npm run check:ts      # Verifica frontend
+npm run check:rs      # Verifica backend
 ```
 
 ### Build
