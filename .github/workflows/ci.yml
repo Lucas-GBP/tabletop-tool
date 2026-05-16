@@ -7,18 +7,34 @@ on:
     branches: [main, develop]
 
 jobs:
-  check:
-    name: Check (Lint & Format)
+  check-ts:
+    name: Check TypeScript (Lint & Format)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v4
         with:
           node-version: 26.1.0
           cache: npm
+
+      - run: npm ci
+      - run: npm run check:ts
+
+  check-rs:
+    name: Check Rust (Clippy & Format)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
 
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
 
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: libgtk-3-dev libglib2.0-dev pkg-config
+          version: 1.0
+
       - run: npm ci
-      - run: npm run check
+      - run: npm run check:rs

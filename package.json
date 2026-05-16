@@ -12,10 +12,16 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "lint": "eslint . --ext .ts,.tsx && cd src-tauri && cargo clippy -- -D warnings",
+    "lint:ts": "eslint . --ext .ts,.tsx",
+    "lint:rs": "cd src-tauri && cargo clippy -- -D warnings",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\" && cd src-tauri && cargo fmt",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css,json}\" && cd src-tauri && cargo fmt -- --check",
-    "check": "npm run lint && npm run format:check"
+    "format:check:ts": "prettier --check \"src/**/*.{ts,tsx,css,json}\"",
+    "format:check:rs": "cd src-tauri && cargo fmt -- --check",
+    "check": "npm run lint && npm run format:check",
+    "check:ts": "npm run lint:ts && npm run format:check:ts",
+    "check:rs": "npm run lint:rs && npm run format:check:rs"
   },
   "license": "MIT",
   "dependencies": {
