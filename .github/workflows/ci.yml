@@ -42,14 +42,13 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 26.1.0
-          cache: npm
-
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
 
       - uses: awalsh128/cache-apt-pkgs-action@latest
         with:
@@ -65,8 +64,7 @@ jobs:
             patchelf
           version: 1.0
 
-      - run: npm ci
-      - run: npm run lint:rs
+      - run: cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
 
   format-rs:
     name: Format Check Rust
@@ -75,28 +73,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 26.1.0
-          cache: npm
-
       - uses: dtolnay/rust-toolchain@stable
         with:
-          components: rustfmt, clippy
+          components: rustfmt
 
-      - uses: awalsh128/cache-apt-pkgs-action@latest
-        with:
-          packages: >
-            libgtk-3-dev
-            libglib2.0-dev
-            libwebkit2gtk-4.1-dev
-            libjavascriptcoregtk-4.1-dev
-            pkg-config
-            libsoup-3.0-dev
-            libayatana-appindicator3-dev
-            librsvg2-dev
-            patchelf
-          version: 1.0
-
-      - run: npm ci
-      - run: npm run format:check:rs
+      - run: cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
