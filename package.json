@@ -31,12 +31,12 @@
   "devDependencies": {
     "@tauri-apps/cli": "^2",
     "@types/node": "^25.8.0",
-    "eslint": "^9.39.4",
+    "eslint": "^10.4.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-solid": "^0.14.5",
     "prettier": "^3.8.3",
     "typescript": "~6.0.3",
-    "typescript-eslint": "^8.59.3",
+    "typescript-eslint": "^8.59.4",
     "vite": "^6.0.3",
     "vite-plugin-solid": "^2.11.0"
   }
