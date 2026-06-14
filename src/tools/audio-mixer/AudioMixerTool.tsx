@@ -1,14 +1,22 @@
 import { createEffect, createSignal, onCleanup, onMount } from "solid-js";
 import { loadAvailableAudioFiles } from "./audio/audioLibrary";
+import {
+  emptyAudioMixerStore,
+  loadAudioMixerStore,
+  saveAudioMixerStore,
+} from "./audio/audioMixerStore";
 import { AudioManager } from "./audio/AudioManager";
-import type { AudioObjectConfig, AudioObjectListConfig, AvailableAudioFile } from "./audio/types";
+import {
+  AUDIO_MIXER_STORE_SCHEMA_VERSION,
+  type AudioObjectConfig,
+  type AudioObjectListConfig,
+  type AvailableAudioFile,
+} from "./audio/types";
 import { AudioObjectListPanel } from "./components/AudioObjectListPanel";
 import { AudioObjectPanel } from "./components/AudioObjectPanel";
 import { AudioPickerModal, type AudioPickerTarget } from "./components/AudioPickerModal";
 import styles from "./AudioMixerTool.module.scss";
 
-const AUDIO_OBJECTS_STORAGE_KEY = "tabletop-tool.audio-mixer.audio-objects.v1";
-const AUDIO_LISTS_STORAGE_KEY = "tabletop-tool.audio-mixer.audio-lists.v1";
 const DEFAULT_AUDIO_OBJECT_VOLUME = 0.72;
 
 function createId(prefix: string): string {
@@ -48,129 +56,6 @@ function createAudioList(): AudioObjectListConfig {
   };
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
-function isNumberOrUndefined(value: unknown): value is number | undefined {
-  return value === undefined || typeof value === "number";
-}
-
-function normalizeAudioObject(value: unknown): AudioObjectConfig | undefined {
-  if (!isRecord(value) || !isRecord(value.playableRegion) || !isRecord(value.loopRegion)) {
-    return undefined;
-  }
-
-  if (
-    typeof value.id !== "string" ||
-    typeof value.name !== "string" ||
-    typeof value.description !== "string" ||
-    typeof value.filePath !== "string" ||
-    typeof value.defaultVolume !== "number" ||
-    typeof value.playableRegion.startSeconds !== "number" ||
-    !isNumberOrUndefined(value.playableRegion.endSeconds) ||
-    typeof value.loopRegion.enabled !== "boolean" ||
-    typeof value.loopRegion.startSeconds !== "number" ||
-    !isNumberOrUndefined(value.loopRegion.endSeconds)
-  ) {
-    return undefined;
-  }
-
-  return {
-    id: value.id,
-    name: value.name,
-    description: value.description,
-    tags: Array.isArray(value.tags)
-      ? value.tags.filter((tag): tag is string => typeof tag === "string")
-      : [],
-    filePath: value.filePath,
-    defaultVolume: value.defaultVolume,
-    fadeInMs: typeof value.fadeInMs === "number" ? value.fadeInMs : 1200,
-    fadeOutMs: typeof value.fadeOutMs === "number" ? value.fadeOutMs : 1600,
-    playableRegion: {
-      startSeconds: value.playableRegion.startSeconds,
-      endSeconds: value.playableRegion.endSeconds,
-    },
-    loopRegion: {
-      enabled: value.loopRegion.enabled,
-      startSeconds: value.loopRegion.startSeconds,
-      endSeconds: value.loopRegion.endSeconds,
-    },
-  };
-}
-
-function normalizeAudioList(value: unknown): AudioObjectListConfig | undefined {
-  if (!isRecord(value)) {
-    return undefined;
-  }
-
-  if (
-    typeof value.id !== "string" ||
-    typeof value.name !== "string" ||
-    typeof value.description !== "string" ||
-    !Array.isArray(value.audioObjectIds)
-  ) {
-    return undefined;
-  }
-
-  return {
-    id: value.id,
-    name: value.name,
-    description: value.description,
-    audioObjectIds: value.audioObjectIds.filter(
-      (audioObjectId): audioObjectId is string => typeof audioObjectId === "string"
-    ),
-  };
-}
-
-function loadStoredAudioObjects(): AudioObjectConfig[] {
-  try {
-    const storedObjects = localStorage.getItem(AUDIO_OBJECTS_STORAGE_KEY);
-
-    if (!storedObjects) {
-      return [];
-    }
-
-    const parsedObjects: unknown = JSON.parse(storedObjects);
-
-    return Array.isArray(parsedObjects)
-      ? parsedObjects
-          .map((audioObject) => normalizeAudioObject(audioObject))
-          .filter((audioObject): audioObject is AudioObjectConfig => Boolean(audioObject))
-      : [];
-  } catch {
-    return [];
-  }
-}
-
-function loadStoredAudioLists(): AudioObjectListConfig[] {
-  try {
-    const storedLists = localStorage.getItem(AUDIO_LISTS_STORAGE_KEY);
-
-    if (!storedLists) {
-      return [];
-    }
-
-    const parsedLists: unknown = JSON.parse(storedLists);
-
-    return Array.isArray(parsedLists)
-      ? parsedLists
-          .map((audioList) => normalizeAudioList(audioList))
-          .filter((audioList): audioList is AudioObjectListConfig => Boolean(audioList))
-      : [];
-  } catch {
-    return [];
-  }
-}
-
-function storeAudioObjects(objects: AudioObjectConfig[]): void {
-  localStorage.setItem(AUDIO_OBJECTS_STORAGE_KEY, JSON.stringify(objects));
-}
-
-function storeAudioLists(lists: AudioObjectListConfig[]): void {
-  localStorage.setItem(AUDIO_LISTS_STORAGE_KEY, JSON.stringify(lists));
-}
-
 function hasAudioObjectPlaybackChange(
   currentObject: AudioObjectConfig,
   updatedObject: AudioObjectConfig
@@ -185,13 +70,19 @@ function hasAudioObjectPlaybackChange(
 
 export function AudioMixerTool() {
   const audioManager = new AudioManager();
-  const [audioObjects, setAudioObjects] =
-    createSignal<AudioObjectConfig[]>(loadStoredAudioObjects());
-  const [audioLists, setAudioLists] = createSignal<AudioObjectListConfig[]>(loadStoredAudioLists());
+  const initialStore = emptyAudioMixerStore();
+  const [audioObjects, setAudioObjects] = createSignal<AudioObjectConfig[]>(
+    initialStore.audioObjects
+  );
+  const [audioLists, setAudioLists] = createSignal<AudioObjectListConfig[]>(
+    initialStore.audioObjectLists
+  );
   const [previewVolume, setPreviewVolume] = createSignal(0.82);
   const [availableAudioFiles, setAvailableAudioFiles] = createSignal<AvailableAudioFile[]>([]);
+  const [isStoreLoaded, setIsStoreLoaded] = createSignal(false);
   const [isLibraryLoading, setIsLibraryLoading] = createSignal(false);
   const [libraryError, setLibraryError] = createSignal<string>();
+  const [storeError, setStoreError] = createSignal<string>();
   const [audioError, setAudioError] = createSignal<string>();
   const [pickerTarget, setPickerTarget] = createSignal<AudioPickerTarget>();
   const [previewedAudioObjectId, setPreviewedAudioObjectId] = createSignal<string>();
@@ -201,11 +92,21 @@ export function AudioMixerTool() {
     audioObjects().find((audioObject) => audioObject.id === audioObjectId);
 
   createEffect(() => {
-    storeAudioObjects(audioObjects());
-  });
+    if (!isStoreLoaded()) {
+      return;
+    }
 
-  createEffect(() => {
-    storeAudioLists(audioLists());
+    const nextStore = {
+      schemaVersion: AUDIO_MIXER_STORE_SCHEMA_VERSION,
+      audioObjects: audioObjects(),
+      audioObjectLists: audioLists(),
+    } as const;
+
+    void saveAudioMixerStore(nextStore).catch((error: unknown) => {
+      setStoreError(
+        error instanceof Error ? error.message : "Nao foi possivel salvar a biblioteca de audio."
+      );
+    });
   });
 
   const refreshAudioLibrary = async () => {
@@ -225,6 +126,20 @@ export function AudioMixerTool() {
 
   onMount(() => {
     void refreshAudioLibrary();
+    void loadAudioMixerStore()
+      .then((store) => {
+        setAudioObjects(store.audioObjects);
+        setAudioLists(store.audioObjectLists);
+        setStoreError(undefined);
+        setIsStoreLoaded(true);
+      })
+      .catch((error: unknown) => {
+        setStoreError(
+          error instanceof Error
+            ? error.message
+            : "Nao foi possivel carregar a biblioteca de audio."
+        );
+      });
   });
 
   onCleanup(() => {
@@ -377,6 +292,7 @@ export function AudioMixerTool() {
       </header>
 
       {audioError() && <p class={styles.error}>{audioError()}</p>}
+      {storeError() && <p class={styles.error}>{storeError()}</p>}
 
       <AudioObjectPanel
         objects={audioObjects()}

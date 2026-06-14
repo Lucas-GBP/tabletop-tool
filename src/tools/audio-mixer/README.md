@@ -46,3 +46,14 @@ futuro sera responsavel por:
 - Objetos ou listas tocando em loop.
 - Listas tocando aleatoriamente com frequencia configurada na composicao.
 - Triggers/botoes/hotkeys que tocam listas sob comando do mestre.
+
+### Persistencia
+
+A estrutura da biblioteca e armazenada no SQLite global do Tabletop Tool, no
+diretorio de dados do app:
+
+`tabletop-tool.sqlite3`
+
+As tabelas do mixer guardam apenas metadados, configuracoes e relacoes. Os
+arquivos de audio continuam fora do banco, em `public/audio` durante o
+desenvolvimento.

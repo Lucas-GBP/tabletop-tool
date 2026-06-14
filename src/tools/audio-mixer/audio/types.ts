@@ -38,3 +38,11 @@ export type AudioObjectListConfig = {
   description: string;
   audioObjectIds: string[];
 };
+
+export const AUDIO_MIXER_STORE_SCHEMA_VERSION = 1 as const;
+
+export type AudioMixerStore = {
+  schemaVersion: typeof AUDIO_MIXER_STORE_SCHEMA_VERSION;
+  audioObjects: AudioObjectConfig[];
+  audioObjectLists: AudioObjectListConfig[];
+};
