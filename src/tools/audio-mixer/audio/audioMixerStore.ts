@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api/core";
+import { tabletopDatabase } from "../../../database/TabletopDatabase";
 import { AUDIO_MIXER_STORE_SCHEMA_VERSION, type AudioMixerStore } from "./types";
 
 export const emptyAudioMixerStore = (): AudioMixerStore => ({
@@ -8,13 +8,11 @@ export const emptyAudioMixerStore = (): AudioMixerStore => ({
 });
 
 export async function loadAudioMixerStore(): Promise<AudioMixerStore> {
-  return ensureSupportedStore(await invoke<AudioMixerStore>("load_audio_mixer_store"));
+  return ensureSupportedStore(await tabletopDatabase.loadAudioMixerStore());
 }
 
 export async function saveAudioMixerStore(store: AudioMixerStore): Promise<void> {
-  await invoke("save_audio_mixer_store", {
-    store: ensureSupportedStore(store),
-  });
+  await tabletopDatabase.saveAudioMixerStore(ensureSupportedStore(store));
 }
 
 function ensureSupportedStore(store: AudioMixerStore): AudioMixerStore {

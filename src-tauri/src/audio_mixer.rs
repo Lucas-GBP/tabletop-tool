@@ -2,27 +2,31 @@ use crate::database::open_tabletop_database;
 use rusqlite::{params, Connection, OptionalExtension, Transaction};
 use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
+use ts_rs::TS;
 
 const AUDIO_MIXER_SCHEMA_VERSION: i64 = 1;
 const AUDIO_MIXER_SCHEMA_KEY: &str = "audio_mixer_schema_version";
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
+#[ts(export)]
 pub(crate) struct AudioRegionConfig {
     start_seconds: f64,
     end_seconds: Option<f64>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
+#[ts(export)]
 pub(crate) struct AudioLoopRegionConfig {
     enabled: bool,
     start_seconds: f64,
     end_seconds: Option<f64>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
+#[ts(export)]
 pub(crate) struct AudioObjectConfig {
     id: String,
     name: String,
@@ -36,8 +40,9 @@ pub(crate) struct AudioObjectConfig {
     loop_region: AudioLoopRegionConfig,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
+#[ts(export)]
 pub(crate) struct AudioObjectListConfig {
     id: String,
     name: String,
@@ -45,8 +50,9 @@ pub(crate) struct AudioObjectListConfig {
     audio_object_ids: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
+#[ts(export)]
 pub(crate) struct AudioMixerStore {
     schema_version: i64,
     audio_objects: Vec<AudioObjectConfig>,

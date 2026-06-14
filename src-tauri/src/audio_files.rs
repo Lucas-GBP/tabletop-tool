@@ -3,9 +3,11 @@ use std::{
     env, fs, io,
     path::{Path, PathBuf},
 };
+use ts_rs::TS;
 
-#[derive(Serialize)]
+#[derive(Serialize, TS)]
 #[serde(rename_all = "camelCase")]
+#[ts(export)]
 pub(crate) struct AudioFile {
     id: String,
     name: String,

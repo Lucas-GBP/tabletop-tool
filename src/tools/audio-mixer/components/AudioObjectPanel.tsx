@@ -25,16 +25,16 @@ function parseSeconds(value: string): number {
   return Number.isFinite(parsedValue) ? Math.max(0, parsedValue) : 0;
 }
 
-function parseOptionalSeconds(value: string): number | undefined {
+function parseOptionalSeconds(value: string): number | null {
   const trimmedValue = value.trim();
 
   if (!trimmedValue) {
-    return undefined;
+    return null;
   }
 
   const parsedValue = Number(trimmedValue);
 
-  return Number.isFinite(parsedValue) ? Math.max(0, parsedValue) : undefined;
+  return Number.isFinite(parsedValue) ? Math.max(0, parsedValue) : null;
 }
 
 function parseTags(value: string): string[] {

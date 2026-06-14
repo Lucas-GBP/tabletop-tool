@@ -39,10 +39,12 @@ function createAudioObjectFromFile(file: AvailableAudioFile): AudioObjectConfig 
     fadeOutMs: 1600,
     playableRegion: {
       startSeconds: 0,
+      endSeconds: null,
     },
     loopRegion: {
       enabled: shouldEnableLoopByDefault(file),
       startSeconds: 0,
+      endSeconds: null,
     },
   };
 }

@@ -22,3 +22,4 @@ tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 rusqlite = { version = "0.40.1", features = ["bundled"] }
+ts-rs = { version = "12.0.1", features = ["serde-compat"] }
