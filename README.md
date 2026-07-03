@@ -6,6 +6,37 @@ This template should help get you started developing with Tauri, Solid and Types
 
 - [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
 
+## Hierarquia de dominio
+
+O projeto deve ser pensado como um conjunto de ferramentas para preparar e
+conduzir sessoes de RPG. A hierarquia conceitual planejada e:
+
+`Arquivo de audio -> Objeto de audio -> Lista de objetos de audio -> Composicao de audio -> Cena -> Sessao`
+
+- **Arquivo de audio**: arquivo bruto descoberto pelo app, hoje em
+  `public/audio` durante o desenvolvimento. Ele e materia-prima, nao algo que
+  uma cena deve consumir diretamente.
+- **Objeto de audio**: configuracao reutilizavel sobre um arquivo, com nome,
+  descricao, tags, volume base, trecho tocavel, loop interno e fades. Ele existe
+  independentemente de uma cena.
+- **Lista de objetos de audio**: grupo reutilizavel de objetos. Ao ser tocada,
+  escolhe um objeto valido da lista; se houver apenas um item, se comporta como
+  esse objeto.
+- **Composicao de audio**: camada futura, fora do mixer atual, que combina
+  objetos/listas com comportamento de cena: loops, volumes relativos,
+  frequencias aleatorias, triggers, botoes ou hotkeys.
+- **Cena**: unidade planejada para uso na mesa. Uma cena pode apontar para uma
+  composicao de audio e tambem para dados de outras ferramentas, como
+  iniciativa, criaturas, notas e outros elementos de preparacao.
+- **Sessao**: conjunto organizado de cenas preparadas para uma partida.
+
+O `audio-mixer` implementado hoje cobre apenas a biblioteca/editor:
+
+`Arquivo de audio -> Objeto de audio -> Lista de objetos de audio`
+
+Composicoes, cenas e sessoes devem ficar em modulos futuros que consomem essa
+biblioteca, em vez de serem implementadas dentro do mixer.
+
 ## Project generation
 
 Este projeto foi gerado usando o template oficial do Tauri com os seguintes passos:

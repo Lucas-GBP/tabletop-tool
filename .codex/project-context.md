@@ -14,6 +14,32 @@ Stack:
 - SQLite persistence through `rusqlite`.
 - TypeScript bindings generated from Rust structs with `ts-rs`.
 
+## Domain Hierarchy
+
+The long-term domain hierarchy is:
+
+`audio file -> audio object -> audio object list -> audio composition -> scene -> session`
+
+The implemented audio mixer owns the reusable audio-library portion only:
+
+`audio file -> audio object -> audio object list`
+
+Future audio composition, scene, and session modules should consume mixer data
+instead of putting scene/composition behavior inside the mixer.
+
+Definitions:
+
+- `audio file`: raw media discovered from `public/audio` or packaged audio
+  assets. It is not a scene-level entity.
+- `audio object`: reusable scene-independent configuration for one audio file.
+- `audio object list`: reusable pool of audio object ids, with random selection
+  on playback.
+- `audio composition`: future scene-specific audio arrangement built from
+  objects/lists.
+- `scene`: future cross-tool prepared unit, potentially combining audio,
+  initiative, creatures, notes, and other table data.
+- `session`: future organized set of scenes for a game session.
+
 ## Important Paths
 
 - `src/App.tsx`: delegates to the app shell.

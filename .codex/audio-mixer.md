@@ -8,12 +8,17 @@ Current scope:
 
 `audio file -> audio object -> audio object list`
 
+Full planned domain hierarchy:
+
+`audio file -> audio object -> audio object list -> audio composition -> scene -> session`
+
 Out of scope for this module:
 
 - Scene composition.
 - Hotkeys/triggers for scene playback.
 - Timed random ambience composition.
 - Multi-object scene layering.
+- Initiative, creature, note, or session planning data.
 
 Those future behaviors should be implemented in a later scene/composition
 module that consumes audio object lists.
@@ -36,6 +41,16 @@ Audio objects add reusable configuration to a file:
 
 Audio object lists group object ids. Previewing a list randomly selects one
 valid object from the list. A one-item list behaves like that object.
+
+An audio composition is the future scene-specific layer that can decide how
+objects/lists play together: looping beds, relative volumes, random ambience
+frequency, and triggered sounds. It should reference mixer objects/lists rather
+than duplicate their file-region settings.
+
+A scene is a future cross-tool preparation unit. It may reference an audio
+composition and other tool data such as initiative entries, creatures, notes, or
+encounter preparation. A session is a future organized set of scenes for a game
+session.
 
 ## Region Contract
 

@@ -8,7 +8,7 @@ O escopo atual e:
 
 O escopo futuro de cena fica fora deste modulo:
 
-`Lista de objetos de audio -> Composicao de audios -> Cena`
+`Lista de objetos de audio -> Composicao de audios -> Cena -> Sessao`
 
 ### Arquivo de Audio
 
@@ -49,6 +49,13 @@ futuro sera responsavel por:
 - Objetos ou listas tocando em loop.
 - Listas tocando aleatoriamente com frequencia configurada na composicao.
 - Triggers/botoes/hotkeys que tocam listas sob comando do mestre.
+
+Na hierarquia geral do projeto, uma composicao de audio consome objetos ou
+listas do mixer e define comportamento especifico de uma cena: camadas,
+volumes relativos, loops, eventos aleatorios e acionamentos. Uma cena pode
+combinar essa composicao com dados de outras ferramentas, como iniciativa,
+criaturas, notas e preparacao. Uma sessao organiza as cenas planejadas para uma
+partida.
 
 ### Persistencia
 

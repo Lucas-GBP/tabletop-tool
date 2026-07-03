@@ -6,6 +6,7 @@ import {
   normalizeAudioRegions,
   roundSeconds,
 } from "../audio/audioRegions";
+import { formatSeconds } from "../audio/audioTime";
 import type { AudioLoopRegionConfig, AudioRegionConfig } from "../audio/types";
 import styles from "./AudioWaveform.module.scss";
 
@@ -86,19 +87,6 @@ function createPeaks(buffer: AudioBuffer, peakCount: number): number[] {
   }
 
   return peaks;
-}
-
-function formatSeconds(seconds: number): string {
-  if (seconds < 60) {
-    return `${seconds.toFixed(1)}s`;
-  }
-
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = Math.round(seconds % 60)
-    .toString()
-    .padStart(2, "0");
-
-  return `${minutes}:${remainingSeconds}`;
 }
 
 export function AudioWaveform(props: AudioWaveformProps) {
