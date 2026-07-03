@@ -29,12 +29,15 @@ Um objeto de audio adiciona configuracao reutilizavel a um arquivo:
 - Fade-in e fade-out
 
 O mixer permite criar, editar, remover e ouvir esses objetos. A waveform ajuda a
-encontrar visualmente inicio, fim e area de loop.
+encontrar visualmente inicio, fim e area de loop, permite arrastar os marcadores
+dessas regioes e usar a agulha da previa para navegar pelo audio.
 
 ### Lista de Objetos de Audio
 
-Uma lista agrupa objetos de audio. Quando uma lista for usada por uma futura
-composicao, ela deve escolher aleatoriamente um objeto da lista a cada reproducao.
+Uma lista agrupa objetos de audio. Ela pode ser testada no mixer sorteando um
+dos objetos incluidos. Quando uma lista for usada por uma futura composicao, ela
+deve manter esse comportamento de escolher aleatoriamente um objeto da lista a
+cada reproducao.
 
 Uma lista com apenas um objeto se comporta como aquele objeto.
 

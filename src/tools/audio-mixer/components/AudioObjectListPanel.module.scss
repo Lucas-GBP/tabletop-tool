@@ -110,6 +110,13 @@
     color: var(--color-muted);
     font-size: 0.72rem;
   }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
 
   button {
     min-height: 30px;
@@ -119,11 +126,25 @@
     color: var(--color-muted);
     background: transparent;
 
-    &:hover {
-      border-color: var(--color-red);
+    &:not(:disabled):hover {
+      border-color: var(--color-accent);
       color: var(--color-text);
     }
+
+    &:last-child:not(:disabled):hover {
+      border-color: var(--color-red);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+    }
   }
+}
+
+.previewActive {
+  border-color: rgba(var(--color-accent-rgb), 0.58) !important;
+  color: var(--color-accent-strong) !important;
+  background: rgba(var(--color-accent-rgb), 0.12) !important;
 }
 
 .fields {
@@ -138,6 +159,16 @@
   span {
     color: var(--color-muted);
     font-size: 0.72rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .heading {
+    display: grid;
+  }
+
+  .actions {
+    justify-content: flex-start;
   }
 }
 

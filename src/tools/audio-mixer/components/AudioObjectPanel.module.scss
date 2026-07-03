@@ -245,9 +245,79 @@
   }
 }
 
-.check {
+.regionGroup {
+  grid-template-columns: 1fr !important;
+  align-content: start;
+}
+
+.regionControl {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.regionControlHeader {
+  min-height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+
+  output {
+    flex: 0 0 auto;
+    color: var(--color-text);
+    font-size: 0.74rem;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.regionControlBody {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(112px, 132px);
+  gap: 8px;
+  align-items: center;
+}
+
+.regionRange {
+  width: 100%;
+}
+
+.regionControlInputs {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 42px;
+  gap: 6px;
+
+  button {
+    min-width: 0;
+    min-height: 36px;
+    padding: 0 8px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-muted);
+    background: var(--color-surface-strong);
+
+    &:hover:not(:disabled) {
+      border-color: var(--color-accent);
+      color: var(--color-text);
+    }
+
+    &:disabled {
+      opacity: 0.58;
+    }
+  }
+}
+
+.endActive {
+  border-color: rgba(var(--color-accent-rgb), 0.52) !important;
+  color: var(--color-accent-strong) !important;
+  background: rgba(var(--color-accent-rgb), 0.12) !important;
+}
+
+.loopToggle {
   min-height: 36px;
-  align-self: end;
+  align-self: start;
   display: flex !important;
   align-items: center;
   justify-content: center;
@@ -277,6 +347,10 @@
   .grid,
   .regions,
   .regions fieldset {
+    grid-template-columns: 1fr;
+  }
+
+  .regionControlBody {
     grid-template-columns: 1fr;
   }
 }

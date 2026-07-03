@@ -1,3 +1,4 @@
+import { getAudioRegionBounds } from "./audioRegions";
 import type { AudioObjectConfig } from "./types";
 
 type PlaybackRegion = {
@@ -11,8 +12,11 @@ type PlaybackRegion = {
 type PreviewAudio = {
   source: AudioBufferSourceNode;
   gainNode: GainNode;
+  buffer: AudioBuffer;
   startedAt: number;
+  volume: number;
   playbackRegion: PlaybackRegion;
+  onEnded?: () => void;
   onTimeUpdate?: (seconds: number) => void;
   progressFrame?: number;
 };
@@ -44,44 +48,20 @@ export class AudioManager {
     this.stopPreview();
 
     const buffer = await this.loadBuffer(audioObject.filePath);
-    const source = context.createBufferSource();
-    const gainNode = context.createGain();
     const playbackRegion = this.getPlaybackRegion(audioObject, buffer.duration);
     const preview = {
-      source,
-      gainNode,
-      startedAt: context.currentTime,
+      source: context.createBufferSource(),
+      gainNode: context.createGain(),
+      buffer,
+      startedAt: 0,
+      volume: options.volume ?? audioObject.defaultVolume,
       playbackRegion,
+      onEnded: options.onEnded,
       onTimeUpdate: options.onTimeUpdate,
     };
 
-    source.buffer = buffer;
-    source.loop = playbackRegion.loopEnabled;
-
-    if (playbackRegion.loopEnabled) {
-      source.loopStart = playbackRegion.loopStart;
-      source.loopEnd = playbackRegion.loopEnd;
-    }
-
-    gainNode.gain.value = options.volume ?? audioObject.defaultVolume;
-    source.connect(gainNode);
-    gainNode.connect(context.destination);
-    source.onended = () => {
-      if (this.preview?.source === source) {
-        this.cleanupPreview(preview);
-        options.onEnded?.();
-      }
-    };
-
     this.preview = preview;
-    this.startPreviewProgress(preview);
-
-    if (playbackRegion.loopEnabled) {
-      source.start(0, playbackRegion.start);
-      return;
-    }
-
-    source.start(0, playbackRegion.start, playbackRegion.duration);
+    this.restartPreviewAt(preview, playbackRegion.start);
   }
 
   stopPreview(): void {
@@ -96,6 +76,20 @@ export class AudioManager {
     } finally {
       this.cleanupPreview(preview);
     }
+  }
+
+  seekPreview(seconds: number): number | undefined {
+    const preview = this.preview;
+
+    if (!preview) {
+      return undefined;
+    }
+
+    const seekSeconds = this.clampSeekSeconds(preview.playbackRegion, seconds);
+
+    this.restartPreviewAt(preview, seekSeconds);
+
+    return seekSeconds;
   }
 
   private getContext(): AudioContext {
@@ -122,42 +116,117 @@ export class AudioManager {
     bufferDuration: number
   ): PlaybackRegion {
     const minimumDuration = 0.001;
-    const start = this.clampSeconds(
-      audioObject.playableRegion.startSeconds,
-      0,
-      Math.max(0, bufferDuration - minimumDuration)
-    );
-    const end = this.clampSeconds(
-      audioObject.playableRegion.endSeconds ?? bufferDuration,
-      start + minimumDuration,
+    const bounds = getAudioRegionBounds(
+      audioObject.playableRegion,
+      audioObject.loopRegion,
       bufferDuration
     );
-    const duration = Math.max(minimumDuration, end - start);
+    const duration = Math.max(minimumDuration, bounds.playableEnd - bounds.playableStart);
 
     if (!audioObject.loopRegion.enabled) {
       return {
-        start,
+        start: bounds.playableStart,
         duration,
         loopEnabled: false,
-        loopStart: start,
-        loopEnd: end,
+        loopStart: bounds.playableStart,
+        loopEnd: bounds.playableEnd,
       };
     }
 
-    const loopStart = this.clampSeconds(audioObject.loopRegion.startSeconds, start, end);
-    const loopEnd = this.clampSeconds(audioObject.loopRegion.endSeconds ?? end, loopStart, end);
-
     return {
-      start,
+      start: bounds.playableStart,
       duration,
-      loopEnabled: loopEnd > loopStart,
-      loopStart,
-      loopEnd,
+      loopEnabled: bounds.loopEnd > bounds.loopStart,
+      loopStart: bounds.loopStart,
+      loopEnd: bounds.loopEnd,
     };
   }
 
   private clampSeconds(value: number, min: number, max: number): number {
     return Math.min(Math.max(value, min), max);
+  }
+
+  private clampSeekSeconds(region: PlaybackRegion, seconds: number): number {
+    const minimumDuration = 0.001;
+    const end = region.loopEnabled ? region.loopEnd : region.start + region.duration;
+    const max = Math.max(region.start, end - minimumDuration);
+
+    return this.clampSeconds(seconds, region.start, max);
+  }
+
+  private restartPreviewAt(preview: PreviewAudio, seconds: number): void {
+    const context = this.getContext();
+    const previousSource = preview.source;
+    const previousGainNode = preview.gainNode;
+    const source = context.createBufferSource();
+    const gainNode = context.createGain();
+    const startSeconds = this.clampSeekSeconds(preview.playbackRegion, seconds);
+
+    if (preview.progressFrame !== undefined) {
+      window.cancelAnimationFrame(preview.progressFrame);
+      preview.progressFrame = undefined;
+    }
+
+    preview.source = source;
+    preview.gainNode = gainNode;
+    preview.startedAt = this.getStartedAtForOffset(preview, startSeconds);
+
+    source.buffer = preview.buffer;
+    source.loop = preview.playbackRegion.loopEnabled;
+
+    if (preview.playbackRegion.loopEnabled) {
+      source.loopStart = preview.playbackRegion.loopStart;
+      source.loopEnd = preview.playbackRegion.loopEnd;
+    }
+
+    gainNode.gain.value = preview.volume;
+    source.connect(gainNode);
+    gainNode.connect(context.destination);
+    source.onended = () => {
+      if (this.preview?.source === source) {
+        this.cleanupPreview(preview);
+        preview.onEnded?.();
+      }
+    };
+
+    try {
+      previousSource.stop();
+    } catch {
+      // The previous source may have ended naturally before a seek operation.
+    } finally {
+      previousSource.disconnect();
+      previousGainNode.disconnect();
+    }
+
+    this.startSource(source, preview.playbackRegion, startSeconds);
+    this.startPreviewProgress(preview);
+  }
+
+  private startSource(
+    source: AudioBufferSourceNode,
+    region: PlaybackRegion,
+    seconds: number
+  ): void {
+    if (region.loopEnabled) {
+      source.start(0, seconds);
+      return;
+    }
+
+    source.start(0, seconds, Math.max(0.001, region.start + region.duration - seconds));
+  }
+
+  private getStartedAtForOffset(preview: PreviewAudio, seconds: number): number {
+    const context = this.getContext();
+    const region = preview.playbackRegion;
+
+    if (!region.loopEnabled || seconds <= region.loopEnd) {
+      return context.currentTime - Math.max(0, seconds - region.start);
+    }
+
+    const introDuration = Math.max(0, region.loopEnd - region.start);
+    const loopDuration = Math.max(0.001, region.loopEnd - region.loopStart);
+
+    return context.currentTime - introDuration - ((seconds - region.loopStart) % loopDuration);
   }
 
   private startPreviewProgress(preview: PreviewAudio): void {

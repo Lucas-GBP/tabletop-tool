@@ -7,6 +7,8 @@ type AudioObjectListPanelProps = {
   objects: AudioObjectConfig[];
   onAdd: () => void;
   onChange: (list: AudioObjectListConfig) => void;
+  previewingListId?: string;
+  onPreview: (list: AudioObjectListConfig) => void;
   onRemove: (listId: string) => void;
 };
 
@@ -59,6 +61,7 @@ export function AudioObjectListPanel(props: AudioObjectListPanelProps) {
                 props.objects.filter(
                   (audioObject) => !audioList().audioObjectIds.includes(audioObject.id)
                 );
+              const isPreviewing = () => props.previewingListId === audioList().id;
 
               return (
                 <article class={styles.card}>
@@ -67,9 +70,20 @@ export function AudioObjectListPanel(props: AudioObjectListPanelProps) {
                       <h3>{audioList().name}</h3>
                       <span>{audioList().audioObjectIds.length} objetos</span>
                     </div>
-                    <button type="button" onClick={() => props.onRemove(audioList().id)}>
-                      Remover
-                    </button>
+                    <div class={styles.actions}>
+                      <button
+                        type="button"
+                        classList={{ [styles.previewActive]: isPreviewing() }}
+                        aria-pressed={isPreviewing()}
+                        disabled={audioList().audioObjectIds.length === 0}
+                        onClick={() => props.onPreview(audioList())}
+                      >
+                        {isPreviewing() ? "Parar" : "Sortear"}
+                      </button>
+                      <button type="button" onClick={() => props.onRemove(audioList().id)}>
+                        Remover
+                      </button>
+                    </div>
                   </div>
 
                   <div class={styles.fields}>
@@ -93,12 +107,15 @@ export function AudioObjectListPanel(props: AudioObjectListPanelProps) {
                       <span>Adicionar objeto</span>
                       <select
                         value=""
+                        disabled={availableObjects().length === 0}
                         onChange={(event) => {
                           addObject(event.currentTarget.value);
                           event.currentTarget.value = "";
                         }}
                       >
-                        <option value="">Selecionar</option>
+                        <option value="">
+                          {availableObjects().length === 0 ? "Todos adicionados" : "Selecionar"}
+                        </option>
                         <For each={availableObjects()}>
                           {(audioObject) => (
                             <option value={audioObject.id}>{audioObject.name}</option>

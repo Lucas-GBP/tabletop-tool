@@ -1,4 +1,5 @@
 import { createEffect, createSignal, onCleanup, onMount } from "solid-js";
+import { normalizeAudioObjectConfig } from "./audio/audioRegions";
 import { loadAvailableAudioFiles } from "./audio/audioLibrary";
 import {
   emptyAudioMixerStore,
@@ -28,7 +29,7 @@ function shouldEnableLoopByDefault(file: AvailableAudioFile): boolean {
 }
 
 function createAudioObjectFromFile(file: AvailableAudioFile): AudioObjectConfig {
-  return {
+  return normalizeAudioObjectConfig({
     id: createId("audio-object"),
     name: file.name,
     description: "",
@@ -46,7 +47,7 @@ function createAudioObjectFromFile(file: AvailableAudioFile): AudioObjectConfig 
       startSeconds: 0,
       endSeconds: null,
     },
-  };
+  });
 }
 
 function createAudioList(): AudioObjectListConfig {
@@ -88,10 +89,13 @@ export function AudioMixerTool() {
   const [audioError, setAudioError] = createSignal<string>();
   const [pickerTarget, setPickerTarget] = createSignal<AudioPickerTarget>();
   const [previewedAudioObjectId, setPreviewedAudioObjectId] = createSignal<string>();
+  const [previewedAudioListId, setPreviewedAudioListId] = createSignal<string>();
   const [previewedAudioTime, setPreviewedAudioTime] = createSignal<number>();
 
   const getAudioObject = (audioObjectId: string) =>
     audioObjects().find((audioObject) => audioObject.id === audioObjectId);
+  const getAudioList = (audioListId: string) =>
+    audioLists().find((audioList) => audioList.id === audioListId);
 
   createEffect(() => {
     if (!isStoreLoaded()) {
@@ -100,7 +104,7 @@ export function AudioMixerTool() {
 
     const nextStore = {
       schemaVersion: AUDIO_MIXER_STORE_SCHEMA_VERSION,
-      audioObjects: audioObjects(),
+      audioObjects: audioObjects().map((audioObject) => normalizeAudioObjectConfig(audioObject)),
       audioObjectLists: audioLists(),
     } as const;
 
@@ -130,7 +134,9 @@ export function AudioMixerTool() {
     void refreshAudioLibrary();
     void loadAudioMixerStore()
       .then((store) => {
-        setAudioObjects(store.audioObjects);
+        setAudioObjects(
+          store.audioObjects.map((audioObject) => normalizeAudioObjectConfig(audioObject))
+        );
         setAudioLists(store.audioObjectLists);
         setStoreError(undefined);
         setIsStoreLoaded(true);
@@ -151,31 +157,38 @@ export function AudioMixerTool() {
   const stopAudioObjectPreview = () => {
     audioManager.stopPreview();
     setPreviewedAudioObjectId(undefined);
+    setPreviewedAudioListId(undefined);
     setPreviewedAudioTime(undefined);
+  };
+
+  const startAudioObjectPreview = async (audioObject: AudioObjectConfig, audioListId?: string) => {
+    stopAudioObjectPreview();
+    await audioManager.init();
+    await audioManager.previewAudioObject(audioObject, {
+      volume: audioObject.defaultVolume * previewVolume(),
+      onEnded: () => {
+        setPreviewedAudioObjectId((currentId) =>
+          currentId === audioObject.id ? undefined : currentId
+        );
+        setPreviewedAudioListId((currentId) => (currentId === audioListId ? undefined : currentId));
+        setPreviewedAudioTime(undefined);
+      },
+      onTimeUpdate: (seconds) => setPreviewedAudioTime(seconds),
+    });
+    setPreviewedAudioObjectId(audioObject.id);
+    setPreviewedAudioListId(audioListId);
   };
 
   const toggleAudioObjectPreview = async (audioObject: AudioObjectConfig) => {
     setAudioError(undefined);
 
-    if (previewedAudioObjectId() === audioObject.id) {
+    if (previewedAudioObjectId() === audioObject.id && !previewedAudioListId()) {
       stopAudioObjectPreview();
       return;
     }
 
     try {
-      stopAudioObjectPreview();
-      await audioManager.init();
-      await audioManager.previewAudioObject(audioObject, {
-        volume: audioObject.defaultVolume * previewVolume(),
-        onEnded: () => {
-          setPreviewedAudioObjectId((currentId) =>
-            currentId === audioObject.id ? undefined : currentId
-          );
-          setPreviewedAudioTime(undefined);
-        },
-        onTimeUpdate: (seconds) => setPreviewedAudioTime(seconds),
-      });
-      setPreviewedAudioObjectId(audioObject.id);
+      await startAudioObjectPreview(audioObject);
     } catch (error) {
       setAudioError(
         error instanceof Error ? error.message : "Nao foi possivel testar o objeto de audio."
@@ -185,24 +198,63 @@ export function AudioMixerTool() {
     }
   };
 
+  const toggleAudioListPreview = async (audioList: AudioObjectListConfig) => {
+    setAudioError(undefined);
+
+    if (previewedAudioListId() === audioList.id) {
+      stopAudioObjectPreview();
+      return;
+    }
+
+    const candidates = audioList.audioObjectIds
+      .map((objectId) => getAudioObject(objectId))
+      .filter((audioObject): audioObject is AudioObjectConfig => Boolean(audioObject));
+    const selectedObject = candidates[Math.floor(Math.random() * candidates.length)];
+
+    if (!selectedObject) {
+      setAudioError("A lista precisa ter pelo menos um objeto de audio valido para ser testada.");
+      return;
+    }
+
+    try {
+      await startAudioObjectPreview(selectedObject, audioList.id);
+    } catch (error) {
+      setAudioError(
+        error instanceof Error ? error.message : "Nao foi possivel testar a lista de audio."
+      );
+      setPreviewedAudioObjectId(undefined);
+      setPreviewedAudioListId(undefined);
+      setPreviewedAudioTime(undefined);
+    }
+  };
+
+  const seekAudioPreview = (seconds: number) => {
+    const seekedSeconds = audioManager.seekPreview(seconds);
+
+    if (typeof seekedSeconds === "number") {
+      setPreviewedAudioTime(seekedSeconds);
+    }
+  };
+
   const addAudioObject = (file: AvailableAudioFile) => {
     setAudioObjects((currentObjects) => [...currentObjects, createAudioObjectFromFile(file)]);
   };
 
   const updateAudioObject = (updatedObject: AudioObjectConfig) => {
-    const currentObject = getAudioObject(updatedObject.id);
+    const normalizedObject = normalizeAudioObjectConfig(updatedObject);
+    const currentObject = getAudioObject(normalizedObject.id);
 
     if (
       currentObject &&
-      previewedAudioObjectId() === updatedObject.id &&
-      hasAudioObjectPlaybackChange(currentObject, updatedObject)
+      previewedAudioObjectId() === normalizedObject.id &&
+      hasAudioObjectPlaybackChange(currentObject, normalizedObject)
     ) {
       stopAudioObjectPreview();
     }
 
     setAudioObjects((currentObjects) =>
       currentObjects.map((audioObject) =>
-        audioObject.id === updatedObject.id ? updatedObject : audioObject
+        audioObject.id === normalizedObject.id ? normalizedObject : audioObject
       )
     );
   };
@@ -241,12 +293,26 @@ export function AudioMixerTool() {
   };
 
   const updateAudioList = (updatedList: AudioObjectListConfig) => {
+    const currentList = getAudioList(updatedList.id);
+
+    if (
+      currentList &&
+      previewedAudioListId() === updatedList.id &&
+      currentList.audioObjectIds.join("|") !== updatedList.audioObjectIds.join("|")
+    ) {
+      stopAudioObjectPreview();
+    }
+
     setAudioLists((currentLists) =>
       currentLists.map((audioList) => (audioList.id === updatedList.id ? updatedList : audioList))
     );
   };
 
   const removeAudioList = (audioListId: string) => {
+    if (previewedAudioListId() === audioListId) {
+      stopAudioObjectPreview();
+    }
+
     setAudioLists((currentLists) =>
       currentLists.filter((audioList) => audioList.id !== audioListId)
     );
@@ -310,6 +376,7 @@ export function AudioMixerTool() {
         previewingObjectId={previewedAudioObjectId()}
         previewTime={previewedAudioTime()}
         onPreview={(audioObject) => void toggleAudioObjectPreview(audioObject)}
+        onSeekPreview={seekAudioPreview}
         onRemove={removeAudioObject}
       />
 
@@ -318,6 +385,8 @@ export function AudioMixerTool() {
         objects={audioObjects()}
         onAdd={addAudioList}
         onChange={updateAudioList}
+        previewingListId={previewedAudioListId()}
+        onPreview={(audioList) => void toggleAudioListPreview(audioList)}
         onRemove={removeAudioList}
       />
 

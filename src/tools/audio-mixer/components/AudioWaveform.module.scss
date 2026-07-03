@@ -12,6 +12,20 @@
   background: var(--color-surface-strong);
 }
 
+.editable {
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+.seekable {
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.editable.seekable {
+  cursor: ew-resize;
+}
+
 .meta {
   min-height: 16px;
   display: flex;
