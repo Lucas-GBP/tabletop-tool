@@ -8,6 +8,8 @@ agents.
 
 - Read `.codex/project-context.md` before non-trivial work.
 - For audio mixer changes, also read `.codex/audio-mixer.md`.
+- For scene, session, audio-composition, or cross-tool architecture work, read
+  `.codex/domain-roadmap.md`.
 - For validation choices, read `.codex/verification.md`.
 - Check `git status --short` before editing. The worktree may already contain
   user changes; preserve them.

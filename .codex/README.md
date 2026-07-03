@@ -5,6 +5,8 @@ entry point; these files hold the longer notes.
 
 - `project-context.md`: stack, ownership boundaries, data flow, generated files.
 - `audio-mixer.md`: current audio mixer contracts and component map.
+- `domain-roadmap.md`: hierarchy, gaps, and implementation plan for tools,
+  audio compositions, scenes, and sessions.
 - `verification.md`: recommended checks for different kinds of changes.
 
 Keep these notes practical and current when architecture changes.
