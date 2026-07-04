@@ -10,14 +10,16 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "test": "npm run test:e2e",
+    "test:e2e": "playwright test",
     "tauri": "tauri",
     "lint": "eslint . --ext .ts,.tsx && cd src-tauri && cargo clippy -- -D warnings",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "lint:ts": "eslint . --ext .ts,.tsx",
     "lint:rs": "cd src-tauri && cargo clippy -- -D warnings",
-    "format": "prettier --write \"src/**/*.{ts,tsx,css,scss,json}\" && cd src-tauri && cargo fmt",
-    "format:check": "prettier --check \"src/**/*.{ts,tsx,css,scss,json}\" && cd src-tauri && cargo fmt -- --check",
-    "format:check:ts": "prettier --check \"src/**/*.{ts,tsx,css,scss,json}\"",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css,scss,json}\" \"tests/**/*.{ts,tsx,json}\" \"playwright.config.ts\" \"package.json\" && cd src-tauri && cargo fmt",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,css,scss,json}\" \"tests/**/*.{ts,tsx,json}\" \"playwright.config.ts\" \"package.json\" && cd src-tauri && cargo fmt -- --check",
+    "format:check:ts": "prettier --check \"src/**/*.{ts,tsx,css,scss,json}\" \"tests/**/*.{ts,tsx,json}\" \"playwright.config.ts\" \"package.json\"",
     "format:check:rs": "cd src-tauri && cargo fmt -- --check",
     "check": "npm run lint && npm run format:check",
     "fix": "npm run lint:fix && npm run format"
@@ -29,6 +31,7 @@
     "solid-js": "^1.9.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@tauri-apps/cli": "^2",
     "@types/node": "^25.8.0",
     "eslint": "^9.39.4",

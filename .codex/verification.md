@@ -17,6 +17,16 @@ broader checks when behavior crosses module boundaries.
 Use browser/Tauri manual testing for UI behavior that lint/build cannot prove,
 especially waveform pointer interactions and numeric input editing.
 
+## Frontend Tool Flow Changes
+
+- `npm run test:e2e`
+
+The E2E suite uses Playwright with mocked Tauri commands and mocked browser
+audio decoding. It is good for navigation, editor workflows, cross-tool
+references, autosave calls, and run-mode rendering. Still do real Tauri/manual
+testing when native window behavior, real audio files, or filesystem discovery
+are the changed surface.
+
 ## Rust or Tauri Command Changes
 
 - `npm run lint:rs`
@@ -31,6 +41,7 @@ exports compact one-line types.
 Run both sides:
 
 - `cd src-tauri && cargo test`
+- `npm run test:e2e`
 - `npm run build`
 - `npm run lint:ts`
 

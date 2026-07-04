@@ -31,9 +31,9 @@ The implemented app is currently an audio-library editor.
 
 What exists:
 
-- The app shell renders only the audio mixer as the active tool.
+- The app shell renders implemented tools from a small frontend registry.
 - The Rust backend exposes commands for listing audio files and loading/saving
-  the audio mixer store.
+  the audio mixer, audio composition, scene, session, and initiative stores.
 - SQLite persistence exists through the global `tabletop-tool.sqlite3`.
 - Rust structs are exported to TypeScript with `ts-rs`; generated files under
   `src/bindings/tauri` must not be edited manually.
@@ -45,13 +45,9 @@ What exists:
 
 What does not exist yet:
 
-- A real multi-tool registry or router.
-- Audio compositions.
-- Scenes.
-- Sessions.
-- Initiative, creatures, notes, or encounter preparation data.
-- A reusable scene/entity editor surface.
-- A run mode for using a prepared session at the table.
+- Full production-grade multi-track audio playback.
+- Rich initiative/run-state automation.
+- Advanced reusable creature library.
 
 ## Architecture Principles
 
@@ -98,6 +94,9 @@ Done when:
 
 Goal: stop hardcoding the app shell around the audio mixer.
 
+Status: done for implemented frontend tools. The registry currently contains
+only the audio mixer, but the shell now renders from `src/app/tools.ts`.
+
 Tasks:
 
 - Add a small frontend registry, for example `src/app/tools.ts`.
@@ -114,6 +113,11 @@ Done when:
 ### 3. Add Shared Domain Foundations
 
 Goal: define shared language before implementing scenes.
+
+Status: initial frontend foundation exists in `src/domain`. It defines finite
+tool ids, finite entity kinds, branded ids, and cross-tool references. Future
+Rust persistence should still define persisted scene/session shapes and export
+bindings through `ts-rs`.
 
 Suggested frontend paths:
 
@@ -138,6 +142,10 @@ Done when:
 
 Goal: persist cross-tool entities through the same Rust/SQLite path as the
 mixer.
+
+Status: MVP done. Scenes, sessions, audio compositions, and initiative
+encounters have Rust structs, SQLite tables, Tauri commands, and generated
+TypeScript bindings.
 
 Suggested Rust modules:
 
@@ -186,6 +194,9 @@ Done when:
 
 Goal: avoid building every tool as a one-off CRUD screen.
 
+Status: MVP done. `src/components/entity-workspace/EntityWorkspace.tsx` provides
+the shared list/detail/search/create surface used by the new planning tools.
+
 Reusable UI patterns:
 
 - List/detail layout.
@@ -214,6 +225,8 @@ Done when:
 
 Goal: create scenes as first-class cross-tool entities, not mixer data.
 
+Status: MVP done in `src/tools/scenes`.
+
 MVP fields:
 
 - Name.
@@ -236,6 +249,10 @@ Done when:
 ### 7. Create Audio Compositions
 
 Goal: add the missing layer between reusable mixer data and scene behavior.
+
+Status: MVP done in `src/tools/audio-composition`. It references mixer
+objects/lists by id and can test individual tracks through the mixer playback
+runtime.
 
 Potential model:
 
@@ -279,6 +296,9 @@ Done when:
 
 Goal: make scenes consume compositions.
 
+Status: MVP done. Scenes can link one audio composition and one initiative
+encounter.
+
 Tasks:
 
 - Add scene field/reference for an audio composition.
@@ -296,6 +316,8 @@ Done when:
 ### 9. Add Sessions
 
 Goal: organize scenes for a game session.
+
+Status: MVP done in `src/tools/sessions`.
 
 MVP fields:
 
@@ -320,6 +342,8 @@ Done when:
 
 Goal: prove that scenes are cross-tool, not audio-only.
 
+Status: MVP done in `src/tools/initiative` as encounters with participants.
+
 Suggested approach:
 
 - Create a separate initiative/encounter tool.
@@ -341,6 +365,10 @@ Done when:
 ### 11. Add Run Mode
 
 Goal: create a table-facing workflow separate from preparation.
+
+Status: MVP done in `src/tools/session-runner`. It reads prepared sessions,
+scenes, audio compositions, and initiative encounters without exposing every
+editor control.
 
 Run mode should focus on:
 

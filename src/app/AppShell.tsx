@@ -1,5 +1,7 @@
 import { For, createEffect, createSignal } from "solid-js";
-import { AudioMixerTool } from "../tools/audio-mixer/AudioMixerTool";
+import { Dynamic } from "solid-js/web";
+import type { ImplementedToolId } from "../domain";
+import { DEFAULT_TOOL_ID, getToolById, tools } from "./tools";
 import styles from "./AppShell.module.scss";
 
 type AccentTheme = "violet" | "amber" | "teal";
@@ -22,6 +24,8 @@ function getInitialTheme(): AccentTheme {
 
 export function AppShell() {
   const [theme, setTheme] = createSignal<AccentTheme>(getInitialTheme());
+  const [activeToolId, setActiveToolId] = createSignal<ImplementedToolId>(DEFAULT_TOOL_ID);
+  const activeTool = () => getToolById(activeToolId());
 
   createEffect(() => {
     localStorage.setItem("tabletop-tool.theme", theme());
@@ -38,11 +42,26 @@ export function AppShell() {
           </div>
         </div>
 
-        <nav class={styles.toolNav}>
-          <button type="button" class={`${styles.toolNavItem} ${styles.toolNavItemActive}`}>
-            <span>Mixer de audio</span>
-            <small>Ativo</small>
-          </button>
+        <nav class={styles.toolNav} aria-label="Ferramentas disponiveis">
+          <For each={tools}>
+            {(tool) => {
+              const isActive = () => activeToolId() === tool.id;
+
+              return (
+                <button
+                  type="button"
+                  class={styles.toolNavItem}
+                  classList={{ [styles.toolNavItemActive]: isActive() }}
+                  aria-pressed={isActive()}
+                  title={tool.description}
+                  onClick={() => setActiveToolId(tool.id)}
+                >
+                  <span>{tool.label}</span>
+                  <small>{isActive() ? tool.statusLabel : "Abrir"}</small>
+                </button>
+              );
+            }}
+          </For>
         </nav>
 
         <label class={styles.themePicker}>
@@ -57,7 +76,7 @@ export function AppShell() {
       </aside>
 
       <main class={styles.content}>
-        <AudioMixerTool />
+        <Dynamic component={activeTool().Component} />
       </main>
     </div>
   );

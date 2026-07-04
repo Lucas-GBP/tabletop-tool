@@ -3,7 +3,8 @@
 ## Summary
 
 `tabletop-tool` is a local desktop app for tabletop utilities. The current
-implemented tool is an audio mixer/library editor.
+implemented tools cover the audio library, audio compositions, scenes, sessions,
+initiative encounters, and a lightweight table/run mode.
 
 Stack:
 
@@ -44,16 +45,35 @@ Definitions:
 
 - `src/App.tsx`: delegates to the app shell.
 - `src/app/AppShell.tsx`: main app chrome, theme picker, active tool nav.
+- `src/app/tools.ts`: implemented tool registry used by the app shell.
+- `src/domain`: shared frontend domain ids and cross-tool references for future
+  scenes, sessions, compositions, and tool integrations.
 - `src/tools/audio-mixer/AudioMixerTool.tsx`: top-level audio mixer state and
   orchestration.
+- `src/tools/audio-composition`: scene-audio composition editor that consumes
+  mixer objects/lists.
+- `src/tools/scenes`: scene planner that links compositions and initiative
+  encounters.
+- `src/tools/sessions`: session planner that orders scenes.
+- `src/tools/initiative`: encounter/participant editor.
+- `src/tools/session-runner`: table-facing run mode for prepared sessions.
 - `src/tools/audio-mixer/audio`: audio domain helpers, persistence wrapper,
   library loading, and preview playback.
 - `src/tools/audio-mixer/components`: mixer UI panels and waveform UI.
 - `src/database/TabletopDatabase.ts`: small frontend wrapper around Tauri
   commands.
+- `tests/e2e`: Playwright tests for cross-tool UI flows with mocked Tauri
+  commands and mocked browser audio APIs.
+- `playwright.config.ts`: E2E test runner configuration.
 - `src-tauri/src/lib.rs`: Tauri command registration.
 - `src-tauri/src/audio_mixer.rs`: audio mixer SQLite schema and load/save
   commands.
+- `src-tauri/src/audio_compositions.rs`: audio composition SQLite schema and
+  load/save commands.
+- `src-tauri/src/scenes.rs`: scene SQLite schema and load/save commands.
+- `src-tauri/src/sessions.rs`: session SQLite schema and load/save commands.
+- `src-tauri/src/initiative.rs`: initiative encounter SQLite schema and
+  load/save commands.
 - `src-tauri/src/audio_files.rs`: filesystem scan for available audio files.
 - `src/bindings/tauri`: generated TypeScript types. Do not hand-edit.
 
@@ -63,9 +83,11 @@ The frontend stores working mixer state in Solid signals. Loading and saving go
 through `audioMixerStore.ts`, then `TabletopDatabase`, then Tauri commands.
 
 Rust owns durable persistence in the app SQLite database. The audio mixer schema
-stores metadata, object settings, tags, lists, and list membership. Audio files
-remain external files, currently discovered from `public/audio` or `dist/audio`
-during development/build flows.
+stores metadata, object settings, tags, lists, and list membership. Composition,
+scene, session, and initiative schemas store their own data and keep references
+by id so missing cross-tool references can be surfaced instead of silently
+deleted. Audio files remain external files, currently discovered from
+`public/audio` or `dist/audio` during development/build flows.
 
 ## Generated Types
 

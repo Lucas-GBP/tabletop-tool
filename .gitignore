@@ -1,3 +1,5 @@
 node_modules
 dist
 *.mp3
+playwright-report
+test-results
