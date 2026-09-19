@@ -56,3 +56,8 @@ See [Persistence](./ARCHITECTURE/persistence/README.md).
 - Rust IPC contracts are exported to TypeScript with Specta + tauri-specta instead of being manually duplicated.
 - Frontend quality tooling uses `tsc --noEmit`, ESLint + typescript-eslint, Stylelint + `stylelint-config-standard-scss`, and Prettier.
 - Rust quality tooling uses rustfmt, Clippy with warnings denied in CI, and `cargo test`.
+
+- [Runtime architecture](./ARCHITECTURE/runtime/README.md) — persistent definitions versus transient Scene execution state.
+- [Frontend / Backend boundary](./ARCHITECTURE/frontend/frontend-backend-boundary.md) — persistent Rust definitions versus volatile TypeScript runtime.
+- [Implementation readiness](./ARCHITECTURE/IMPLEMENTATION_READINESS.md) — closed decisions, non-blocking future decisions, and implementation order.
+- [Error model](./ARCHITECTURE/errors/README.md) — fail-fast configuration errors and graceful runtime failures.

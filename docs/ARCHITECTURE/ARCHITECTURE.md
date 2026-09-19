@@ -225,3 +225,56 @@ See [Persistence](./persistence/README.md).
   Session or Campaign?
 - How should database records reference managed files without coupling domain concepts to filesystem paths?
 - What ownership and cleanup rules prevent orphaned database records or orphaned files?
+
+## Persistent Definition vs Runtime State
+
+Tabletop Tools separates prepared configuration from mutable state produced while a Scene is running.
+
+```text
+Persistent Definition
+        ↓
+     execute
+        ↓
+Runtime State
+```
+
+Runtime state must never implicitly modify persistent definitions.
+
+A running Scene has a transient execution context, conceptually `SceneRuntime`, which survives Scene Level changes but is discarded when leaving the Scene or closing the application.
+
+Tool-specific runtime state remains inside each Tool. Core `Scene` and `SceneLevel` remain independent of Audio Mixer, Encounter, and future Tool-specific state.
+
+See [Runtime Model](./runtime/scene-runtime.md).
+
+## Frontend / Backend Responsibility Boundary
+
+Tabletop Tools uses lifetime as the primary boundary between Rust and TypeScript:
+
+```text
+Rust
+└── persistent definitions and persistence
+
+TypeScript
+└── volatile runtime execution
+```
+
+Rust owns the Core Domain, persistent Tool definitions, SeaORM/SQLite persistence, filesystem management, validation, and IPC contracts.
+
+TypeScript owns `SceneRuntime` and Tool runtime state such as `SceneAudioRuntime`, `AudioCompositionInstance`, `AudioMixer`, and `PlaybackInstance`.
+
+Audio playback uses the Web Audio API in the WebView for the initial implementation.
+
+This is a strong default rather than an absolute rule: a future runtime component may move to Rust if a concrete native requirement justifies it.
+
+See [Frontend / Backend Responsibility Boundary](./frontend/frontend-backend-boundary.md).
+
+## Implementation Status
+
+The Core Domain and initial Audio Mixer architecture are now considered **ready for implementation**.
+
+The remaining open questions are non-blocking and should be resolved only when concrete implementation requirements make them relevant.
+
+See:
+
+- [Implementation Readiness](./IMPLEMENTATION_READINESS.md)
+- [Error Model](./errors/README.md)

@@ -65,3 +65,6 @@ contracts should not be maintained manually in parallel.
 
 The approved frontend tooling is documented in
 [Quality Tooling](./quality-tooling.md).
+
+- [Frontend / Backend Responsibility Boundary](./frontend-backend-boundary.md) — Rust owns persistent definitions; TypeScript owns transient Scene execution and Web Audio runtime.
+- [Audio Object Editor UX](./audio-object-editor.md) — waveform region editing, numeric synchronization, and unsaved preview.

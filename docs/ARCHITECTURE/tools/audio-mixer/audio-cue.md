@@ -1,68 +1,45 @@
 # Audio Cue
 
-## Purpose
+`Audio Cue` is the conceptual abstraction used whenever another component needs to request playable audio without distinguishing between concrete source types.
 
-Audio Cue is a conceptual abstraction for anything that can be directly played
-by an Audio Trigger.
-
-Current Audio Cue types are:
-
-- [Audio Object](./audio-object.md)
-- [Audio List](./audio-list.md)
-- [Audio Composition](./audio-composition.md)
-
-## Conceptual Relationship
-
-```mermaid
-classDiagram
-    class AudioCue {
-        <<concept>>
-    }
-
-    AudioCue <|-- AudioObject
-    AudioCue <|-- AudioList
-    AudioCue <|-- AudioComposition
-
-    AudioTrigger --> AudioCue : plays
+```text
+AudioCue
+├── AudioObject
+└── AudioList
 ```
 
-## Important Constraint
+The global `AudioMixer` accepts an `AudioCue` directly:
 
-Audio Cue is currently a domain abstraction only.
+```text
+consumer
+   ↓
+AudioMixer.play(AudioCue)
+```
 
-It does not require:
+For an `AudioObject`, execution creates a `Playback Instance` directly.
 
-- an `AudioCue` database table;
-- an `AudioCue` Rust struct;
-- inheritance;
-- a specific enum;
-- a trait;
-- a frontend union type;
-- a particular persistence strategy.
+For an `AudioList`, the Mixer first selects one `AudioObject` according to the list's selection policy and then creates the `Playback Instance`.
 
-Those are later implementation decisions.
+`AudioComposition` is deliberately **not** an `AudioCue`. A composition has its own lifecycle, layer state, scheduling, and runtime instance.
 
-## Purpose of the Abstraction
+`AudioCue` is a domain abstraction and does not prescribe a specific Rust representation such as an enum, trait, or tagged union.
 
-The abstraction allows the Audio Mixer to state a simple rule:
+## Architectural Rule
 
-> An Audio Trigger plays exactly one Audio Cue.
+Ordinary playback consumers should depend on `AudioCue` rather than branching on `AudioObject` versus `AudioList`.
 
-without forcing the conceptual model to treat Audio Object, Audio List, and
-Audio Composition as unrelated targets.
+A consumer should only care about the concrete type when the distinction is intrinsically necessary to that feature.
 
-## Architectural Boundary
+## No Audio Trigger Layer
 
-Audio Cue belongs entirely to the Audio Mixer tool.
+The initial architecture does not define a persistent or runtime `AudioTrigger` abstraction.
 
-## Related Components
+When application logic, UI, or another runtime component wants to execute playable audio, it calls the global Mixer directly:
 
-- [Audio Object](./audio-object.md)
-- [Audio List](./audio-list.md)
-- [Audio Composition](./audio-composition.md)
-- [Audio Trigger](./audio-trigger.md)
+```text
+UI / Application Logic / Runtime Component
+                   ↓
+          AudioMixer.play(AudioCue)
+```
 
-## Open Questions
-
-- What implementation representation best preserves this abstraction?
-- Should future playable concepts also satisfy the Audio Cue role?
+A future event-to-audio binding abstraction may be introduced only if those associations become user-configurable and persistent data.

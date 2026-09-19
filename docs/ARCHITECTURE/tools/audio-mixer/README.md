@@ -32,9 +32,9 @@ classDiagram
 
 - [Audio File](./audio-file.md)
 - [Audio Object](./audio-object.md)
+- [Playback Instance](./playback-instance.md)
 - [Audio List](./audio-list.md)
 - [Audio Composition](./audio-composition.md)
-- [Audio Trigger](./audio-trigger.md)
 - [Audio Cue](./audio-cue.md)
 
 `Audio List Entry` and `Composition Layer` are currently documented inside
@@ -43,10 +43,10 @@ their parent concepts rather than as independent components.
 ## Core Ideas
 
 - An Audio File represents the underlying audio resource.
-- An Audio Object is the smallest directly playable audio concept.
+- An Audio Object is the smallest directly playable persistent audio concept and defines a reusable playback region, gain, optional loop, and fade behavior.
+- A Playback Instance is one transient runtime execution of an Audio Object and is never persisted.
 - An Audio List selects or advances through Audio Objects.
 - An Audio Composition orchestrates multiple sources over time.
-- An Audio Trigger connects a domain event to one playable Audio Cue.
 - Audio Mixer concepts may reference Core Domain concepts.
 - Core Domain concepts must not depend on the Audio Mixer.
 
@@ -76,8 +76,6 @@ definition.
 - Every Audio Composition contains at least one Composition Layer.
 - Every Composition Layer has exactly one source:
   Audio Object XOR Audio List.
-- Every Audio Trigger has exactly one owner.
-- Every Audio Trigger has exactly one Audio Cue target.
 
 ## Current Scope
 
@@ -89,7 +87,28 @@ use case justifies it.
 
 ## Open Questions
 
-- Which Audio Trigger owners should exist besides Scene Level and Character?
 - Which scheduling modes are needed for compositions?
 - Should Audio Mixer state be configurable per Scene, Scene Level, Campaign, or
   a combination of these?
+
+## Current specification status
+
+The following concepts have an initial specification sufficient for implementation-oriented design:
+
+- `Audio Object`
+- `Playback Instance`
+- `Audio Cue`
+- `Audio List`
+- `Audio Composition`
+- `Audio Composition Instance`
+- global `Audio Mixer`
+
+`Audio Trigger` is not part of the initial architecture.
+
+Application events, UI handlers, and runtime components call the global `AudioMixer` directly when they need to execute an `AudioCue`.
+
+A future binding abstraction should only be introduced if event-to-audio associations become user-configurable and persistent.
+- [Scene Audio Configuration](./scene-audio-configuration.md) — persistent Audio Cues and Audio Compositions available in a Scene.
+- [Scene Level Audio Configuration](./scene-level-audio-configuration.md) — persistent per-level Composition layer overrides.
+- [Scene Audio Runtime](./scene-audio-runtime.md) — transient Scene-specific audio state and Scene Level reconciliation.
+- [Audio Object Editor UX](../../frontend/audio-object-editor.md) — interactive waveform editor and preview workflow.

@@ -99,3 +99,33 @@ contract. They must not be hand-edited.
 
 The exact generation workflow and whether generated files are committed to the
 repository will be decided when the build and CI pipelines are implemented.
+
+## Persistent vs Runtime Commands
+
+Tauri IPC is primarily used to cross the persistent-definition boundary.
+
+Persistent operations flow through Rust:
+
+```text
+React intent
+    ↓
+generated IPC command
+    ↓
+Rust validation/application logic
+    ↓
+SeaORM / filesystem
+```
+
+Pure runtime operations should stay in TypeScript when they do not require native capabilities:
+
+```text
+React intent
+    ↓
+SceneRuntime / Tool runtime
+    ↓
+runtime state or Web Audio
+```
+
+For example, changing a persisted `SceneLevelAudioConfiguration` uses IPC. Temporarily muting a layer during Scene execution does not.
+
+This distinction avoids unnecessary IPC traffic and prevents runtime state from accidentally becoming persistent state.
