@@ -1,0 +1,12 @@
+[package]
+name = "migration"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.95"
+publish = false
+
+[dependencies]
+sea-orm-migration = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }

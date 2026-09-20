@@ -1,0 +1,31 @@
+:root {
+  color-scheme: light dark;
+
+  --font-family: inter, avenir, helvetica, arial, sans-serif;
+  --font-size: 16px;
+  --line-height: 1.5;
+  --color-text: #0f0f0f;
+  --color-background: #f6f6f6;
+  --color-surface: #fff;
+  --color-surface-active: #e8e8e8;
+  --color-link: #646cff;
+  --color-link-hover: #535bf2;
+  --color-focus: #396cd8;
+  --color-error: #b42318;
+  --space-small: 0.5rem;
+  --space-medium: 1rem;
+  --space-large: 1.5rem;
+  --radius-control: 0.5rem;
+  --shadow-control: 0 2px 2px rgb(0 0 0 / 20%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-text: #f6f6f6;
+    --color-background: #2f2f2f;
+    --color-surface: #0f0f0f98;
+    --color-surface-active: #0f0f0f69;
+    --color-link-hover: #24c8db;
+    --color-error: #fda29b;
+  }
+}

@@ -108,6 +108,7 @@ The following concepts have an initial specification sufficient for implementati
 Application events, UI handlers, and runtime components call the global `AudioMixer` directly when they need to execute an `AudioCue`.
 
 A future binding abstraction should only be introduced if event-to-audio associations become user-configurable and persistent.
+
 - [Scene Audio Configuration](./scene-audio-configuration.md) — persistent Audio Cues and Audio Compositions available in a Scene.
 - [Scene Level Audio Configuration](./scene-level-audio-configuration.md) — persistent per-level Composition layer overrides.
 - [Scene Audio Runtime](./scene-audio-runtime.md) — transient Scene-specific audio state and Scene Level reconciliation.

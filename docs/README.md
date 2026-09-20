@@ -3,9 +3,12 @@
 This directory contains the architectural and domain documentation for
 `tabletop-tools`.
 
-The project is currently in the architecture and domain-design phase. The
-documentation therefore focuses on concepts, responsibilities, boundaries,
-dependencies, invariants, and open questions rather than implementation details.
+The architecture is ready for implementation. These documents define mandatory
+concepts, responsibilities, boundaries, dependencies, invariants, and lifecycle
+rules. Development tooling is configured; product features remain to be implemented.
+
+See [Development Setup](./DEVELOPMENT.md) for installation, quality checks,
+generated IPC bindings, migrations, and CI.
 
 ## Architecture
 

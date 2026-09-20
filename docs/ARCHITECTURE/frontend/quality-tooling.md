@@ -51,8 +51,8 @@ Expected checks include:
 
 ```text
 cargo fmt --all -- --check
-cargo clippy --all-targets --all-features -- -D warnings
-cargo test --all-features
+cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+cargo test --workspace --all-features --locked
 ```
 
 ## Responsibility Separation
@@ -69,3 +69,19 @@ cargo test→ Rust tests
 
 No tool should be configured to unnecessarily duplicate another tool's primary
 responsibility.
+
+## Configured Workflow
+
+Run `npm run check` from the repository root for frontend checks, Rust workspace
+checks, and IPC binding synchronization. `npm run check:ts` only requires the
+frontend toolchain; `npm run check:rs` covers the application and migration crates.
+
+Frontend tests use Vitest with jsdom and React Testing Library. This establishes
+component/API interaction testing; it does not replace future Web Audio or native
+desktop integration verification. Tests fail when no tests are found.
+
+Prettier handles formatting independently of ESLint/Stylelint. Generated bindings,
+lockfiles, build artifacts, and local agent instructions are not rewritten.
+Rust formatting uses rustfmt. `npm run format` runs both formatters.
+
+Versions and commands are documented in [Development Setup](../../DEVELOPMENT.md).

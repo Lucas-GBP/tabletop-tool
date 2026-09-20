@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+.vitest/
+src-tauri/target/
+src-tauri/gen/
+src/shared/api/bindings.ts
+package-lock.json
+src-tauri/Cargo.lock
+.agents/
+**/AGENTS.md

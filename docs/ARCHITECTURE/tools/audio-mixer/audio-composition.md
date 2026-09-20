@@ -484,7 +484,6 @@ The initial Audio Composition model does not include:
 
 These may be added only if concrete use cases justify them.
 
-
 ## Relationship with the Global Audio Mixer
 
 The runtime composition does not render audio itself.
@@ -502,7 +501,6 @@ PlaybackId
 The composition runtime may retain returned `PlaybackId`s when later control is necessary.
 
 The global Mixer remains the owner of the actual `Playback Instance`s.
-
 
 ## Persistent Definition and Runtime Instance
 

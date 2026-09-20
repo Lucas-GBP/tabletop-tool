@@ -97,8 +97,20 @@ consistent application-facing interface.
 Generated TypeScript bindings are build artifacts derived from the Rust
 contract. They must not be hand-edited.
 
-The exact generation workflow and whether generated files are committed to the
-repository will be decided when the build and CI pipelines are implemented.
+Generated bindings are committed at `src/shared/api/bindings.ts`. The command
+registry in `src-tauri/src/ipc.rs` is shared by the desktop invocation handler and
+the headless `export-bindings` binary, enabled through the Rust `bindings` feature.
+
+- Run `npm run bindings:generate` after changing an IPC contract.
+- Run `npm run check:bindings` to generate a temporary copy and compare it with
+  the committed file, without modifying that file. A mismatch fails the check.
+- CI runs this check on Windows, Linux, and macOS. Line-ending differences are
+  normalized; contract differences are not.
+- Generated bindings are excluded from lint/format rewriting but remain part of
+  TypeScript type checking.
+
+The initial `greet` command exercises this pipeline without introducing product
+domain contracts. See [Development Setup](../../DEVELOPMENT.md).
 
 ## Persistent vs Runtime Commands
 

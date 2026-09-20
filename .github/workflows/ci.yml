@@ -5,6 +5,104 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      package:
+        description: Gerar instaladores de teste sem publicar release
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
-  
+  frontend:
+    name: Frontend quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Install pinned npm
+        run: npm install --global $(node --print "require('./package.json').packageManager")
+      - run: npm ci
+      - run: npm run check:ts
+      - run: npm run build
+
+  desktop:
+    name: Rust and desktop (${{ matrix.os }})
+    needs: frontend
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            bundles: deb
+            artifact: linux-x64
+          - os: windows-2022
+            bundles: nsis
+            artifact: windows-x64
+          - os: macos-15
+            bundles: dmg
+            artifact: macos-arm64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Install pinned npm
+        run: npm install --global $(node --print "require('./package.json').packageManager")
+      - name: Install Linux desktop dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y \
+            libwebkit2gtk-4.1-dev build-essential libssl-dev \
+            libxdo-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+      - name: Install project Rust toolchain
+        run: rustup show
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: src-tauri -> target
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - run: npm ci
+      - run: npm run check:rs
+      - run: npm run check:bindings
+      - name: Build desktop application
+        if: github.event_name != 'workflow_dispatch' || !inputs.package
+        run: npm run tauri build -- --debug --no-bundle --ci -- --locked
+      - name: Build test installer
+        if: github.event_name == 'workflow_dispatch' && inputs.package
+        run: npm run tauri build -- --ci --bundles ${{ matrix.bundles }} -- --locked
+      - name: Upload test installer
+        if: github.event_name == 'workflow_dispatch' && inputs.package
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: tabletop-tool-${{ matrix.artifact }}
+          path: |
+            src-tauri/target/release/bundle/deb/*.deb
+            src-tauri/target/release/bundle/nsis/*.exe
+            src-tauri/target/release/bundle/dmg/*.dmg
+          if-no-files-found: error
+          retention-days: 14

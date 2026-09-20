@@ -287,7 +287,6 @@ The initial Mixer model does not define:
 - web/network audio synchronization;
 - audio-bus/group architecture beyond the global master output.
 
-
 ## Direct Command Model
 
 The initial architecture does not place an `AudioTrigger` abstraction between application events and the Mixer.
