@@ -1,0 +1,38 @@
+﻿.app-shell {
+  min-height: 100vh;
+  padding: 2.5rem clamp(1rem, 4vw, 4rem) 4rem;
+}
+
+.loading {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  color: var(--color-text-muted);
+}
+
+.feedback {
+  max-width: 1400px;
+  margin-inline: auto;
+}
+
+.home {
+  width: 100%;
+  max-width: 1100px;
+  margin: var(--space-medium) auto 0;
+}
+
+.workspace {
+  width: 100%;
+  max-width: 1400px;
+  margin: var(--space-medium) auto 0;
+  display: grid;
+  grid-template-columns: minmax(280px, 0.75fr) minmax(0, 2fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (width <= 900px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+}

@@ -19,12 +19,20 @@ Scenes are not owned by the Campaign and have an independent lifecycle.
 
 ## Invariants
 
+- A Campaign has a non-empty display name.
 - A Campaign always contains at least one Session.
 - Every Session belongs to exactly one Campaign.
+- Sessions have dense integer positions starting at zero.
 
 ## Lifecycle
 
-When a Campaign is created, its initial Session is created automatically.
+When a Campaign is created, the application atomically creates its initial
+Session, a new initial Scene with its first SceneLevel, and the SessionScene
+association between them. This convenience does not transfer ownership of the
+Scene to the Campaign; the Scene remains an independent reusable definition.
+
+Creating an additional Session requires an existing Scene for its initial
+SessionScene association.
 
 ## Architectural Boundary
 
@@ -45,5 +53,4 @@ Those belong to their respective Scene Tools.
 
 ## Open Questions
 
-- Can a Campaign ever temporarily exist without a Session during editing?
 - Should tool availability be configurable per Campaign?

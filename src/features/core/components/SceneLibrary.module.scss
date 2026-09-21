@@ -1,0 +1,38 @@
+﻿.panel {
+  padding: 1.25rem;
+  position: sticky;
+  top: 1rem;
+}
+
+.creation-form {
+  margin-top: var(--space-medium);
+  display: flex;
+  gap: 0.55rem;
+
+  input {
+    min-width: 0;
+    flex: 1;
+  }
+}
+
+.description {
+  margin: calc(var(--space-small) * -1) 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.scene-list {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.empty {
+  margin-top: 1rem;
+}
+
+@media (width <= 900px) {
+  .panel {
+    position: static;
+  }
+}

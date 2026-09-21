@@ -41,9 +41,11 @@ meaning of the corresponding domain concept.
 SQLite is the only database required by the application. The database is local to
 the application and does not require a database server.
 
-The logical schema, indexes, constraints, migration strategy, and concrete
-column types are intentionally not defined yet. They should be derived from the
-domain model and real access patterns.
+The initial Core schema has separate tables for Campaign, Session, Scene,
+SceneLevel, and SessionScene. Foreign keys preserve ownership, composite unique
+constraints protect positions and Scene reuse within a Session, and explicit
+migrations evolve the local database. Tool schemas are added only with their
+corresponding implementation.
 
 ## Migrations
 

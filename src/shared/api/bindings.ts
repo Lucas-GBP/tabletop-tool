@@ -4,6 +4,73 @@ import { invoke as __TAURI_INVOKE } from "@tauri-apps/api/core";
 
 /** Commands */
 export const commands = {
-	greet: (name: string) => __TAURI_INVOKE<string>("greet", { name }),
+	listCore: () => typedError<CoreSnapshotDto, AppErrorDto>(__TAURI_INVOKE("list_core")),
+	createScene: (name: string) => typedError<CoreSnapshotDto, AppErrorDto>(__TAURI_INVOKE("create_scene", { name })),
+	createCampaign: (name: string) => typedError<CoreSnapshotDto, AppErrorDto>(__TAURI_INVOKE("create_campaign", { name })),
+	createSession: (campaignId: string, name: string, initialSceneId: string) => typedError<CoreSnapshotDto, AppErrorDto>(__TAURI_INVOKE("create_session", { campaignId, name, initialSceneId })),
+	createSceneLevel: (sceneId: string, name: string) => typedError<CoreSnapshotDto, AppErrorDto>(__TAURI_INVOKE("create_scene_level", { sceneId, name })),
+	renameCampaign: (campaignId: string, name: string) => typedError<CoreSnapshotDto, AppErrorDto>(__TAURI_INVOKE("rename_campaign", { campaignId, name })),
+	renameScene: (sceneId: string, name: string) => typedError<CoreSnapshotDto, AppErrorDto>(__TAURI_INVOKE("rename_scene", { sceneId, name })),
+	renameSceneLevel: (levelId: string, name: string) => typedError<CoreSnapshotDto, AppErrorDto>(__TAURI_INVOKE("rename_scene_level", { levelId, name })),
+	associateScene: (sessionId: string, sceneId: string) => typedError<CoreSnapshotDto, AppErrorDto>(__TAURI_INVOKE("associate_scene", { sessionId, sceneId })),
 };
+
+/* Types */
+export type AppErrorDto = {
+	code: string,
+	message: string,
+	operation: string,
+	entityId: string | null,
+	details: string | null,
+	recoverable: boolean,
+};
+
+export type CampaignDto = {
+	id: string,
+	name: string,
+	sessions: SessionDto[],
+};
+
+export type CoreSnapshotDto = {
+	campaigns: CampaignDto[],
+	scenes: SceneDto[],
+};
+
+export type SceneDto = {
+	id: string,
+	name: string,
+	levels: SceneLevelDto[],
+};
+
+export type SceneLevelDto = {
+	id: string,
+	sceneId: string,
+	name: string,
+	position: number,
+};
+
+export type SessionDto = {
+	id: string,
+	campaignId: string,
+	name: string,
+	position: number,
+	scenes: SessionSceneDto[],
+};
+
+export type SessionSceneDto = {
+	id: string,
+	sessionId: string,
+	sceneId: string,
+	position: number,
+};
+
+/* Tauri Specta runtime */
+async function typedError<T, E>(result: Promise<T>): Promise<{ status: "ok"; data: T } | { status: "error"; error: E }> {
+    try {
+        return { status: "ok", data: await result };
+    } catch (e) {
+        if (e instanceof Error) throw e;
+        return { status: "error", error: e as any };
+    }
+}
 

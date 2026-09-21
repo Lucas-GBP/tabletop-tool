@@ -1,7 +1,8 @@
-# Development Setup
+﻿# Development Setup
 
-The project has a configured development baseline. Core Domain, product schemas,
-audio import, Scene execution, and Audio Mixer features are still pending.
+The project has a configured development baseline and an application-integrated
+Core Domain. Core definitions are persisted locally and managed through the React
+UI. Audio import, Scene execution, and Audio Mixer features are still pending.
 
 ## Prerequisites
 
@@ -31,9 +32,9 @@ Rust changes must include the updated `src-tauri/Cargo.lock`. CI uses locked
 dependencies. Direct npm versions and the Specta prerelease compatibility set
 are pinned; update them together with their consumers and checks.
 
-`npm run dev` runs only the Vite UI. The `greet` example requires Tauri IPC, so
-use `npm run tauri dev` to exercise it against Rust. Frontend tests mock the
-generated command boundary and do not start a desktop window.
+`npm run dev` runs only the Vite UI. Core operations require Tauri IPC, so use
+`npm run tauri dev` to exercise them against Rust and SQLite. Frontend tests mock
+the generated command boundary and do not start a desktop window.
 
 ## Commands
 
@@ -57,11 +58,25 @@ generated command boundary and do not start a desktop window.
 
 ## Frontend Structure
 
-- `src/App.tsx`: the template integration example, using the typed API boundary.
+- `src/App.tsx`: application composition entry point; it does not own feature logic.
+- `src/features/core/pages/`: Core screen composition for Campaigns, Sessions,
+  Scenes, and SceneLevels.
+- `src/features/core/components/`: feature components and forms, split by visual
+  and domain responsibility.
+- `src/features/core/hooks/`: loading and mutation orchestration for the Core
+  workspace.
+- `src/features/core/lib/`: pure form and error helpers scoped to the Core feature.
+- `src/features/session-runner/`: Session execution screen, UI components,
+  runtime hook, and the transient `SessionRuntime`/`SceneRuntime` coordination.
 - `src/shared/api/index.ts`: application-facing API over generated bindings.
 - `src/shared/api/bindings.ts`: generated Rust contract; do not edit manually.
-- `src/shared/ui/`: initial Button/Input primitives with shared SCSS Modules.
-- `src/shared/styles/`: global baseline and CSS custom-property design tokens.
+  `src/shared/` is reserved for artifacts and adapters that cross the Rust ↔
+  TypeScript boundary; general frontend code does not belong there.
+- `src/ui/`: public frontend component layer. It currently exposes the
+  Button, Input, Select, Card, Panel, SectionHeading, EditableText, EmptyState,
+  and FeedbackMessage primitives/composites through `src/ui/index.ts`.
+- `src/lib/`: framework-independent frontend helpers.
+- `src/styles/`: global baseline and CSS custom-property design tokens.
 - `src/test/setup.ts`: Testing Library setup and cleanup.
 - `tsconfig.app.json` and `tsconfig.node.json`: separate strict checks for UI and tooling.
 
@@ -74,6 +89,10 @@ These files are included in TypeScript checking and typed linting.
 Component styling belongs in `.module.scss`; tokens and global baseline stay in
 the shared styles. New features should reuse primitives. This is the initial
 visual foundation, not a completed product design system.
+
+`EditableText` is the shared inline-renaming interaction: double-clicking its
+display value opens the editor; keyboard users can use Enter or F2, and Escape
+cancels an active edit.
 
 ## IPC Generation
 
@@ -94,14 +113,51 @@ the tracked bindings. Pure UI/runtime types remain authored in TypeScript.
 ## Persistence Foundation
 
 `src-tauri/Cargo.toml` is a workspace containing the app and the `migration` crate.
-SeaORM is configured only for SQLite and Tokio. The migration registry is empty
-until domain schemas are implemented. `persistence::migrate` applies registered
-migrations to a connection supplied by the application.
+SeaORM is configured for SQLite and Tokio. At startup the app opens
+`tabletop-tool.sqlite3` in its platform application-data directory and applies
+the registered migrations.
 
-The infrastructure test opens SQLite in memory and runs the migrator twice to
-verify initialization and repeatability. The app does not yet create a user
-database or perform persistent product operations. Add real migrations alongside
-the corresponding domain implementation; do not create placeholder product tables.
+The initial migration creates Campaign, Session, Scene, SceneLevel, and
+SessionScene tables with foreign keys, uniqueness rules, and dense-position
+constraints. Persistence tests run the schema and Core operations against SQLite
+in memory, including repeatable migrations and duplicate-association rejection.
+
+## Core Domain
+
+`src-tauri/src/domain` is the tool-agnostic domain module inside the main Tauri
+crate. It contains typed UUID identities and the `Campaign`/`Session`/`SessionScene`
+and `Scene`/`SceneLevel` aggregates. Its public mutations enforce ownership,
+non-empty child collections, unique Scene use per Session, and dense positions.
+
+Creating a Campaign atomically creates its first Session, an independent initial
+Scene and SceneLevel, and the association between the Session and Scene.
+Additional Sessions require an existing Scene.
+Before a Scene is deleted, `detach_scene_from_campaigns` validates all affected
+Campaigns; it makes no changes when any Session would become empty. A valid call
+removes every association, after which deleting the independent Scene also drops
+its owned SceneLevels.
+
+The domain module has no dependency on Tauri, SeaORM, Specta, serde, the
+filesystem, or frontend code. Persistence entities and IPC DTOs map at their own
+boundaries rather than adding infrastructure derives to the domain model.
+
+The React workspace in `./src` starts with the Campaign list. Creating or opening
+a Campaign enters its own preparation screen, where the user renames the
+Campaign, creates and renames Scenes and SceneLevels, adds Sessions, and
+associates reusable Scenes. Rust trims and rejects empty names before any
+persistent mutation and returns structured IPC errors.
+
+The configuration UI treats the Scene library as a collection of independent,
+reusable definitions. Each Session displays its ordered `SessionScene` sequence
+and an always-visible “Adicionar cena” area. It selects only Scenes not already
+used by that Session and explains when another Scene must first be created in the
+library.
+
+Preparation and execution are separate screens. “Iniciar sessão” instantiates
+frontend-only runtime state from the saved Session sequence. Changing SceneLevel
+preserves the current `SceneRuntime`; changing Scene disposes it and starts a new
+one. “Encerrar sessão” disposes the active runtime and returns to preparation.
+These transitions do not invoke persistent mutation commands.
 
 ## CI and Packaging
 

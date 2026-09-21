@@ -1,0 +1,17 @@
+﻿.message {
+  min-height: 1.5rem;
+  margin-block: var(--space-small);
+}
+
+.error {
+  padding: 0.8rem var(--space-medium);
+  border: 1px solid color-mix(in srgb, var(--color-error), transparent 50%);
+  border-radius: var(--radius-control);
+  color: var(--color-error);
+  background: color-mix(in srgb, var(--color-error), transparent 92%);
+}
+
+.success {
+  color: var(--color-success);
+  font-size: 0.9rem;
+}

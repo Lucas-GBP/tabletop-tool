@@ -31,6 +31,7 @@ A Scene contains one or more Scene Levels.
 
 ## Domain Invariants
 
+- User-visible Core definitions have a non-empty display name.
 - A Campaign always contains at least one Session.
 - A Scene always contains at least one Scene Level.
 - A Scene may be reused by multiple Campaigns.
@@ -38,8 +39,14 @@ A Scene contains one or more Scene Levels.
 
 ## Lifecycle Rules
 
-- Creating a Campaign automatically creates its initial Session.
+- Creating a Campaign atomically creates its initial Session and a new initial
+  Scene, then associates that Scene with the Session. The Scene remains an
+  independent reusable definition after creation.
+- Creating an additional Session requires an existing Scene and associates it
+  with that Session.
 - Creating a Scene automatically creates its initial Scene Level.
+- Deleting a Scene removes its Scene Levels and Session associations. The
+  operation is rejected before mutation if any affected Session would become empty.
 
 ## Boundary
 

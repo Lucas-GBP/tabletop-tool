@@ -1,8 +1,8 @@
 # Tabletop Tool
 
-Aplicação desktop local para preparar e conduzir sessões de RPG, com Tauri 2, React, TypeScript e Vite. A base de desenvolvimento está configurada; a interface ainda demonstra apenas a chamada ao comando Rust `greet`.
+Aplicação desktop local para preparar e conduzir sessões de RPG, com Tauri 2, React, TypeScript e Vite. A tela inicial organiza Campaigns; dentro de cada Campaign, a interface separa o modo de preparação da mesa em andamento, permite preparar Sessions, criar Scenes e SceneLevels e reutilizar Scenes entre Sessions.
 
-A arquitetura documentada define requisitos obrigatórios para a implementação. Domínio, persistência e Audio Mixer ainda não foram implementados. As marcações `[x]` em [Implementation Readiness](docs/ARCHITECTURE/IMPLEMENTATION_READINESS.md) indicam decisões fechadas, não funcionalidades entregues.
+A arquitetura documentada define requisitos obrigatórios para a implementação. O Core Domain está integrado ao backend Tauri, com entidades SeaORM, migração SQLite, IPC tipado e interface React. O Audio Mixer ainda não foi implementado. As marcações `[x]` em [Implementation Readiness](docs/ARCHITECTURE/IMPLEMENTATION_READINESS.md) indicam decisões fechadas, não funcionalidades entregues.
 
 Para orientar as próximas tarefas, leia:
 
@@ -43,7 +43,7 @@ Os scripts atuais estão definidos em [package.json](package.json):
 | `npm run tauri dev`         | Executar a aplicação desktop em desenvolvimento.                    |
 | `npm run tauri build`       | Compilar e empacotar a aplicação desktop.                           |
 
-`tauri` encaminha os argumentos à CLI do Tauri. ESLint, Stylelint, Prettier, Vitest/Testing Library, SCSS Modules, rustfmt e Clippy estão configurados. SeaORM/SQLite conta com um crate de migrações ainda sem tabelas de produto; Specta/tauri-specta gera o contrato demonstrativo. Veja a [lista completa de comandos](docs/DEVELOPMENT.md#commands).
+`tauri` encaminha os argumentos à CLI do Tauri. ESLint, Stylelint, Prettier, Vitest/Testing Library, SCSS Modules, rustfmt e Clippy estão configurados. SeaORM/SQLite persiste o Core no diretório local da aplicação; Specta/tauri-specta gera o contrato consumido pela interface. Veja a [lista completa de comandos](docs/DEVELOPMENT.md#commands).
 
 ## Automação
 

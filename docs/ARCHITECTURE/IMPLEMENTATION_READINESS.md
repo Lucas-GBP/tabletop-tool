@@ -10,9 +10,15 @@ Further architecture-first modeling should stop unless implementation reveals a 
 
 - [x] `Campaign`, `Session`, `Scene`, and `SceneLevel` defined.
 - [x] Entity identity uses UUID.
+- [x] User-visible Core definitions have a non-empty display name; surrounding
+      whitespace is removed before persistence.
 - [x] `Session` belongs to exactly one `Campaign`.
 - [x] A `Campaign` always contains at least one `Session`.
 - [x] Creating a `Campaign` creates its first `Session`.
+- [x] Creating a `Campaign` atomically creates an independent initial `Scene`,
+      its first `SceneLevel`, and the initial `SessionScene` association.
+- [x] Creating an additional `Session` requires an existing `Scene` for that
+      Session's initial `SessionScene` association.
 - [x] `Scene` is reusable across Sessions.
 - [x] `Session` and `Scene` have an N:N relationship through `SessionScene`.
 - [x] The same `Scene` cannot appear more than once in the same `Session`.
@@ -22,6 +28,8 @@ Further architecture-first modeling should stop unless implementation reveals a 
 - [x] Deleting a `Session` does not delete Scenes.
 - [x] The last `Session` of a Campaign cannot be deleted directly.
 - [x] Deleting a `Scene` deletes its SceneLevels and Session associations.
+- [x] Deleting a `Scene` is rejected before mutation if an affected `Session`
+      would otherwise become empty.
 - [x] The last `SceneLevel` of a Scene cannot be deleted directly.
 - [x] Ordering uses dense integer `position` values starting at zero.
 - [x] Insert, remove, and reorder operations keep positions normalized.

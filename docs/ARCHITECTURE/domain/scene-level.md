@@ -13,23 +13,25 @@ A Scene Level:
 - belongs to exactly one [Scene](./scene.md);
 - may be referenced by Scene Tools.
 
-For example, the Audio Mixer may associate Audio Triggers with a Scene Level.
+For example, a Scene Tool may associate its own configuration with a Scene Level.
 
 The dependency direction is:
 
 ```text
-Audio Trigger ───────▶ Scene Level
+Tool Configuration ───────▶ Scene Level
 ```
 
 not:
 
 ```text
-Scene Level ───────▶ Audio Trigger
+Scene Level ───────▶ Tool Configuration
 ```
 
 ## Invariants
 
+- Every Scene Level has a non-empty display name.
 - Every Scene Level belongs to exactly one Scene.
+- Scene Level positions are dense integers starting at zero within their Scene.
 
 ## Lifecycle
 
@@ -51,7 +53,7 @@ It must not require knowledge of:
 ## Related Components
 
 - [Scene](./scene.md)
-- [Audio Trigger](../tools/audio-mixer/audio-trigger.md)
+- [Scene Tools](../tools/README.md)
 
 ## Open Questions
 

@@ -1,4 +1,5 @@
-import type { ComponentProps } from "react";
+﻿import type { ComponentProps } from "react";
+import { classNames } from "../lib/classNames";
 import styles from "./controls.module.scss";
 
 export function Button({
@@ -10,9 +11,7 @@ export function Button({
     <button
       {...props}
       type={type}
-      className={[styles.control, styles.button, className]
-        .filter(Boolean)
-        .join(" ")}
+      className={classNames(styles.control, styles.button, className)}
     />
   );
 }

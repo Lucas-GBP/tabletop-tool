@@ -16,6 +16,21 @@
 
 body {
   margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    radial-gradient(
+      circle at 10% 0%,
+      color-mix(in srgb, var(--color-accent), transparent 91%),
+      transparent 32rem
+    ),
+    var(--color-background);
+}
+
+button,
+input,
+select {
+  font: inherit;
 }
 
 * {

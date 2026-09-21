@@ -1,0 +1,41 @@
+﻿.card {
+  padding: 1rem;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+
+  h3 {
+    margin: 0;
+  }
+
+  > span {
+    color: var(--color-text-muted);
+    font-size: 0.75rem;
+  }
+}
+
+.level-list {
+  margin: 0.75rem 0;
+  padding-left: 1.4rem;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.form {
+  display: flex;
+  gap: 0.55rem;
+
+  input {
+    min-width: 0;
+    flex: 1;
+  }
+
+  button {
+    width: 2.7rem;
+    padding-inline: 0;
+  }
+}

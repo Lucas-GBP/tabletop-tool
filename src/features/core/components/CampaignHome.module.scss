@@ -1,0 +1,35 @@
+﻿.panel {
+  min-height: 32rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+}
+
+.description {
+  margin: calc(var(--space-small) * -1) 0 var(--space-large);
+  color: var(--color-text-muted);
+}
+
+.form {
+  max-width: 42rem;
+  padding: var(--space-medium);
+  display: flex;
+  gap: var(--space-small);
+  border-radius: 0.9rem;
+  background: var(--color-surface-soft);
+
+  input {
+    min-width: 0;
+    flex: 1;
+  }
+}
+
+.list {
+  margin-top: var(--space-large);
+  display: grid;
+  gap: var(--space-medium);
+}
+
+@media (width <= 640px) {
+  .form {
+    flex-direction: column;
+  }
+}

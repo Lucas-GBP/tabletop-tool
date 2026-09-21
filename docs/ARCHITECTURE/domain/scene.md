@@ -20,11 +20,19 @@ A Scene:
 
 ## Invariants
 
+- A Scene has a non-empty display name.
 - A Scene always contains at least one Scene Level.
+- Scene Levels have dense integer positions starting at zero.
 
 ## Lifecycle
 
 When a Scene is created, its initial Scene Level is created automatically.
+Campaign creation may create this Scene as part of one atomic application
+operation, but the resulting Scene is still independent and reusable.
+
+Deleting a Scene deletes all of its Scene Levels and removes its `SessionScene`
+associations. Because a Session must use at least one Scene, deletion is rejected
+before any mutation if the Scene is the only Scene in an affected Session.
 
 ## Architectural Boundary
 

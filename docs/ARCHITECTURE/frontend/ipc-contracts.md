@@ -109,8 +109,9 @@ the headless `export-bindings` binary, enabled through the Rust `bindings` featu
 - Generated bindings are excluded from lint/format rewriting but remain part of
   TypeScript type checking.
 
-The initial `greet` command exercises this pipeline without introducing product
-domain contracts. See [Development Setup](../../DEVELOPMENT.md).
+The Core commands exercise this pipeline with generated DTOs for Campaign,
+Session, Scene, SceneLevel, and SessionScene. See
+[Development Setup](../../DEVELOPMENT.md).
 
 ## Persistent vs Runtime Commands
 
