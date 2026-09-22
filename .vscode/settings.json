@@ -3,7 +3,8 @@
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
+    "source.fixAll.eslint": "explicit",
+    "source.fixAll.stylelint": "explicit"
   },
 
   // Prettier
@@ -15,6 +16,10 @@
     "editor.formatOnSave": true
   },
   "rust-analyzer.check.command": "clippy",
+  "rust-analyzer.linkedProjects": ["src-tauri/Cargo.toml"],
+  "stylelint.validate": ["scss"],
+  "css.validate": false,
+  "scss.validate": false,
 
   // Arquivos
   "files.exclude": {

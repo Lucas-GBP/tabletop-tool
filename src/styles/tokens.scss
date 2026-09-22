@@ -1,0 +1,65 @@
+:root {
+  color-scheme: light dark;
+
+  --font-family: inter, avenir, helvetica, arial, sans-serif;
+  --font-family-display: georgia, "Times New Roman", serif;
+  --font-size: 16px;
+  --line-height: 1.5;
+
+  /*
+   * Paleta quente anterior:
+   * text #0f0f0f; background #f3f0e9; surface #fffdf8;
+   * surface-soft #f8f5ee; surface-active #eee8db; muted #69645b;
+   * border #ded8cc; border-strong #bdb4a5; accent #a34c2e;
+   * accent-soft #f4ddd3; link #646cff; link-hover #535bf2;
+   * focus #396cd8; panel-shadow rgb(71 57 37 / 8%).
+   */
+  --color-text: #17131f;
+  --color-background: #f4f0f7;
+  --color-surface: #fdfaff;
+  --color-surface-soft: #f7f1fa;
+  --color-surface-active: #ece2f2;
+  --color-text-muted: #675e6e;
+  --color-border: #ded3e4;
+  --color-border-strong: #bba8c6;
+  --color-accent: #70408f;
+  --color-accent-soft: #eadcf2;
+  --color-success: #356849;
+  --color-link: #6d3eb2;
+  --color-link-hover: #572c91;
+  --color-focus: #7c3aed;
+  --color-error: #b42318;
+  --space-small: 0.5rem;
+  --space-medium: 1rem;
+  --space-large: 1.5rem;
+  --radius-control: 0.5rem;
+  --shadow-control: 0 2px 2px rgb(0 0 0 / 20%);
+  --shadow-panel: 0 18px 50px rgb(57 36 70 / 10%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /*
+     * Paleta escura quente anterior:
+     * text #f6f6f6; background #181715; surface #24211e;
+     * surface-soft #2c2824; surface-active #39332d; muted #b8aea2;
+     * border #443e37; border-strong #665c51; accent #ee9a76;
+     * accent-soft #4a2c22; link-hover #24c8db.
+     */
+    --color-text: #f8f4fb;
+    --color-background: #17131c;
+    --color-surface: #211a29;
+    --color-surface-soft: #2a2133;
+    --color-surface-active: #392c45;
+    --color-text-muted: #bcb0c5;
+    --color-border: #45384f;
+    --color-border-strong: #685474;
+    --color-accent: #c391e6;
+    --color-accent-soft: #432c55;
+    --color-success: #8bc69e;
+    --color-link: #c9a3ff;
+    --color-link-hover: #e0c7ff;
+    --color-focus: #ba83e4;
+    --color-error: #fda29b;
+  }
+}

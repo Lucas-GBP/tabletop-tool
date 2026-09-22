@@ -3,3 +3,21 @@ dist
 *.mp3
 playwright-report
 test-results
+*/**/AGENTS.md
+AGENTS.md
+.agents
+
+# Development and test output
+coverage/
+*.tsbuildinfo
+*.log
+vite.config.js
+vite.config.d.ts
+
+# Local application data
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal

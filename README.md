@@ -1,157 +1,50 @@
-# Tauri + Solid + Typescript
+# Tabletop Tool
 
-This template should help get you started developing with Tauri, Solid and Typescript in Vite.
+Aplicação desktop local para preparar e conduzir sessões de RPG, com Tauri 2, React, TypeScript e Vite. A tela inicial organiza Campaigns; dentro de cada Campaign, a interface separa o modo de preparação da mesa em andamento, permite preparar Sessions, criar Scenes e SceneLevels e reutilizar Scenes entre Sessions.
 
-## Recommended IDE Setup
+A arquitetura documentada define requisitos obrigatórios para a implementação. O Core Domain está integrado ao backend Tauri, com entidades SeaORM, migração SQLite, IPC tipado e interface React. O Audio Mixer ainda não foi implementado. As marcações `[x]` em [Implementation Readiness](docs/ARCHITECTURE/IMPLEMENTATION_READINESS.md) indicam decisões fechadas, não funcionalidades entregues.
 
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+Para orientar as próximas tarefas, leia:
 
-## Hierarquia de dominio
+- [Documentação do projeto](docs/README.md).
+- [Instalação, comandos e configuração de desenvolvimento](docs/DEVELOPMENT.md).
+- [Decisões e ordem inicial de implementação](docs/ARCHITECTURE/IMPLEMENTATION_READINESS.md).
 
-O projeto deve ser pensado como um conjunto de ferramentas para preparar e
-conduzir sessoes de RPG. A hierarquia conceitual planejada e:
+As instruções locais para agentes ficam em `AGENTS.md` e `.agents/`, quando presentes no checkout.
 
-`Arquivo de audio -> Objeto de audio -> Lista de objetos de audio -> Composicao de audio -> Cena -> Sessao`
+## Executar localmente
 
-- **Arquivo de audio**: arquivo bruto descoberto pelo app, hoje em
-  `public/audio` durante o desenvolvimento. Ele e materia-prima, nao algo que
-  uma cena deve consumir diretamente.
-- **Objeto de audio**: configuracao reutilizavel sobre um arquivo, com nome,
-  descricao, tags, volume base, trecho tocavel, loop interno e fades. Ele existe
-  independentemente de uma cena.
-- **Lista de objetos de audio**: grupo reutilizavel de objetos. Ao ser tocada,
-  escolhe um objeto valido da lista; se houver apenas um item, se comporta como
-  esse objeto.
-- **Composicao de audio**: camada futura, fora do mixer atual, que combina
-  objetos/listas com comportamento de cena: loops, volumes relativos,
-  frequencias aleatorias, triggers, botoes ou hotkeys.
-- **Cena**: unidade planejada para uso na mesa. Uma cena pode apontar para uma
-  composicao de audio e tambem para dados de outras ferramentas, como
-  iniciativa, criaturas, notas e outros elementos de preparacao.
-- **Sessao**: conjunto organizado de cenas preparadas para uma partida.
+Pré-requisitos: Node.js 24.19.0, npm 12.0.2, Rust 1.95.0 e as dependências de sistema do Tauri. As versões estão registradas em `.node-version`, `package.json` e `rust-toolchain.toml`; consulte o [guia de desenvolvimento](docs/DEVELOPMENT.md).
 
-O `audio-mixer` implementado hoje cobre apenas a biblioteca/editor:
-
-`Arquivo de audio -> Objeto de audio -> Lista de objetos de audio`
-
-Composicoes, cenas e sessoes devem ficar em modulos futuros que consomem essa
-biblioteca, em vez de serem implementadas dentro do mixer.
-
-## Project generation
-
-Este projeto foi gerado usando o template oficial do Tauri com os seguintes passos:
-
-### 1. Scaffold do projeto
+Na raiz do repositório:
 
 ```bash
-npm create tauri-app@latest .
-```
-
-Durante a execução interativa, foram selecionadas as seguintes opções:
-
-- **Package name**: `tabletop-tool`
-- **Identifier**: `com.lucas.tabletop-tool`
-- **Language**: TypeScript / JavaScript
-- **Package manager**: npm
-- **UI template**: Solid
-- **UI flavor**: TypeScript
-
-### 2. Instalação das dependências do frontend
-
-```bash
-npm install
-```
-
-Este comando instalou 78 pacotes (Vite, SolidJS, TypeScript e suas dependências).
-
-### 3. Pré-requisitos do sistema
-
-Antes de executar o projeto, é necessário ter o **Rust** instalado:
-
-- **Windows**: Baixe e instale de [https://www.rust-lang.org/learn/get-started](https://www.rust-lang.org/learn/get-started)
-- Após a instalação, reinicie o terminal ou adicione o Cargo ao PATH:
-  ```powershell
-  $env:Path += ";$env:USERPROFILE\.cargo\bin"
-  ```
-
-### 4. Executando o projeto
-
-```bash
+npm ci
+npm run check
 npm run tauri dev
 ```
 
-Este comando:
+O último comando inicia o frontend Vite e a aplicação desktop Tauri.
 
-- Inicia o **Vite dev server** em `http://localhost:1420/`
-- Compila o backend Rust (primeira execução pode levar alguns minutos)
-- Abre a aplicação desktop com hot reload ativado
+## Comandos disponíveis
 
-## Scripts disponíveis
+Os scripts atuais estão definidos em [package.json](package.json):
 
-### Desenvolvimento
+| Comando                     | Função                                                              |
+| --------------------------- | ------------------------------------------------------------------- |
+| `npm run dev`               | Iniciar somente o frontend Vite.                                    |
+| `npm run check`             | Verificar frontend, Rust, testes e sincronização dos contratos IPC. |
+| `npm run format`            | Aplicar Prettier e rustfmt.                                         |
+| `npm test`                  | Executar os testes do frontend.                                     |
+| `npm run test:rs`           | Executar os testes do workspace Rust.                               |
+| `npm run bindings:generate` | Gerar TypeScript a partir dos contratos Rust.                       |
+| `npm run build`             | Verificar TypeScript e gerar o build do frontend.                   |
+| `npm run preview`           | Servir localmente o build do frontend.                              |
+| `npm run tauri dev`         | Executar a aplicação desktop em desenvolvimento.                    |
+| `npm run tauri build`       | Compilar e empacotar a aplicação desktop.                           |
 
-```bash
-npm run dev           # Vite dev server
-npm run tauri dev     # Tauri + Vite (full app)
-```
+`tauri` encaminha os argumentos à CLI do Tauri. ESLint, Stylelint, Prettier, Vitest/Testing Library, SCSS Modules, rustfmt e Clippy estão configurados. SeaORM/SQLite persiste o Core no diretório local da aplicação; Specta/tauri-specta gera o contrato consumido pela interface. Veja a [lista completa de comandos](docs/DEVELOPMENT.md#commands).
 
-### Lint & Format
+## Automação
 
-```bash
-npm run lint          # ESLint (frontend)
-npm run lint:fix      # ESLint com auto-fix
-npm run lint:rs       # Clippy (backend)
-
-npm run format        # Prettier + rustfmt (ambos)
-npm run check:format     # Verifica formatação (ambos)
-npm run check:format:ts  # Verifica formatação do frontend
-npm run check:format:rs  # Verifica formatação do backend
-
-npm run check         # Verifica lint + formatação (ambos)
-npm run check:ts      # Verifica frontend
-npm run check:rs      # Verifica backend
-```
-
-### Build
-
-```bash
-npm run build         # Build frontend
-npm run tauri build   # Build aplicação completa
-```
-
-## CI/CD
-
-O projeto está configurado com GitHub Actions para CI/CD automático:
-
-### Workflow CI (`.github/workflows/ci.yml`)
-
-Executa em **push** e **pull requests** para `main` e `develop`:
-
-1. **Lint Frontend** - ESLint
-2. **Format Check** - Prettier + rustfmt
-3. **Lint Rust** - Clippy
-4. **Build** - Compila para Windows, Linux e macOS
-
-### Workflow Release (`.github/workflows/release.yml`)
-
-Executa quando uma **tag** é criada (ex: `v1.0.0`):
-
-1. Cria release no GitHub
-2. Compila para múltiplas plataformas:
-   - Windows (x64)
-   - Linux (x64)
-   - macOS (Intel e Apple Silicon)
-3. Faz upload dos instaladores para a release
-
-**Para criar uma release:**
-
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-## Stack tecnológica
-
-- **Frontend**: SolidJS + TypeScript + Vite
-- **Backend**: Rust + Tauri v2
-- **Build**: Vite 6.4+ com HMR (Hot Module Replacement)
+O [CI](.github/workflows/ci.yml) verifica qualidade, testes, contratos gerados e compilação desktop em Windows, Linux e macOS. A execução manual pode gerar instaladores de teste como artifacts, sem publicar releases. Consulte os [detalhes dos workflows](.github/workflows/README.md).

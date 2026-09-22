@@ -1,69 +1,18 @@
-# GitHub Actions CI/CD
+# Workflows do GitHub Actions
 
-Este diretório contém os workflows do GitHub Actions para o projeto.
+O arquivo [ci.yml](ci.yml) executa em `push` e `pull_request` para `main` e `develop`, além de permitir execução manual.
 
-## Workflows
+| Job                                                    | Verificações                                                                                        |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| `frontend` — Ubuntu 24.04                              | Instalação via `npm ci`, TypeScript, ESLint, Stylelint, Prettier, Vitest e build Vite.              |
+| `desktop` — Ubuntu 24.04, Windows 2022, macOS 15 ARM64 | rustfmt, Clippy sem warnings, testes do workspace Rust, sincronização dos bindings e build desktop. |
 
-### `ci.yml` - Continuous Integration
+O job desktop só começa após o frontend passar. As versões vêm de `.node-version`, `package.json` e `rust-toolchain.toml`; npm e Cargo usam lockfiles. Há cache de dependências, limite de tempo, cancelamento de execuções obsoletas e permissão mínima de leitura do repositório. As Actions estão fixadas por commit e o Dependabot propõe atualizações.
 
-**Trigger:** Push e Pull Request para `main` ou `develop`
+Na execução manual, habilite `package` para compilar instaladores de teste: DEB no Linux, NSIS EXE no Windows e DMG no macOS. Os artifacts ficam disponíveis por 14 dias. Sem essa opção, o CI compila em debug sem empacotar.
 
-**Jobs:**
+Não há publicação automática de releases nem assinatura/notarização de produção. A execução remota requer enviar os arquivos ao GitHub; configurar checks obrigatórios na proteção de branches é uma configuração do repositório no GitHub.
 
-- `lint-frontend`: ESLint no código TypeScript/SolidJS
-- `format-check`: Verifica formatação (Prettier + rustfmt)
-- `lint-rust`: Clippy no código Rust
-- `build`: Compila para Windows, Linux e macOS
+Os comandos locais equivalentes e os pré-requisitos estão no [guia de desenvolvimento](../../docs/DEVELOPMENT.md). A automação segue os [requisitos documentados](../../docs/README.md) e as [decisões de implementação](../../docs/ARCHITECTURE/IMPLEMENTATION_READINESS.md).
 
-**Cache:** Dependencies do npm e cargo são cacheadas para builds mais rápidos.
-
-### `release.yml` - Release Build
-
-**Trigger:** Push de tag `v*.*.*` (ex: `v1.0.0`)
-
-**Jobs:**
-
-- `create-release`: Cria release no GitHub
-- `build-release`: Compila para múltiplas plataformas e faz upload dos binários
-
-**Plataformas suportadas:**
-
-- Windows (x64) - `.msi`
-- Linux (x64) - `.deb`
-- macOS (Intel) - `.dmg`
-- macOS (Apple Silicon) - `.dmg`
-
-## Testando localmente
-
-Para testar os workflows localmente, use [act](https://github.com/nektos/act):
-
-```bash
-# Instalar act
-winget install nektos.act
-
-# Testar workflow de CI
-act pull_request
-
-# Testar job específico
-act -j lint-frontend
-```
-
-## Criar uma release
-
-1. Atualize a versão em `src-tauri/Cargo.toml` e `package.json`
-2. Commit as mudanças
-3. Crie e push a tag:
-   ```bash
-   git tag v1.0.0
-   git push origin v1.0.0
-   ```
-4. O workflow de release será executado automaticamente
-5. Os binários estarão disponíveis na página de releases do GitHub
-
-## Badge de status
-
-Adicione ao README.md:
-
-```markdown
-![CI](https://github.com/seu-usuario/tabletop-tool/workflows/CI/badge.svg)
-```
+As marcações `[x]` no documento de readiness representam decisões arquiteturais fechadas, não código ou automação já implementados.

@@ -1,0 +1,207 @@
+﻿# Development Setup
+
+The project has a configured development baseline and an application-integrated
+Core Domain. Core definitions are persisted locally and managed through the React
+UI. Audio import, Scene execution, and Audio Mixer features are still pending.
+
+## Prerequisites
+
+- Node.js **24.19.0**, selected by `.node-version`.
+- npm **12.0.2**, recorded in `package.json` (`packageManager`).
+- Rust **1.95.0**, with rustfmt and Clippy, selected by `rust-toolchain.toml`.
+- The [Tauri system prerequisites](https://v2.tauri.app/start/prerequisites/):
+  MSVC C++ build tools and WebView2 on Windows, Xcode tools on macOS, or the
+  documented GTK/WebKit development libraries on Linux.
+
+Install these prerequisites before running the project. `rustup show` from the
+repository root installs/selects the pinned Rust toolchain if necessary. If the
+Node installation contains another npm version, install the recorded version
+with `npm install --global npm@12.0.2`.
+
+Then run from the repository root:
+
+```sh
+npm ci
+npm run check
+npm run tauri dev
+```
+
+Use `npm ci` for an existing checkout. When intentionally changing dependencies,
+use `npm install` and commit `package.json` and `package-lock.json` together.
+Rust changes must include the updated `src-tauri/Cargo.lock`. CI uses locked
+dependencies. Direct npm versions and the Specta prerelease compatibility set
+are pinned; update them together with their consumers and checks.
+
+`npm run dev` runs only the Vite UI. Core operations require Tauri IPC, so use
+`npm run tauri dev` to exercise them against Rust and SQLite. Frontend tests mock
+the generated command boundary and do not start a desktop window.
+
+## Commands
+
+| Command                                                       | Purpose                                                                                  |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `npm run check`                                               | Frontend quality/tests, Rust workspace quality/tests, and generated IPC synchronization. |
+| `npm run check:ts`                                            | Type checking, ESLint, Stylelint, Prettier check, and Vitest.                            |
+| `npm run check:rs`                                            | rustfmt check, Clippy with warnings denied, and Rust workspace tests.                    |
+| `npm run typecheck`                                           | `tsc --noEmit` for application and tooling configurations.                               |
+| `npm run lint` / `npm run lint:fix`                           | Type-aware TypeScript/React linting, including Hooks rules.                              |
+| `npm run lint:styles` / `npm run lint:styles:fix`             | SCSS linting.                                                                            |
+| `npm run format` / `npm run check:format`                     | Write/check Prettier and rustfmt formatting.                                             |
+| `npm run format:ts` / `npm run check:format:ts`               | Prettier for supported frontend/configuration/documentation files.                       |
+| `npm run format:rs` / `npm run check:format:rs`               | Rust workspace formatting.                                                               |
+| `npm test` / `npm run test:watch`                             | Frontend tests once/in watch mode.                                                       |
+| `npm run test:rs`                                             | Rust workspace tests, including the migration crate.                                     |
+| `npm run bindings:generate` / `npm run check:bindings`        | Generate/check TypeScript IPC contracts.                                                 |
+| `npm run build`                                               | Type-check and build the frontend.                                                       |
+| `npm run tauri build -- --debug --no-bundle --ci -- --locked` | Compile the desktop app without producing an installer.                                  |
+| `npm run tauri build`                                         | Compile a release app and platform bundles.                                              |
+
+## Frontend Structure
+
+- `src/App.tsx`: minimal React entry point.
+- `src/app/`: application composition and navigation between Campaign list,
+  Campaign preparation, Scene preparation, and Session execution.
+- `src/components/`: shared controls, visual components, and domain-facing
+  components. Its `index.ts` is the concise public import surface; internal
+  components use `primitives.ts` to avoid barrel cycles.
+- `src/pages/`: screen composition for Campaigns, Sessions, Scenes, and Session
+  execution, exposed through a single `index.ts`.
+- `src/hooks/`: React orchestration for persistent workspace and volatile runtime.
+- `src/tools/runtime/`: framework-independent transient `SessionRuntime` and
+  `SceneRuntime` state. Other directories under `src/tools/` hold future Scene
+  Tool implementations.
+- `src/lib/`: framework-independent frontend helpers with a concise public index.
+- `src/api/index.ts`: application-facing API over generated bindings.
+- `src/api/bindings.ts`: generated Rust contract; do not edit manually.
+- `src/styles/`: global baseline and CSS custom-property design tokens.
+- `src/test/setup.ts`: Testing Library setup and cleanup.
+- `tsconfig.app.json` and `tsconfig.node.json`: separate strict checks for UI and tooling.
+
+Cross-directory frontend imports use the single `@/*` alias mapped to `src/*`.
+Public `index.ts` files keep imports such as `@/components`, `@/pages`,
+`@/hooks`, and `@/tools/runtime` concise. Files within the same directory use direct relative imports
+to avoid unnecessary barrel cycles. TypeScript, Vite, and Vitest declare the same
+alias.
+
+Prefer `.mts` over `.mjs` for ESM scripts and configurations where supported.
+`eslint.config.mts` uses the supported `jiti` loader; `scripts/bindings.mts`
+runs directly on the pinned Node version. Stylelint uses `stylelint.config.ts`
+because its installed configuration loader supports `.ts`, not `.mts`.
+These files are included in TypeScript checking and typed linting.
+
+Every component or page `.tsx` under `src/app`, `src/components`, and
+`src/pages` has a same-named `.module.scss` imported by that component.
+SCSS partials may share mixins, but they do not replace the component-owned
+module. Tokens and the global baseline stay in shared styles. New work should
+reuse primitives.
+
+`EditableText` is the shared inline-renaming interaction: double-clicking its
+display value opens an input with the same typography. Enter saves; Escape or
+moving focus outside the input cancels the edit without auxiliary buttons.
+
+## IPC Generation
+
+Define IPC-facing types and commands in Rust. The Specta registry is reused by
+both `invoke_handler` and the export binary, so there is no separate hand-maintained
+TypeScript command list. Generate and include changed bindings in the same commit.
+
+```sh
+npm run bindings:generate
+npm run check:bindings
+npm run typecheck
+```
+
+The generator runs headlessly but compiles the Tauri crate, so it needs the native
+build prerequisites. Checking uses a temporary directory and does not overwrite
+the tracked bindings. Pure UI/runtime types remain authored in TypeScript.
+
+## Persistence Foundation
+
+`src-tauri/Cargo.toml` is a workspace containing the app and the `migration` crate.
+SeaORM is configured for SQLite and Tokio. At startup the app opens
+`tabletop-tool.sqlite3` in its platform application-data directory and applies
+the registered migrations.
+
+The initial migration creates Campaign, Session, Scene, SceneLevel, and
+SessionScene tables with foreign keys, uniqueness rules, and dense-position
+constraints. Persistence tests run the schema and Core operations against SQLite
+in memory, including repeatable migrations and duplicate-association rejection.
+
+Rust keeps three concrete boundaries without a generic repository framework:
+
+- `src-tauri/src/application/` coordinates use cases and domain mutations;
+- `src-tauri/src/persistence/` maps valid aggregates to and from SeaORM entities;
+- `src-tauri/src/ipc/` converts Tauri input/output and stable error DTOs.
+
+## Core Domain
+
+`src-tauri/src/domain` is the tool-agnostic domain module inside the main Tauri
+crate. It contains typed UUID identities and the `Campaign`/`Session`/`SessionScene`
+and `Scene`/`SceneLevel` aggregates. Its public mutations enforce ownership,
+non-empty child collections, unique Scene use per Session, and dense positions.
+
+Creating a Campaign atomically creates its first Session, an independent initial
+Scene and SceneLevel, and the association between the Session and Scene.
+Additional Sessions require an existing Scene.
+Before a Scene is deleted, `detach_scene_from_campaigns` validates all affected
+Campaigns; it makes no changes when any Session would become empty. A valid call
+removes every association, after which deleting the independent Scene also drops
+its owned SceneLevels.
+
+The domain module has no dependency on Tauri, SeaORM, Specta, serde, the
+filesystem, or frontend code. Names and aggregate reconstruction are validated
+inside the domain. Persistence entities and IPC DTOs map at their own boundaries
+rather than adding infrastructure derives to the domain model.
+
+The React workspace in `./src` starts with the independent Campaign and Scene
+collections. A Scene can be created and opened there before entering a Campaign.
+Creating or opening a Campaign enters its preparation screen, where the user
+renames or deletes the Campaign, creates, renames, or deletes Sessions, and adds
+or removes reusable Scene associations. Opening or creating a Scene enters its
+dedicated preparation screen, where the user renames or deletes the Scene and
+creates, renames, or deletes SceneLevels. Scene Tool configuration is presented
+there as well. Rust trims and rejects empty names before any persistent mutation
+and returns structured IPC errors.
+
+Each Session displays its ordered `SessionScene` sequence and an always-visible
+“Adicionar cena” area. Referenced Scenes link to the same global Scene
+preparation screen. The selector includes only Scenes not already used by that
+Session.
+
+Preparation and execution are separate screens. “Iniciar sessão” instantiates
+frontend-only runtime state from the saved Session sequence. Changing SceneLevel
+preserves the current `SceneRuntime`; changing Scene disposes it and starts a new
+one. “Encerrar sessão” disposes the active runtime and returns to preparation.
+These transitions do not invoke persistent mutation commands.
+
+## CI and Packaging
+
+[CI](../.github/workflows/ci.yml) runs on pushes and pull requests to `main` and
+`develop`, and can also be dispatched manually. It checks frontend quality,
+Rust quality/tests, IPC drift, and desktop compilation on Linux x64, Windows x64,
+and macOS ARM64. Dependencies are cached; concurrent obsolete runs are cancelled.
+
+For test installers, dispatch the workflow with `package` enabled. It produces
+DEB, NSIS EXE, and DMG artifacts retained for 14 days. This does not publish a
+GitHub release or configure production signing/notarization. Platform signing
+credentials can be added when distribution becomes part of the implementation.
+
+Action revisions are pinned; Dependabot is configured for npm, the Rust workspace,
+and GitHub Actions. Repository settings such as required branch checks are managed
+on GitHub and are not changed by these files.
+
+## Editor
+
+VS Code recommendations include ESLint, Stylelint, Prettier, rust-analyzer, and
+EditorConfig. Workspace settings enable formatting and explicit lint fixes on save.
+Select the workspace TypeScript version when prompted. `.editorconfig` and
+`.gitattributes` establish UTF-8/LF and consistent indentation across platforms.
+
+## Tooling References
+
+- [Typed ESLint configuration](https://typescript-eslint.io/getting-started/typed-linting/).
+- [Prettier and linters](https://prettier.io/docs/integrating-with-linters).
+- [Vite CSS preprocessors](https://vite.dev/guide/features#css-pre-processors).
+- [Vitest](https://vitest.dev/guide/) and [Testing Library setup](https://testing-library.com/docs/react-testing-library/setup/).
+- [Tauri Specta](https://github.com/specta-rs/tauri-specta).
+- [SeaORM migration setup](https://www.sea-ql.org/SeaORM/docs/migration/setting-up-migration/).

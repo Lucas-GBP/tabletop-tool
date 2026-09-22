@@ -1,11 +1,19 @@
 {
   "compilerOptions": {
-    "composite": true,
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "types": ["node"],
     "skipLibCheck": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "allowSyntheticDefaultImports": true,
-    "types": ["node"]
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true
   },
-  "include": ["vite.config.ts"]
+  "include": ["*.config.ts", "*.config.mts", "scripts/**/*.mts"]
 }

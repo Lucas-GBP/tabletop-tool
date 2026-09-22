@@ -1,0 +1,25 @@
+﻿.panel {
+  min-height: 32rem;
+  padding: 1.25rem;
+}
+
+.creation-form {
+  margin-top: var(--space-medium);
+  display: flex;
+  gap: 0.55rem;
+
+  input {
+    min-width: 0;
+    flex: 1;
+  }
+}
+
+.scene-list {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.empty {
+  margin-top: 1rem;
+}

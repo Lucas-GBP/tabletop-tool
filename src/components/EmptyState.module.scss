@@ -1,0 +1,36 @@
+﻿.empty {
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.compact {
+  padding: var(--space-large) var(--space-medium);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: 0.85rem;
+
+  strong,
+  > span:not(.icon) {
+    display: block;
+  }
+
+  > span:not(.icon) {
+    margin-top: 0.35rem;
+    font-size: 0.85rem;
+  }
+}
+
+.spacious {
+  min-height: 24rem;
+  display: grid;
+  place-content: center;
+
+  h3,
+  p {
+    margin: 0.35rem 0 0;
+  }
+}
+
+.icon {
+  color: var(--color-accent);
+  font-size: 2.5rem;
+}

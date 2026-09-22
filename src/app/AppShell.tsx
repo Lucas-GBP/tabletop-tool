@@ -1,83 +1,114 @@
-import { For, createEffect, createSignal } from "solid-js";
-import { Dynamic } from "solid-js/web";
-import type { ImplementedToolId } from "../domain";
-import { DEFAULT_TOOL_ID, getToolById, tools } from "./tools";
+import { useState } from "react";
+import { useCoreWorkspace } from "@/hooks";
+import {
+  CampaignListPage,
+  CampaignPreparationPage,
+  ScenePreparationPage,
+  SessionRuntimePage,
+} from "@/pages";
+import type { AppRoute } from "./navigation";
 import styles from "./AppShell.module.scss";
 
-type AccentTheme = "violet" | "amber" | "teal";
+export function AppShell() {
+  const workspace = useCoreWorkspace();
+  const [route, setRoute] = useState<AppRoute>({ screen: "campaign-list" });
 
-const themes = [
-  { id: "violet", name: "Roxo" },
-  { id: "amber", name: "Ambar" },
-  { id: "teal", name: "Verde" },
-] satisfies Array<{ id: AccentTheme; name: string }>;
-
-function getInitialTheme(): AccentTheme {
-  const storedTheme = localStorage.getItem("tabletop-tool.theme");
-
-  if (storedTheme === "amber" || storedTheme === "teal") {
-    return storedTheme;
+  if (workspace.loading) {
+    return <main className={styles.loading}>Abrindo seu espaço de jogo…</main>;
   }
 
-  return "violet";
-}
+  const campaignList = (
+    <CampaignListPage
+      workspace={workspace}
+      onOpenCampaign={(campaignId) =>
+        setRoute({ screen: "campaign-preparation", campaignId })
+      }
+      onOpenScene={(sceneId) =>
+        setRoute({ screen: "scene-preparation", sceneId })
+      }
+    />
+  );
 
-export function AppShell() {
-  const [theme, setTheme] = createSignal<AccentTheme>(getInitialTheme());
-  const [activeToolId, setActiveToolId] = createSignal<ImplementedToolId>(DEFAULT_TOOL_ID);
-  const activeTool = () => getToolById(activeToolId());
+  if (route.screen === "campaign-list") return campaignList;
 
-  createEffect(() => {
-    localStorage.setItem("tabletop-tool.theme", theme());
-  });
+  if (route.screen === "scene-preparation") {
+    const scene = workspace.snapshot.scenes.find(
+      (item) => item.id === route.sceneId,
+    );
+    const campaign = route.campaignId
+      ? workspace.snapshot.campaigns.find(
+          (item) => item.id === route.campaignId,
+        )
+      : undefined;
+
+    if (!scene || (route.campaignId && !campaign)) return campaignList;
+
+    return (
+      <ScenePreparationPage
+        backLabel={campaign?.name ?? "Início"}
+        scene={scene}
+        workspace={workspace}
+        onBack={() =>
+          setRoute(
+            campaign
+              ? {
+                  screen: "campaign-preparation",
+                  campaignId: campaign.id,
+                }
+              : { screen: "campaign-list" },
+          )
+        }
+      />
+    );
+  }
+
+  const campaign = workspace.snapshot.campaigns.find(
+    (item) => item.id === route.campaignId,
+  );
+
+  if (!campaign) return campaignList;
+
+  if (route.screen === "session-runtime") {
+    const session = campaign.sessions.find(
+      (item) => item.id === route.sessionId,
+    );
+    if (session) {
+      return (
+        <SessionRuntimePage
+          campaign={campaign}
+          session={session}
+          scenes={workspace.snapshot.scenes}
+          onEnd={() =>
+            setRoute({
+              screen: "campaign-preparation",
+              campaignId: campaign.id,
+            })
+          }
+        />
+      );
+    }
+  }
 
   return (
-    <div class={styles.root} data-theme={theme()}>
-      <aside class={styles.sidebar} aria-label="Ferramentas">
-        <div class={styles.brand}>
-          <span class={styles.brandMark}>TT</span>
-          <div>
-            <strong>Tabletop Tool</strong>
-            <span>Kit de mesa</span>
-          </div>
-        </div>
-
-        <nav class={styles.toolNav} aria-label="Ferramentas disponiveis">
-          <For each={tools}>
-            {(tool) => {
-              const isActive = () => activeToolId() === tool.id;
-
-              return (
-                <button
-                  type="button"
-                  class={styles.toolNavItem}
-                  classList={{ [styles.toolNavItemActive]: isActive() }}
-                  aria-pressed={isActive()}
-                  title={tool.description}
-                  onClick={() => setActiveToolId(tool.id)}
-                >
-                  <span>{tool.label}</span>
-                  <small>{isActive() ? tool.statusLabel : "Abrir"}</small>
-                </button>
-              );
-            }}
-          </For>
-        </nav>
-
-        <label class={styles.themePicker}>
-          <span>Tema</span>
-          <select
-            value={theme()}
-            onChange={(event) => setTheme(event.currentTarget.value as AccentTheme)}
-          >
-            <For each={themes}>{(item) => <option value={item.id}>{item.name}</option>}</For>
-          </select>
-        </label>
-      </aside>
-
-      <main class={styles.content}>
-        <Dynamic component={activeTool().Component} />
-      </main>
-    </div>
+    <CampaignPreparationPage
+      campaign={campaign}
+      workspace={workspace}
+      onBack={() => setRoute({ screen: "campaign-list" })}
+      onManageScenes={() => setRoute({ screen: "campaign-list" })}
+      onOpenScene={(sceneId) =>
+        setRoute({
+          screen: "scene-preparation",
+          campaignId: campaign.id,
+          sceneId,
+        })
+      }
+      onStartSession={(sessionId) =>
+        setRoute({
+          screen: "session-runtime",
+          campaignId: campaign.id,
+          sessionId,
+        })
+      }
+    />
   );
 }

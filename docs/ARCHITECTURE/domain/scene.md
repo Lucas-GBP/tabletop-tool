@@ -1,0 +1,79 @@
+# Scene
+
+## Purpose
+
+A Scene represents reusable tabletop content such as an encounter, location,
+situation, or prepared sequence.
+
+For example, a Scene could represent a goblin encounter on a road.
+
+A Scene is deliberately reusable and therefore does not belong exclusively to a
+single Campaign or Session.
+
+## Relationships
+
+A Scene:
+
+- may be used by multiple [Campaigns](./campaign.md);
+- may be used by multiple [Sessions](./session.md);
+- contains one or more [Scene Levels](./scene-level.md).
+
+## Invariants
+
+- A Scene has a non-empty display name.
+- A Scene always contains at least one Scene Level.
+- Scene Levels have dense integer positions starting at zero.
+
+## Lifecycle
+
+When a Scene is created, its initial Scene Level is created automatically.
+Campaign creation may create this Scene as part of one atomic application
+operation, but the resulting Scene is still independent and reusable.
+
+Deleting a Scene deletes all of its Scene Levels and removes its `SessionScene`
+associations. Because a Session must use at least one Scene, deletion is rejected
+before any mutation if the Scene is the only Scene in an affected Session.
+
+A Scene may be renamed independently of every Session that references it.
+
+## Architectural Boundary
+
+Scene is part of the Core Domain.
+
+It defines the context in which Scene Tools may operate, but it must not know
+about those tools.
+
+For example, a Scene must not require properties such as:
+
+```text
+audio_mixer
+initiative
+encounter_builder
+```
+
+Instead, those tools may reference the Scene externally.
+
+## Preparation UI
+
+A Scene has a dedicated preparation screen. Its name, Scene Levels, and the
+persistent configuration owned by Scene Tools are edited there.
+
+The application home lists and creates reusable Scenes independently from
+Campaigns, so a Scene can be prepared before entering any Campaign. Campaign
+preparation does not embed the global Scene collection; its Sessions only
+organize `SessionScene` associations and link each referenced Scene to the same
+preparation screen. Creating a Scene opens that screen so its initial Scene
+Level and future Tool configuration can be continued in one place.
+
+## Related Components
+
+- [Campaign](./campaign.md)
+- [Session](./session.md)
+- [Scene Level](./scene-level.md)
+
+## Open Questions
+
+- Is a Scene only a reusable definition?
+- If a Scene changes during play, should that change the reusable definition?
+- Should a separate Scene Instance or Scene State concept represent changes made
+  during a Campaign or Session?
