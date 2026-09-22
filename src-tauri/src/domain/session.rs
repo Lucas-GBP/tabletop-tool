@@ -1,4 +1,4 @@
-use super::{CampaignId, DomainError, SceneId, SessionId, SessionSceneId};
+use super::{CampaignId, DisplayName, DomainError, SceneId, SessionId, SessionSceneId};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SessionScene {
@@ -9,6 +9,21 @@ pub struct SessionScene {
 }
 
 impl SessionScene {
+    #[must_use]
+    pub const fn from_parts(
+        id: SessionSceneId,
+        session_id: SessionId,
+        scene_id: SceneId,
+        position: usize,
+    ) -> Self {
+        Self {
+            id,
+            session_id,
+            scene_id,
+            position,
+        }
+    }
+
     #[must_use]
     pub const fn id(&self) -> SessionSceneId {
         self.id
@@ -34,29 +49,62 @@ impl SessionScene {
 pub struct Session {
     id: SessionId,
     campaign_id: CampaignId,
+    name: DisplayName,
     position: usize,
     scenes: Vec<SessionScene>,
 }
 
 impl Session {
-    pub(crate) fn new(
+    pub fn new(
         id: SessionId,
         campaign_id: CampaignId,
+        name: &str,
         position: usize,
         initial_association_id: SessionSceneId,
         initial_scene_id: SceneId,
-    ) -> Self {
-        Self {
+    ) -> Result<Self, DomainError> {
+        Self::from_parts(
             id,
             campaign_id,
+            name,
             position,
-            scenes: vec![SessionScene {
-                id: initial_association_id,
-                session_id: id,
-                scene_id: initial_scene_id,
-                position: 0,
-            }],
+            vec![SessionScene::from_parts(
+                initial_association_id,
+                id,
+                initial_scene_id,
+                0,
+            )],
+        )
+    }
+
+    pub fn from_parts(
+        id: SessionId,
+        campaign_id: CampaignId,
+        name: &str,
+        position: usize,
+        scenes: Vec<SessionScene>,
+    ) -> Result<Self, DomainError> {
+        if scenes.is_empty() {
+            return Err(DomainError::SessionRequiresScene(id));
         }
+        if scenes.iter().enumerate().any(|(position, link)| {
+            link.session_id != id
+                || link.position != position
+                || scenes
+                    .iter()
+                    .filter(|candidate| candidate.scene_id == link.scene_id)
+                    .count()
+                    > 1
+        }) {
+            return Err(DomainError::InvalidStructure("session"));
+        }
+        Ok(Self {
+            id,
+            campaign_id,
+            name: DisplayName::new(name)?,
+            position,
+            scenes,
+        })
     }
 
     #[must_use]
@@ -67,6 +115,11 @@ impl Session {
     #[must_use]
     pub const fn campaign_id(&self) -> CampaignId {
         self.campaign_id
+    }
+
+    #[must_use]
+    pub fn name(&self) -> &str {
+        self.name.as_str()
     }
 
     #[must_use]
@@ -82,6 +135,11 @@ impl Session {
     #[must_use]
     pub fn uses_scene(&self, scene_id: SceneId) -> bool {
         self.scenes.iter().any(|link| link.scene_id == scene_id)
+    }
+
+    pub fn rename(&mut self, name: &str) -> Result<(), DomainError> {
+        self.name = DisplayName::new(name)?;
+        Ok(())
     }
 
     pub(crate) fn insert_scene(
@@ -105,12 +163,7 @@ impl Session {
         let id = SessionSceneId::new();
         self.scenes.insert(
             position,
-            SessionScene {
-                id,
-                session_id: self.id,
-                scene_id,
-                position,
-            },
+            SessionScene::from_parts(id, self.id, scene_id, position),
         );
         self.normalize_scene_positions();
         Ok(id)

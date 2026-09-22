@@ -58,27 +58,30 @@ the generated command boundary and do not start a desktop window.
 
 ## Frontend Structure
 
-- `src/App.tsx`: application composition entry point; it does not own feature logic.
-- `src/features/core/pages/`: Core screen composition for Campaigns, Sessions,
-  Scenes, and SceneLevels.
-- `src/features/core/components/`: feature components and forms, split by visual
-  and domain responsibility.
-- `src/features/core/hooks/`: loading and mutation orchestration for the Core
-  workspace.
-- `src/features/core/lib/`: pure form and error helpers scoped to the Core feature.
-- `src/features/session-runner/`: Session execution screen, UI components,
-  runtime hook, and the transient `SessionRuntime`/`SceneRuntime` coordination.
-- `src/shared/api/index.ts`: application-facing API over generated bindings.
-- `src/shared/api/bindings.ts`: generated Rust contract; do not edit manually.
-  `src/shared/` is reserved for artifacts and adapters that cross the Rust ↔
-  TypeScript boundary; general frontend code does not belong there.
-- `src/ui/`: public frontend component layer. It currently exposes the
-  Button, Input, Select, Card, Panel, SectionHeading, EditableText, EmptyState,
-  and FeedbackMessage primitives/composites through `src/ui/index.ts`.
-- `src/lib/`: framework-independent frontend helpers.
+- `src/App.tsx`: minimal React entry point.
+- `src/app/`: application composition and navigation between Campaign list,
+  Campaign preparation, Scene preparation, and Session execution.
+- `src/components/`: shared controls, visual components, and domain-facing
+  components. Its `index.ts` is the concise public import surface; internal
+  components use `primitives.ts` to avoid barrel cycles.
+- `src/pages/`: screen composition for Campaigns, Sessions, Scenes, and Session
+  execution, exposed through a single `index.ts`.
+- `src/hooks/`: React orchestration for persistent workspace and volatile runtime.
+- `src/tools/runtime/`: framework-independent transient `SessionRuntime` and
+  `SceneRuntime` state. Other directories under `src/tools/` hold future Scene
+  Tool implementations.
+- `src/lib/`: framework-independent frontend helpers with a concise public index.
+- `src/api/index.ts`: application-facing API over generated bindings.
+- `src/api/bindings.ts`: generated Rust contract; do not edit manually.
 - `src/styles/`: global baseline and CSS custom-property design tokens.
 - `src/test/setup.ts`: Testing Library setup and cleanup.
 - `tsconfig.app.json` and `tsconfig.node.json`: separate strict checks for UI and tooling.
+
+Cross-directory frontend imports use the single `@/*` alias mapped to `src/*`.
+Public `index.ts` files keep imports such as `@/components`, `@/pages`,
+`@/hooks`, and `@/tools/runtime` concise. Files within the same directory use direct relative imports
+to avoid unnecessary barrel cycles. TypeScript, Vite, and Vitest declare the same
+alias.
 
 Prefer `.mts` over `.mjs` for ESM scripts and configurations where supported.
 `eslint.config.mts` uses the supported `jiti` loader; `scripts/bindings.mts`
@@ -86,13 +89,15 @@ runs directly on the pinned Node version. Stylelint uses `stylelint.config.ts`
 because its installed configuration loader supports `.ts`, not `.mts`.
 These files are included in TypeScript checking and typed linting.
 
-Component styling belongs in `.module.scss`; tokens and global baseline stay in
-the shared styles. New features should reuse primitives. This is the initial
-visual foundation, not a completed product design system.
+Every component or page `.tsx` under `src/app`, `src/components`, and
+`src/pages` has a same-named `.module.scss` imported by that component.
+SCSS partials may share mixins, but they do not replace the component-owned
+module. Tokens and the global baseline stay in shared styles. New work should
+reuse primitives.
 
 `EditableText` is the shared inline-renaming interaction: double-clicking its
-display value opens the editor; keyboard users can use Enter or F2, and Escape
-cancels an active edit.
+display value opens an input with the same typography. Enter saves; Escape or
+moving focus outside the input cancels the edit without auxiliary buttons.
 
 ## IPC Generation
 
@@ -122,6 +127,12 @@ SessionScene tables with foreign keys, uniqueness rules, and dense-position
 constraints. Persistence tests run the schema and Core operations against SQLite
 in memory, including repeatable migrations and duplicate-association rejection.
 
+Rust keeps three concrete boundaries without a generic repository framework:
+
+- `src-tauri/src/application/` coordinates use cases and domain mutations;
+- `src-tauri/src/persistence/` maps valid aggregates to and from SeaORM entities;
+- `src-tauri/src/ipc/` converts Tauri input/output and stable error DTOs.
+
 ## Core Domain
 
 `src-tauri/src/domain` is the tool-agnostic domain module inside the main Tauri
@@ -138,20 +149,24 @@ removes every association, after which deleting the independent Scene also drops
 its owned SceneLevels.
 
 The domain module has no dependency on Tauri, SeaORM, Specta, serde, the
-filesystem, or frontend code. Persistence entities and IPC DTOs map at their own
-boundaries rather than adding infrastructure derives to the domain model.
+filesystem, or frontend code. Names and aggregate reconstruction are validated
+inside the domain. Persistence entities and IPC DTOs map at their own boundaries
+rather than adding infrastructure derives to the domain model.
 
-The React workspace in `./src` starts with the Campaign list. Creating or opening
-a Campaign enters its own preparation screen, where the user renames the
-Campaign, creates and renames Scenes and SceneLevels, adds Sessions, and
-associates reusable Scenes. Rust trims and rejects empty names before any
-persistent mutation and returns structured IPC errors.
+The React workspace in `./src` starts with the independent Campaign and Scene
+collections. A Scene can be created and opened there before entering a Campaign.
+Creating or opening a Campaign enters its preparation screen, where the user
+renames or deletes the Campaign, creates, renames, or deletes Sessions, and adds
+or removes reusable Scene associations. Opening or creating a Scene enters its
+dedicated preparation screen, where the user renames or deletes the Scene and
+creates, renames, or deletes SceneLevels. Scene Tool configuration is presented
+there as well. Rust trims and rejects empty names before any persistent mutation
+and returns structured IPC errors.
 
-The configuration UI treats the Scene library as a collection of independent,
-reusable definitions. Each Session displays its ordered `SessionScene` sequence
-and an always-visible “Adicionar cena” area. It selects only Scenes not already
-used by that Session and explains when another Scene must first be created in the
-library.
+Each Session displays its ordered `SessionScene` sequence and an always-visible
+“Adicionar cena” area. Referenced Scenes link to the same global Scene
+preparation screen. The selector includes only Scenes not already used by that
+Session.
 
 Preparation and execution are separate screens. “Iniciar sessão” instantiates
 frontend-only runtime state from the saved Session sequence. Changing SceneLevel

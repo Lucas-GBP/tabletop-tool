@@ -39,6 +39,9 @@ The initial Scene Level is created automatically together with its Scene.
 
 Additional Scene Levels may be added later.
 
+A Scene Level may be renamed or deleted. Direct deletion is rejected when it is
+the last Scene Level of its Scene.
+
 ## Architectural Boundary
 
 Scene Level must remain tool-agnostic.

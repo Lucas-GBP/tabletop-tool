@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
-const bindings = join(root, "src/shared/api/bindings.ts");
+const bindings = join(root, "src/api/bindings.ts");
 const args = process.argv.slice(2);
 
 if (args.length > 1 || (args.length === 1 && args[0] !== "--check")) {

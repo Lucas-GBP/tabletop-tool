@@ -12,6 +12,10 @@ Further architecture-first modeling should stop unless implementation reveals a 
 - [x] Entity identity uses UUID.
 - [x] User-visible Core definitions have a non-empty display name; surrounding
       whitespace is removed before persistence.
+- [x] Campaign, Session, Scene, and SceneLevel expose basic create, read,
+      rename, and delete operations.
+- [x] SessionScene associations can be added and removed without deleting their
+      reusable Scene.
 - [x] `Session` belongs to exactly one `Campaign`.
 - [x] A `Campaign` always contains at least one `Session`.
 - [x] Creating a `Campaign` creates its first `Session`.

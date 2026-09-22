@@ -35,12 +35,21 @@ Removing a Scene association is rejected when it is the Session's last Scene.
 Likewise, deleting a reusable Scene is rejected before mutation when removing its
 associations would leave any Session empty.
 
+A Session may be renamed or deleted. Direct deletion is rejected when it is the
+last Session of its Campaign. Deleting a Session removes its SessionScene
+associations but never deletes the reusable Scenes they reference.
+
 ## Architectural Boundary
 
 Session is part of the Core Domain and must remain independent from individual
 Scene Tools.
 
 Tool-specific state related to a Session should be owned by the tool itself.
+
+The preparation UI for a Session edits its ordered `SessionScene` associations.
+Editing the referenced Scene, its Scene Levels, or its Tool configuration opens
+the independent Scene preparation screen because those changes affect every
+Session that reuses that Scene.
 
 ## Execution
 

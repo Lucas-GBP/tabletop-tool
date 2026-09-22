@@ -4,6 +4,10 @@ use std::{error::Error, fmt};
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum DomainError {
     InvalidName,
+    CampaignRequiresSession(CampaignId),
+    SessionRequiresScene(SessionId),
+    SceneRequiresLevel(SceneId),
+    InvalidStructure(&'static str),
     PositionOutOfBounds {
         position: usize,
         len: usize,
@@ -31,6 +35,16 @@ impl fmt::Display for DomainError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::InvalidName => formatter.write_str("name must not be empty"),
+            Self::CampaignRequiresSession(id) => {
+                write!(formatter, "campaign {id} must contain a session")
+            }
+            Self::SessionRequiresScene(id) => {
+                write!(formatter, "session {id} must contain a scene")
+            }
+            Self::SceneRequiresLevel(id) => {
+                write!(formatter, "scene {id} must contain a scene level")
+            }
+            Self::InvalidStructure(entity) => write!(formatter, "invalid {entity} structure"),
             Self::PositionOutOfBounds { position, len } => {
                 write!(
                     formatter,

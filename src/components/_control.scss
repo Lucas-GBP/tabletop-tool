@@ -1,0 +1,11 @@
+@mixin base {
+  padding: 0.6em 1.2em;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-control);
+  font: inherit;
+  font-weight: 500;
+  transition: border-color 0.25s;
+}

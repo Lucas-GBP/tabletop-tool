@@ -1,0 +1,5 @@
+@use "control";
+
+.control {
+  @include control.base;
+}

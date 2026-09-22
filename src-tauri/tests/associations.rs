@@ -1,11 +1,19 @@
-﻿use tabletop_tool_lib::domain::{Campaign, DomainError, Scene, SessionId};
+use tabletop_tool_lib::domain::{Campaign, DomainError, Scene, SessionId};
+
+fn test_scene() -> Scene {
+    Scene::new("Scene", "Level 1").unwrap()
+}
+
+fn campaign(initial_scene: &Scene) -> Campaign {
+    Campaign::new("Campaign", "Session 1", initial_scene).unwrap()
+}
 
 #[test]
 fn a_scene_can_be_reused_by_multiple_sessions_and_campaigns() {
-    let scene = Scene::new();
-    let mut first_campaign = Campaign::new(&scene);
-    let second_session = first_campaign.add_session(&scene);
-    let second_campaign = Campaign::new(&scene);
+    let scene = test_scene();
+    let mut first_campaign = campaign(&scene);
+    let second_session = first_campaign.add_session("Session 2", &scene).unwrap();
+    let second_campaign = campaign(&scene);
 
     assert!(first_campaign
         .sessions()
@@ -20,8 +28,8 @@ fn a_scene_can_be_reused_by_multiple_sessions_and_campaigns() {
 
 #[test]
 fn session_rejects_duplicate_scene_associations_without_mutation() {
-    let scene = Scene::new();
-    let mut campaign = Campaign::new(&scene);
+    let scene = test_scene();
+    let mut campaign = campaign(&scene);
     let session = campaign.sessions()[0].id();
     let snapshot = campaign.clone();
 
@@ -37,10 +45,10 @@ fn session_rejects_duplicate_scene_associations_without_mutation() {
 
 #[test]
 fn session_scene_insert_move_and_remove_keep_dense_positions() {
-    let first = Scene::new();
-    let second = Scene::new();
-    let inserted = Scene::new();
-    let mut campaign = Campaign::new(&first);
+    let first = test_scene();
+    let second = test_scene();
+    let inserted = test_scene();
+    let mut campaign = campaign(&first);
     let session = campaign.sessions()[0].id();
     campaign.add_scene(session, &second).unwrap();
     campaign.insert_scene(session, 1, &inserted).unwrap();
@@ -60,8 +68,8 @@ fn session_scene_insert_move_and_remove_keep_dense_positions() {
 
 #[test]
 fn session_rejects_removing_its_last_scene_without_mutation() {
-    let scene = Scene::new();
-    let mut campaign = Campaign::new(&scene);
+    let scene = test_scene();
+    let mut campaign = campaign(&scene);
     let session = campaign.sessions()[0].id();
     let snapshot = campaign.clone();
 
@@ -71,7 +79,7 @@ fn session_rejects_removing_its_last_scene_without_mutation() {
     );
     assert_eq!(campaign, snapshot);
 
-    let missing = Scene::new();
+    let missing = test_scene();
     assert_eq!(
         campaign.remove_scene(session, missing.id()),
         Err(DomainError::SceneNotAssociated {
@@ -84,9 +92,9 @@ fn session_rejects_removing_its_last_scene_without_mutation() {
 
 #[test]
 fn moving_a_scene_preserves_the_association_identity() {
-    let first = Scene::new();
-    let second = Scene::new();
-    let mut campaign = Campaign::new(&first);
+    let first = test_scene();
+    let second = test_scene();
+    let mut campaign = campaign(&first);
     let session = campaign.sessions()[0].id();
     let association = campaign.add_scene(session, &second).unwrap();
 
@@ -97,9 +105,9 @@ fn moving_a_scene_preserves_the_association_identity() {
 
 #[test]
 fn operations_reject_unknown_sessions_without_mutation() {
-    let scene = Scene::new();
-    let other = Scene::new();
-    let mut campaign = Campaign::new(&scene);
+    let scene = test_scene();
+    let other = test_scene();
+    let mut campaign = campaign(&scene);
     let missing = SessionId::new();
     let snapshot = campaign.clone();
 
@@ -117,9 +125,9 @@ fn operations_reject_unknown_sessions_without_mutation() {
 
 #[test]
 fn invalid_scene_position_is_rejected_before_mutation() {
-    let first = Scene::new();
-    let second = Scene::new();
-    let mut campaign = Campaign::new(&first);
+    let first = test_scene();
+    let second = test_scene();
+    let mut campaign = campaign(&first);
     let session = campaign.sessions()[0].id();
     let snapshot = campaign.clone();
 

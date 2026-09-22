@@ -1,44 +1,63 @@
-use super::{CampaignId, DomainError, Scene, SceneId, Session, SessionId, SessionSceneId};
+use super::{
+    CampaignId, DisplayName, DomainError, Scene, SceneId, Session, SessionId, SessionSceneId,
+};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Campaign {
     id: CampaignId,
+    name: DisplayName,
     sessions: Vec<Session>,
 }
 
 impl Campaign {
-    #[must_use]
-    pub fn new(initial_scene: &Scene) -> Self {
-        Self::with_ids(
-            CampaignId::new(),
-            SessionId::new(),
-            SessionSceneId::new(),
-            initial_scene,
+    pub fn new(
+        name: &str,
+        initial_session_name: &str,
+        initial_scene: &Scene,
+    ) -> Result<Self, DomainError> {
+        let id = CampaignId::new();
+        Self::from_parts(
+            id,
+            name,
+            vec![Session::new(
+                SessionId::new(),
+                id,
+                initial_session_name,
+                0,
+                SessionSceneId::new(),
+                initial_scene.id(),
+            )?],
         )
     }
 
-    #[must_use]
-    pub fn with_ids(
+    pub fn from_parts(
         id: CampaignId,
-        initial_session_id: SessionId,
-        initial_association_id: SessionSceneId,
-        initial_scene: &Scene,
-    ) -> Self {
-        Self {
-            id,
-            sessions: vec![Session::new(
-                initial_session_id,
-                id,
-                0,
-                initial_association_id,
-                initial_scene.id(),
-            )],
+        name: &str,
+        sessions: Vec<Session>,
+    ) -> Result<Self, DomainError> {
+        if sessions.is_empty() {
+            return Err(DomainError::CampaignRequiresSession(id));
         }
+        if sessions.iter().enumerate().any(|(position, session)| {
+            session.campaign_id() != id || session.position() != position
+        }) {
+            return Err(DomainError::InvalidStructure("campaign"));
+        }
+        Ok(Self {
+            id,
+            name: DisplayName::new(name)?,
+            sessions,
+        })
     }
 
     #[must_use]
     pub const fn id(&self) -> CampaignId {
         self.id
+    }
+
+    #[must_use]
+    pub fn name(&self) -> &str {
+        self.name.as_str()
     }
 
     #[must_use]
@@ -53,14 +72,23 @@ impl Campaign {
             .any(|session| session.uses_scene(scene_id))
     }
 
-    pub fn add_session(&mut self, initial_scene: &Scene) -> SessionId {
-        self.insert_session(self.sessions.len(), initial_scene)
-            .expect("appending a session is always in bounds")
+    pub fn rename(&mut self, name: &str) -> Result<(), DomainError> {
+        self.name = DisplayName::new(name)?;
+        Ok(())
+    }
+
+    pub fn add_session(
+        &mut self,
+        name: &str,
+        initial_scene: &Scene,
+    ) -> Result<SessionId, DomainError> {
+        self.insert_session(self.sessions.len(), name, initial_scene)
     }
 
     pub fn insert_session(
         &mut self,
         position: usize,
+        name: &str,
         initial_scene: &Scene,
     ) -> Result<SessionId, DomainError> {
         if position > self.sessions.len() {
@@ -75,13 +103,18 @@ impl Campaign {
             Session::new(
                 id,
                 self.id,
+                name,
                 position,
                 SessionSceneId::new(),
                 initial_scene.id(),
-            ),
+            )?,
         );
         self.normalize_session_positions();
         Ok(id)
+    }
+
+    pub fn rename_session(&mut self, session_id: SessionId, name: &str) -> Result<(), DomainError> {
+        self.session_mut(session_id)?.rename(name)
     }
 
     pub fn move_session(

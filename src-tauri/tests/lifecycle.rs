@@ -1,6 +1,14 @@
-﻿use tabletop_tool_lib::domain::{
+use tabletop_tool_lib::domain::{
     detach_scene_from_campaigns, Campaign, DomainError, Scene, SceneId, SceneLevelId,
 };
+
+fn test_scene() -> Scene {
+    Scene::new("Scene", "Level 1").unwrap()
+}
+
+fn campaign(initial_scene: &Scene) -> Campaign {
+    Campaign::new("Campaign", "Session 1", initial_scene).unwrap()
+}
 
 fn positions(values: impl IntoIterator<Item = usize>) -> Vec<usize> {
     values.into_iter().collect()
@@ -8,7 +16,7 @@ fn positions(values: impl IntoIterator<Item = usize>) -> Vec<usize> {
 
 #[test]
 fn scene_starts_with_one_level_owned_by_it() {
-    let scene = Scene::new();
+    let scene = test_scene();
 
     assert_eq!(scene.levels().len(), 1);
     assert_eq!(scene.levels()[0].scene_id(), scene.id());
@@ -17,10 +25,10 @@ fn scene_starts_with_one_level_owned_by_it() {
 
 #[test]
 fn scene_level_insert_move_and_remove_keep_dense_positions() {
-    let mut scene = Scene::new();
+    let mut scene = test_scene();
     let first = scene.levels()[0].id();
-    let second = scene.add_level();
-    let inserted = scene.insert_level(1).unwrap();
+    let second = scene.add_level("Level 2").unwrap();
+    let inserted = scene.insert_level(1, "Inserted level").unwrap();
 
     assert_eq!(
         scene
@@ -41,7 +49,7 @@ fn scene_level_insert_move_and_remove_keep_dense_positions() {
 
 #[test]
 fn scene_rejects_removing_its_last_level_without_mutation() {
-    let mut scene = Scene::new();
+    let mut scene = test_scene();
     let level = scene.levels()[0].id();
 
     assert_eq!(
@@ -53,7 +61,7 @@ fn scene_rejects_removing_its_last_level_without_mutation() {
 
 #[test]
 fn scene_rejects_invalid_level_operations_without_mutation() {
-    let mut scene = Scene::new();
+    let mut scene = test_scene();
     let level = scene.levels()[0].id();
     let snapshot = scene.clone();
     let missing = SceneLevelId::new();
@@ -79,7 +87,7 @@ fn scene_rejects_invalid_level_operations_without_mutation() {
     );
     assert_eq!(scene, snapshot);
     assert_eq!(
-        scene.insert_level(2),
+        scene.insert_level(2, "Invalid level"),
         Err(DomainError::PositionOutOfBounds {
             position: 2,
             len: 1
@@ -90,8 +98,8 @@ fn scene_rejects_invalid_level_operations_without_mutation() {
 
 #[test]
 fn campaign_starts_with_one_session_using_the_explicit_scene() {
-    let scene = Scene::new();
-    let campaign = Campaign::new(&scene);
+    let scene = test_scene();
+    let campaign = campaign(&scene);
 
     assert_eq!(campaign.sessions().len(), 1);
     let session = &campaign.sessions()[0];
@@ -105,11 +113,13 @@ fn campaign_starts_with_one_session_using_the_explicit_scene() {
 
 #[test]
 fn campaign_session_insert_move_and_remove_keep_dense_positions() {
-    let scene = Scene::new();
-    let mut campaign = Campaign::new(&scene);
+    let scene = test_scene();
+    let mut campaign = campaign(&scene);
     let first = campaign.sessions()[0].id();
-    let second = campaign.add_session(&scene);
-    let inserted = campaign.insert_session(1, &scene).unwrap();
+    let second = campaign.add_session("Session 2", &scene).unwrap();
+    let inserted = campaign
+        .insert_session(1, "Inserted session", &scene)
+        .unwrap();
 
     assert_eq!(
         campaign
@@ -131,13 +141,13 @@ fn campaign_session_insert_move_and_remove_keep_dense_positions() {
 
 #[test]
 fn campaign_rejects_invalid_session_positions_without_mutation() {
-    let scene = Scene::new();
-    let mut campaign = Campaign::new(&scene);
+    let scene = test_scene();
+    let mut campaign = campaign(&scene);
     let session = campaign.sessions()[0].id();
     let snapshot = campaign.clone();
 
     assert_eq!(
-        campaign.insert_session(2, &scene),
+        campaign.insert_session(2, "Invalid session", &scene),
         Err(DomainError::PositionOutOfBounds {
             position: 2,
             len: 1
@@ -158,8 +168,8 @@ fn campaign_rejects_invalid_session_positions_without_mutation() {
 
 #[test]
 fn campaign_rejects_removing_its_last_session_without_mutation() {
-    let scene = Scene::new();
-    let mut campaign = Campaign::new(&scene);
+    let scene = test_scene();
+    let mut campaign = campaign(&scene);
     let session = campaign.sessions()[0].id();
 
     assert_eq!(
@@ -171,9 +181,9 @@ fn campaign_rejects_removing_its_last_session_without_mutation() {
 
 #[test]
 fn removing_a_session_does_not_delete_its_reusable_scenes() {
-    let scene = Scene::new();
-    let mut campaign = Campaign::new(&scene);
-    let removed_id = campaign.add_session(&scene);
+    let scene = test_scene();
+    let mut campaign = campaign(&scene);
+    let removed_id = campaign.add_session("Session 2", &scene).unwrap();
 
     let removed = campaign.remove_session(removed_id).unwrap();
 
@@ -184,10 +194,10 @@ fn removing_a_session_does_not_delete_its_reusable_scenes() {
 
 #[test]
 fn deleting_a_scene_is_preflighted_across_all_campaigns() {
-    let required = Scene::new();
-    let alternative = Scene::new();
-    let first = Campaign::new(&required);
-    let mut second = Campaign::new(&required);
+    let required = test_scene();
+    let alternative = test_scene();
+    let first = campaign(&required);
+    let mut second = campaign(&required);
     let second_session = second.sessions()[0].id();
     second.add_scene(second_session, &alternative).unwrap();
     // Put the mutable candidate first so this catches streaming implementations
@@ -205,12 +215,12 @@ fn deleting_a_scene_is_preflighted_across_all_campaigns() {
 
 #[test]
 fn deleting_a_scene_detaches_all_associations_when_sessions_remain_valid() {
-    let deleted = Scene::new();
-    let alternative = Scene::new();
-    let mut first = Campaign::new(&deleted);
+    let deleted = test_scene();
+    let alternative = test_scene();
+    let mut first = campaign(&deleted);
     let first_session = first.sessions()[0].id();
     first.add_scene(first_session, &alternative).unwrap();
-    let mut second = Campaign::new(&alternative);
+    let mut second = campaign(&alternative);
     let second_session = second.sessions()[0].id();
     second.add_scene(second_session, &deleted).unwrap();
     let mut campaigns = vec![first, second];
@@ -230,8 +240,8 @@ fn deleting_a_scene_detaches_all_associations_when_sessions_remain_valid() {
 
 #[test]
 fn deleting_an_unreferenced_scene_is_a_noop() {
-    let scene = Scene::new();
-    let mut campaigns = vec![Campaign::new(&scene)];
+    let scene = test_scene();
+    let mut campaigns = vec![campaign(&scene)];
 
     assert_eq!(
         detach_scene_from_campaigns(&mut campaigns, SceneId::new()),

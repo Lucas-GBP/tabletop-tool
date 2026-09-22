@@ -11,7 +11,7 @@ export default defineConfig([
     "coverage/**",
     "src-tauri/target/**",
     "src-tauri/gen/**",
-    "src/shared/api/bindings.ts",
+    "src/api/bindings.ts",
   ]),
   {
     files: ["**/*.{js,mjs}"],

@@ -6,24 +6,16 @@
 mod campaign;
 mod error;
 mod ids;
+mod name;
 mod scene;
 mod session;
 
 pub use campaign::{detach_scene_from_campaigns, Campaign};
 pub use error::DomainError;
 pub use ids::{CampaignId, SceneId, SceneLevelId, SessionId, SessionSceneId};
+pub(crate) use name::DisplayName;
 pub use scene::{Scene, SceneLevel};
 pub use session::{Session, SessionScene};
-
-/// Normalize a user-facing persistent name before it crosses into storage.
-pub fn validate_name(value: &str) -> Result<String, DomainError> {
-    let name = value.trim();
-    if name.is_empty() {
-        Err(DomainError::InvalidName)
-    } else {
-        Ok(name.to_owned())
-    }
-}
 
 #[cfg(test)]
 mod tests {
@@ -31,7 +23,13 @@ mod tests {
 
     #[test]
     fn names_are_trimmed_and_empty_names_are_rejected() {
-        assert_eq!(validate_name("  Floresta  "), Ok("Floresta".to_owned()));
-        assert_eq!(validate_name(" \n\t "), Err(DomainError::InvalidName));
+        assert_eq!(
+            Scene::new("  Floresta  ", "Nível 1").unwrap().name(),
+            "Floresta"
+        );
+        assert_eq!(
+            Scene::new(" \n\t ", "Nível 1"),
+            Err(DomainError::InvalidName)
+        );
     }
 }

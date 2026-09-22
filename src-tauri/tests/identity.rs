@@ -1,10 +1,18 @@
-﻿use tabletop_tool_lib::domain::{Campaign, Scene};
+use tabletop_tool_lib::domain::{Campaign, Scene};
+
+fn test_scene() -> Scene {
+    Scene::new("Scene", "Level 1").unwrap()
+}
+
+fn campaign(initial_scene: &Scene) -> Campaign {
+    Campaign::new("Campaign", "Session 1", initial_scene).unwrap()
+}
 
 #[test]
 fn persistent_entities_receive_distinct_uuid_identities() {
-    let scene = Scene::new();
-    let other_scene = Scene::new();
-    let campaign = Campaign::new(&scene);
+    let scene = test_scene();
+    let other_scene = test_scene();
+    let campaign = campaign(&scene);
     let session = &campaign.sessions()[0];
     let association = &session.scenes()[0];
     let level = &scene.levels()[0];

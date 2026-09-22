@@ -39,6 +39,11 @@ A Scene contains one or more Scene Levels.
 
 ## Lifecycle Rules
 
+- Campaign, Session, Scene, and SceneLevel expose basic create, read, rename,
+  and delete operations through the application boundary. A delete may be
+  rejected when it would violate an aggregate minimum or a reusable reference.
+- A SessionScene association can be added or removed independently from the
+  reusable Scene it references.
 - Creating a Campaign atomically creates its initial Session and a new initial
   Scene, then associates that Scene with the Session. The Scene remains an
   independent reusable definition after creation.

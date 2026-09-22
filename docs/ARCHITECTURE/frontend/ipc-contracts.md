@@ -97,8 +97,8 @@ consistent application-facing interface.
 Generated TypeScript bindings are build artifacts derived from the Rust
 contract. They must not be hand-edited.
 
-Generated bindings are committed at `src/shared/api/bindings.ts`. The command
-registry in `src-tauri/src/ipc.rs` is shared by the desktop invocation handler and
+Generated bindings are committed at `src/api/bindings.ts`. The command
+registry in `src-tauri/src/ipc/` is shared by the desktop invocation handler and
 the headless `export-bindings` binary, enabled through the Rust `bindings` feature.
 
 - Run `npm run bindings:generate` after changing an IPC contract.

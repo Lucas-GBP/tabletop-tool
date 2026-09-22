@@ -1,7 +1,7 @@
-﻿import { CoreWorkspacePage } from "./features/core/pages/CoreWorkspacePage";
+import { AppShell } from "@/app/AppShell";
 
 function App() {
-  return <CoreWorkspacePage />;
+  return <AppShell />;
 }
 
 export default App;

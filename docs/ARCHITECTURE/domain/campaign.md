@@ -34,6 +34,10 @@ Scene to the Campaign; the Scene remains an independent reusable definition.
 Creating an additional Session requires an existing Scene for its initial
 SessionScene association.
 
+A Campaign may be renamed or deleted. Deleting it removes its Sessions and
+their SessionScene associations, while referenced reusable Scenes remain
+available independently.
+
 ## Architectural Boundary
 
 Campaign is part of the Core Domain.

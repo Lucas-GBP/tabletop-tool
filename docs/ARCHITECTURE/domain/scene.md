@@ -34,6 +34,8 @@ Deleting a Scene deletes all of its Scene Levels and removes its `SessionScene`
 associations. Because a Session must use at least one Scene, deletion is rejected
 before any mutation if the Scene is the only Scene in an affected Session.
 
+A Scene may be renamed independently of every Session that references it.
+
 ## Architectural Boundary
 
 Scene is part of the Core Domain.
@@ -50,6 +52,18 @@ encounter_builder
 ```
 
 Instead, those tools may reference the Scene externally.
+
+## Preparation UI
+
+A Scene has a dedicated preparation screen. Its name, Scene Levels, and the
+persistent configuration owned by Scene Tools are edited there.
+
+The application home lists and creates reusable Scenes independently from
+Campaigns, so a Scene can be prepared before entering any Campaign. Campaign
+preparation does not embed the global Scene collection; its Sessions only
+organize `SessionScene` associations and link each referenced Scene to the same
+preparation screen. Creating a Scene opens that screen so its initial Scene
+Level and future Tool configuration can be continued in one place.
 
 ## Related Components
 

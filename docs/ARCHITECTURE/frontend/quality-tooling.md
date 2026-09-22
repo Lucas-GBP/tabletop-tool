@@ -27,9 +27,9 @@ formatting.
 - Stylelint
 - `stylelint-config-standard-scss`
 
-SCSS Modules are linted independently from TypeScript. Project-specific design
-system restrictions should be added only when a concrete recurring problem
-justifies them.
+SCSS Modules are linted independently from TypeScript. Every application
+component and page `.tsx` has a same-named `.module.scss`; shared SCSS partials
+may provide mixins but do not replace that owned module.
 
 ### Formatting
 

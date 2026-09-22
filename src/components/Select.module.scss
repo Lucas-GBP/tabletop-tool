@@ -1,0 +1,12 @@
+@use "control";
+
+.control {
+  @include control.base;
+}
+
+.select {
+  min-width: 0;
+  padding-right: 2.2em;
+  box-shadow: none;
+  font-weight: 400;
+}
