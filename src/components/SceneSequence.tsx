@@ -1,15 +1,17 @@
 import { Panel, SectionHeading } from "./primitives";
-import type { RuntimeScene } from "@/tools/runtime";
+import type { RuntimeScene } from "@/runtime";
 import styles from "./SceneSequence.module.scss";
 
 interface SceneSequenceProps {
-  scenes: RuntimeScene[];
+  scenes: readonly RuntimeScene[];
+  sceneNames: ReadonlyMap<string, string>;
   currentSceneId: string;
   onSelect: (sceneId: string) => void;
 }
 
 export function SceneSequence({
   scenes,
+  sceneNames,
   currentSceneId,
   onSelect,
 }: SceneSequenceProps) {
@@ -21,18 +23,21 @@ export function SceneSequence({
       </p>
       <ol className={styles.list}>
         {scenes.map((runtimeScene, index) => {
-          const active = runtimeScene.scene.id === currentSceneId;
+          const active = runtimeScene.sceneId === currentSceneId;
           return (
             <li key={runtimeScene.associationId}>
               <button
                 type="button"
                 className={styles.scene}
                 aria-current={active ? "step" : undefined}
-                onClick={() => onSelect(runtimeScene.scene.id)}
+                onClick={() => onSelect(runtimeScene.sceneId)}
               >
                 <span className={styles.position}>{index + 1}</span>
                 <span>
-                  <strong>{runtimeScene.scene.name}</strong>
+                  <strong>
+                    {sceneNames.get(runtimeScene.sceneId) ??
+                      "Cena indisponível"}
+                  </strong>
                   <small>{active ? "Em execução" : "Preparada"}</small>
                 </span>
               </button>

@@ -67,9 +67,10 @@ the generated command boundary and do not start a desktop window.
 - `src/pages/`: screen composition for Campaigns, Sessions, Scenes, and Session
   execution, exposed through a single `index.ts`.
 - `src/hooks/`: React orchestration for persistent workspace and volatile runtime.
-- `src/tools/runtime/`: framework-independent transient `SessionRuntime` and
-  `SceneRuntime` state. Other directories under `src/tools/` hold future Scene
-  Tool implementations.
+- `src/runtime/`: framework-independent, tool-agnostic `SessionRuntime` and
+  `SceneRuntime` state.
+- `src/tools/`: future Scene Tool implementations, including each Tool's own
+  runtime code.
 - `src/lib/`: framework-independent frontend helpers with a concise public index.
 - `src/api/index.ts`: application-facing API over generated bindings.
 - `src/api/bindings.ts`: generated Rust contract; do not edit manually.
@@ -79,7 +80,7 @@ the generated command boundary and do not start a desktop window.
 
 Cross-directory frontend imports use the single `@/*` alias mapped to `src/*`.
 Public `index.ts` files keep imports such as `@/components`, `@/pages`,
-`@/hooks`, and `@/tools/runtime` concise. Files within the same directory use direct relative imports
+`@/hooks`, and `@/runtime` concise. Files within the same directory use direct relative imports
 to avoid unnecessary barrel cycles. TypeScript, Vite, and Vitest declare the same
 alias.
 
@@ -173,6 +174,11 @@ frontend-only runtime state from the saved Session sequence. Changing SceneLevel
 preserves the current `SceneRuntime`; changing Scene disposes it and starts a new
 one. “Encerrar sessão” disposes the active runtime and returns to preparation.
 These transitions do not invoke persistent mutation commands.
+
+The runtime stores Core identities and transient execution state rather than
+mutable copies of IPC DTOs. Runtime failures use a structured `RuntimeError` and
+are isolated by the React orchestration hook. The Session remains open while the
+UI presents a user message and an in-memory technical diagnostic log.
 
 ## CI and Packaging
 

@@ -7,6 +7,7 @@ export { SceneLibrary } from "./SceneLibrary";
 export { ScenePreparationHeader } from "./ScenePreparationHeader";
 export { SceneSequence } from "./SceneSequence";
 export { SceneStructurePanel } from "./SceneStructurePanel";
+export { RuntimeFeedback } from "./RuntimeFeedback";
 export { SessionRuntimeHeader } from "./SessionRuntimeHeader";
 export { WorkspaceFeedback } from "./WorkspaceFeedback";
 export { WorkspaceHeader } from "./WorkspaceHeader";

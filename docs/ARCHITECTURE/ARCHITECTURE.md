@@ -244,6 +244,23 @@ A running Scene has a transient execution context, conceptually `SceneRuntime`, 
 
 Tool-specific runtime state remains inside each Tool. Core `Scene` and `SceneLevel` remain independent of Audio Mixer, Encounter, and future Tool-specific state.
 
+The runtime ownership flow is:
+
+```text
+Persistent Definitions
+        ↓ instantiate
+SessionRuntime
+        ↓ owns the active execution
+SceneRuntime
+        ↓ coordinates
+Concrete Tool runtimes
+```
+
+The tool-agnostic `SessionRuntime` and `SceneRuntime` live in `src/runtime` and
+keep only identities and transient execution state. Concrete Tool runtimes live
+under `src/tools/<tool>/runtime`. This dependency direction does not require a
+generic `ToolRuntime` interface or an event bus.
+
 See [Runtime Model](./runtime/scene-runtime.md).
 
 ## Frontend / Backend Responsibility Boundary

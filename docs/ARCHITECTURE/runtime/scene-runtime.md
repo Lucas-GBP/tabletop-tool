@@ -227,11 +227,14 @@ This keeps transient execution state close to the UI and to runtime-only engines
 Rust remains authoritative over persistent configuration. Runtime changes in TypeScript do not implicitly write back to Rust or SQLite.
 
 `SessionRuntime` and `SceneRuntime` are tool-agnostic runtime concepts. Their
-TypeScript implementation lives under `src/tools/runtime/`, alongside but
-separate from the implementations of Scene Tools. This directory choice does
-not make either concept a Scene Tool. React hooks control their construction and
-cleanup, while lifecycle rules remain independent from components and individual
-Scene Tools.
+TypeScript implementation lives under `src/runtime/`. Concrete Tool runtimes
+live with their Tool under `src/tools/` and depend on this execution context.
+React hooks control construction, observation, commands, and cleanup, while
+lifecycle rules remain independent from components and individual Scene Tools.
+
+Runtime objects retain Core identities and transient execution state. They do
+not embed mutable copies of complete persistent DTOs. Presentation code resolves
+the read-only definitions it needs separately from the runtime snapshot.
 
 ## Scene as an Execution Boundary
 

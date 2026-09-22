@@ -1,0 +1,38 @@
+.feedback {
+  max-width: 1400px;
+  margin: 0 auto var(--space-medium);
+}
+
+.diagnostics {
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+
+  summary {
+    width: fit-content;
+    cursor: pointer;
+  }
+
+  ol {
+    margin: var(--space-small) 0 0;
+    padding: var(--space-medium) var(--space-medium) var(--space-medium) 2.5rem;
+    display: grid;
+    gap: var(--space-small);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: var(--color-surface-soft);
+  }
+
+  li {
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  small {
+    overflow-wrap: anywhere;
+  }
+
+  strong {
+    color: var(--color-error);
+    font-family: monospace;
+  }
+}

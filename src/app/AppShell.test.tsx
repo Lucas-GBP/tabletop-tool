@@ -137,4 +137,44 @@ describe("Application navigation", () => {
     expect(api.renameScene).not.toHaveBeenCalled();
     expect(api.renameSceneLevel).not.toHaveBeenCalled();
   });
+
+  it("reports an invalid runtime definition without leaving the session screen", async () => {
+    const user = userEvent.setup();
+    const invalidSnapshot: CoreSnapshotDto = {
+      ...campaignSnapshot,
+      campaigns: [
+        {
+          ...campaignSnapshot.campaigns[0]!,
+          sessions: [
+            {
+              ...campaignSnapshot.campaigns[0]!.sessions[0]!,
+              scenes: [
+                {
+                  ...campaignSnapshot.campaigns[0]!.sessions[0]!.scenes[0]!,
+                  sceneId: "missing-scene",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    vi.mocked(api.listCore).mockResolvedValue(invalidSnapshot);
+    render(<App />);
+    await openCampaign(user);
+
+    await user.click(
+      screen.getByRole("button", { name: "Iniciar sessão Sessão 1" }),
+    );
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Uma cena desta sessão não está disponível.",
+    );
+    expect(screen.getByText("Mesa em andamento")).toBeVisible();
+    expect(screen.getByText("Diagnóstico da execução (1)")).toBeVisible();
+    expect(screen.getByText("SESSION_SCENE_NOT_FOUND")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Encerrar sessão" }));
+    expect(await screen.findByText("Modo de preparação")).toBeVisible();
+  });
 });

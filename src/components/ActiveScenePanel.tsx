@@ -1,9 +1,9 @@
+import type { SceneDto } from "@/api";
 import { Button, EmptyState, Panel, SectionHeading } from "./primitives";
-import type { RuntimeScene } from "@/tools/runtime";
 import styles from "./ActiveScenePanel.module.scss";
 
 interface ActiveScenePanelProps {
-  runtimeScene: RuntimeScene;
+  scene: SceneDto;
   currentLevelId: string;
   currentIndex: number;
   sceneCount: number;
@@ -13,7 +13,7 @@ interface ActiveScenePanelProps {
 }
 
 export function ActiveScenePanel({
-  runtimeScene,
+  scene,
   currentLevelId,
   currentIndex,
   sceneCount,
@@ -21,8 +21,6 @@ export function ActiveScenePanel({
   onPreviousScene,
   onNextScene,
 }: ActiveScenePanelProps) {
-  const { scene } = runtimeScene;
-
   return (
     <Panel as="section" className={styles.panel}>
       <SectionHeading
