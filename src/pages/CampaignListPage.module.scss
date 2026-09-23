@@ -1,6 +1,6 @@
 .shell {
   min-height: 100vh;
-  padding: 2.5rem clamp(1rem, 4vw, 4rem) 4rem;
+  padding: 1.5rem clamp(1rem, 4vw, 4rem) 3rem;
 }
 
 .home {
@@ -11,6 +11,15 @@
   grid-template-columns: minmax(0, 2fr) minmax(280px, 0.8fr);
   gap: 1.25rem;
   align-items: start;
+}
+
+.tools {
+  width: 100%;
+  max-width: 1400px;
+  margin: var(--space-medium) auto 0;
+  display: flex;
+  gap: var(--space-small);
+  align-items: center;
 }
 
 @media (width <= 900px) {

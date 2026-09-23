@@ -23,6 +23,12 @@ vi.mock("@/api", () => ({
     deleteScene: vi.fn(),
     deleteSceneLevel: vi.fn(),
     removeSceneFromSession: vi.fn(),
+    listAudioLibrary: vi.fn(),
+    getSceneAudioConfiguration: vi.fn(),
+    getSceneLevelAudioConfiguration: vi.fn(),
+    resolveAssetPath: vi.fn(),
+    getAppSettings: vi.fn(),
+    configureAssetDirectory: vi.fn(),
   },
   ApplicationError: class ApplicationError extends Error {},
   ApplicationTimeoutError: class ApplicationTimeoutError extends Error {},
@@ -39,6 +45,25 @@ async function openCampaign(user: ReturnType<typeof userEvent.setup>) {
 describe("Application navigation", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.mocked(api.listAudioLibrary).mockResolvedValue({
+      assetDirectory: null,
+      files: [],
+      objects: [],
+      lists: [],
+      compositions: [],
+      settings: { masterVolumeDb: 0 },
+    });
+    vi.mocked(api.getSceneAudioConfiguration).mockImplementation((sceneId) =>
+      Promise.resolve({
+        sceneId,
+        audioObjectIds: [],
+        audioListIds: [],
+        audioCompositionIds: [],
+      }),
+    );
+    vi.mocked(api.getSceneLevelAudioConfiguration).mockImplementation(
+      (sceneLevelId) => Promise.resolve({ sceneLevelId, disabledLayerIds: [] }),
+    );
   });
 
   it("runs a session separately from persistent preparation", async () => {
@@ -107,9 +132,9 @@ describe("Application navigation", () => {
       screen.queryByRole("heading", { name: "Sombras do Norte" }),
     ).not.toBeInTheDocument();
     expect(screen.getByText("Mesa em andamento")).toBeVisible();
-    expect(screen.getByRole("note")).toHaveTextContent(
-      "Scene e SceneLevel ativos são temporários",
-    );
+    expect(
+      screen.getByText("Alterações durante a mesa são temporárias."),
+    ).toBeVisible();
     expect(
       screen.queryByRole("textbox", { name: "Nome da nova cena" }),
     ).not.toBeInTheDocument();
@@ -136,5 +161,45 @@ describe("Application navigation", () => {
     ).not.toBeInTheDocument();
     expect(api.renameScene).not.toHaveBeenCalled();
     expect(api.renameSceneLevel).not.toHaveBeenCalled();
+  });
+
+  it("reports an invalid runtime definition without leaving the session screen", async () => {
+    const user = userEvent.setup();
+    const invalidSnapshot: CoreSnapshotDto = {
+      ...campaignSnapshot,
+      campaigns: [
+        {
+          ...campaignSnapshot.campaigns[0]!,
+          sessions: [
+            {
+              ...campaignSnapshot.campaigns[0]!.sessions[0]!,
+              scenes: [
+                {
+                  ...campaignSnapshot.campaigns[0]!.sessions[0]!.scenes[0]!,
+                  sceneId: "missing-scene",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    vi.mocked(api.listCore).mockResolvedValue(invalidSnapshot);
+    render(<App />);
+    await openCampaign(user);
+
+    await user.click(
+      screen.getByRole("button", { name: "Iniciar sessão Sessão 1" }),
+    );
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Uma cena desta sessão não está disponível.",
+    );
+    expect(screen.getByText("Mesa em andamento")).toBeVisible();
+    expect(screen.getByText("Diagnóstico da execução (1)")).toBeVisible();
+    expect(screen.getByText("SESSION_SCENE_NOT_FOUND")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Encerrar sessão" }));
+    expect(await screen.findByText("Modo de preparação")).toBeVisible();
   });
 });

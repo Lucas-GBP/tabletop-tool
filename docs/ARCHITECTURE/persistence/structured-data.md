@@ -11,12 +11,12 @@ Examples include:
 - Sessions;
 - Scenes;
 - Scene Levels;
-- Scene Tool configuration and state;
+- persistent Scene Tool definitions and configuration;
 - Audio Object metadata;
 - Audio Lists and their membership;
 - Audio Compositions and their layers;
-- Audio Triggers;
-- metadata and references associated with managed files.
+- the configured application asset root;
+- relative asset paths owned by persistent definitions.
 
 ## SeaORM
 
@@ -49,9 +49,43 @@ corresponding implementation.
 
 ## Migrations
 
-Database evolution must be handled through explicit migrations from the start of
-implementation so existing local databases can be upgraded safely as the
-application evolves.
+Database evolution uses SeaORM Migrator. Applied migrations are immutable: a
+schema change is represented by a new migration rather than an edit to an
+existing migration module. This keeps upgrades reproducible for databases that
+may have been created by different application versions.
+
+New schema declarations use the typed builders from SeaORM Migration and
+SeaQuery: `Table`, `ColumnDef`, `ForeignKey`, `Index`, and `Expr`. Every migration
+declares its own `DeriveIden` identifiers. A historical migration is a snapshot
+of the schema at that time and must not import `Column` enums from the current
+entities, which may change later.
+
+Because the project has not distributed an installed database yet, its initial
+development baseline was reset once so both the Core and Audio Mixer migrations
+use typed builders. After the first distributed version, every registered
+migration is immutable and any Core or Tool schema change must be introduced by
+a new migration.
+
+## Database access guideline
+
+Tabletop Tool uses SeaORM as the default persistence abstraction. Persistent
+tables have dedicated `Entity`, `Model`, `ActiveModel`, and `Column` types inside
+the persistence layer.
+
+Normal CRUD, filtering, ordering, and association queries use SeaORM's typed
+Entity and Column APIs. Complex expressions use SeaQuery before considering SQL
+text. Raw SQL is allowed only when a SQLite-specific or bulk operation is
+clearly simpler or cannot be represented cleanly by those APIs. Such SQL must
+remain localized, bind all values, explain the exception, and have a focused
+test.
+
+Conversions between persistence models and domain values remain explicit. The
+domain owns business meaning and invariants; it does not derive SeaORM models or
+depend on SeaORM, SQLite, migrations, serialization, Specta, or Tauri.
+
+Transactions remain mandatory for compound writes. Moving to typed APIs does
+not weaken atomicity, dense ordering, foreign keys, unique indexes, checks, or
+cascade behavior.
 
 ## Invariants
 

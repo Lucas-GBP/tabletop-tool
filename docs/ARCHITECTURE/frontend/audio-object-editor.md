@@ -7,7 +7,9 @@ Numeric inputs remain available for precision and accessibility, but the primary
 ## Main Workflow
 
 ```text
-select AudioFile
+select discovered audio asset
+    ↓
+persist AudioObject with defaults
     ↓
 inspect waveform
     ↓
@@ -24,39 +26,43 @@ save
 
 The user should not need to save after every adjustment in order to hear the result.
 
-## Available Audio Files
+## Available audio assets
 
-The editor shows the persistent `AudioFile` entries currently available to the application.
-
-The source of truth is SQLite through Rust, not a frontend directory scan.
+General settings let the user choose one asset root. Rust recursively discovers
+supported audio below that root. The catalog is transient; persistent
+`AudioObject` definitions store normalized relative paths.
 
 ```text
 React
-  ↓ request AudioFiles
-Rust
+  ↓ request current library
+Rust scans configured asset root
   ↓
-SQLite
-  ↓
-AudioFileDto[]
+AudioAssetDto[]
 ```
 
-When the user imports a new file:
+The asset picker is shared by object creation and file replacement. It provides
+search, parent-folder filtering, and refresh. During creation, selecting an asset
+immediately persists an object with defaults and opens this editor.
+
+When the user adds a file to the configured root:
 
 ```text
-UI
- ↓
-Rust import
- ↓
-copy to AppData/media/audio/
- ↓
-create AudioFile
- ↓
-refresh available-file list
+configured asset root
+        ↓ rescan
+Rust probes supported files
+        ↓
+return refreshed transient catalog
 ```
+
+The application does not copy, rename, or delete the user's source files.
+
+If the saved relative path is absent from the latest catalog, the editor keeps
+the object intact, shows an unavailable warning, and offers the same picker to
+replace its asset. Waveform and preview stay disabled until a source resolves.
 
 ## Waveform
 
-The selected AudioFile is decoded in the frontend and represented as a waveform.
+The selected audio asset is decoded in the frontend and represented as a waveform.
 
 The visualization should use reduced peak data rather than rendering every sample.
 
@@ -103,7 +109,7 @@ The user must be able to:
 - drag the right edge to change `end_time`;
 - drag the interior of the selected region to move the whole region while preserving its duration.
 
-The region must always remain inside the AudioFile duration.
+The region must always remain inside the currently discovered asset duration.
 
 ## Loop Region
 
@@ -213,6 +219,11 @@ The expected controls are conceptually:
 
 Preview must not require persisting the draft first.
 
+Preview outside a running Session belongs to an editor-local runtime. It may
+reuse the same Web Audio playback implementation, but it is stopped and disposed
+when the editor closes or its source changes. It is never treated as Scene
+playback and cannot survive navigation into or out of a Scene.
+
 ## Preview Playhead
 
 While preview is active, the waveform shows a playhead indicating the current playback position.
@@ -254,10 +265,10 @@ Rust validates the final draft again before persistence.
 
 The editor never modifies the underlying audio file.
 
-An `AudioObject` only describes how part of an `AudioFile` should be played.
+An `AudioObject` only describes how part of a referenced asset should be played.
 
 ```text
-AudioFile
+asset file
     unchanged
 
 AudioObject

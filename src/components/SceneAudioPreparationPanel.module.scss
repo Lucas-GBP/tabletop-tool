@@ -1,0 +1,91 @@
+.panel {
+  padding: 1.25rem;
+}
+
+.resources {
+  margin: var(--space-medium) 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--space-medium);
+
+  fieldset {
+    padding: var(--space-medium);
+    display: grid;
+    gap: var(--space-small);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+  }
+
+  legend {
+    padding-inline: 0.35rem;
+    font-weight: 700;
+  }
+
+  label {
+    display: flex;
+    gap: var(--space-small);
+    align-items: center;
+  }
+}
+
+.levels {
+  margin-top: var(--space-large);
+  padding-top: var(--space-large);
+  border-top: 1px solid var(--color-border);
+
+  > h3,
+  > p {
+    margin: 0;
+  }
+
+  > p {
+    margin-top: 0.25rem;
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+  }
+}
+
+.hint {
+  margin: var(--space-small) 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.dirty {
+  margin-left: var(--space-small);
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.level {
+  margin-top: var(--space-medium);
+  padding: var(--space-medium);
+  display: grid;
+  gap: var(--space-small);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-soft);
+
+  h4 {
+    margin: 0 0 0.25rem;
+  }
+
+  label {
+    display: flex;
+    gap: var(--space-small);
+    align-items: center;
+  }
+
+  span,
+  small {
+    display: block;
+  }
+
+  small {
+    color: var(--color-text-muted);
+  }
+
+  button {
+    justify-self: start;
+  }
+}

@@ -1,0 +1,124 @@
+.overlay {
+  width: 100vw;
+  max-width: none;
+  height: 100vh;
+  max-height: none;
+  margin: 0;
+  padding: clamp(1rem, 4vw, 4rem);
+  border: 0;
+  background: transparent;
+  place-items: center;
+  overflow: hidden;
+
+  &[open] {
+    display: grid;
+  }
+
+  &::backdrop {
+    background: rgb(10 7 13 / 72%);
+  }
+}
+
+.dialog {
+  width: min(52rem, 100%);
+  max-height: min(46rem, calc(100vh - 2rem));
+  padding: clamp(1rem, 3vw, 2rem);
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: var(--space-medium);
+  border: 1px solid var(--color-border-strong);
+  border-radius: calc(var(--radius-control) * 2);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-panel);
+}
+
+.header,
+.actions,
+.filters {
+  display: flex;
+  gap: var(--space-small);
+}
+
+.header {
+  justify-content: space-between;
+  align-items: start;
+}
+
+.actions {
+  flex: 0 0 auto;
+}
+
+.filters {
+  input {
+    flex: 1 1 auto;
+  }
+
+  select {
+    min-width: 12rem;
+    padding: 0.65rem;
+    color: var(--color-text);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-control);
+    background: var(--color-surface-soft);
+  }
+}
+
+.list {
+  min-height: 12rem;
+  padding-right: var(--space-small);
+  display: grid;
+  gap: var(--space-small);
+  align-content: start;
+  overflow-y: auto;
+}
+
+.asset {
+  width: 100%;
+  padding: var(--space-medium);
+  display: grid;
+  gap: 0.2rem;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-soft);
+  text-align: left;
+
+  &:hover,
+  &:focus-visible,
+  &[aria-current="true"] {
+    border-color: var(--color-accent);
+    background: var(--color-surface-active);
+    outline: none;
+  }
+
+  strong {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-small);
+  }
+
+  small {
+    color: var(--color-text-muted);
+  }
+}
+
+.current {
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+  font-size: 0.75rem;
+}
+
+@media (width <= 600px) {
+  .header,
+  .filters {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .actions button {
+    flex: 1 1 0;
+  }
+}

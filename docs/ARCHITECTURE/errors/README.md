@@ -149,6 +149,10 @@ Raw SeaORM, filesystem, or library error strings must not become the public appl
 
 Runtime-only errors belong to TypeScript.
 
+The shared `RuntimeError` contract contains `code`, `message`, `recoverable`,
+and optional `operation`, `entityId`, and `details`. Tool-specific runtime
+errors use this structure without requiring a generic ToolRuntime abstraction.
+
 Initial audio examples:
 
 ```text
@@ -178,6 +182,12 @@ Tool Runtime / Rust command
 ```
 
 The project should not rely on scattered `console.error()` calls or generic `"something went wrong"` messages as its primary error handling strategy.
+
+The Session runtime orchestration boundary catches transition failures, keeps
+the active Session mounted when possible, and exposes both the current
+user-facing error and a bounded in-memory diagnostic history to the UI. A
+successful later transition clears the current message without persisting or
+silently discarding the diagnostic history.
 
 ## Persistence Rule
 

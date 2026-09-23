@@ -86,6 +86,11 @@ export function EditableText({
         >
           {value}
         </Text>
+        {!disabled ? (
+          <span className={styles.hint} aria-hidden="true">
+            ✎
+          </span>
+        ) : null}
         <span id={instructionsId} className={styles["visually-hidden"]}>
           Clique duas vezes para editar. Pressione Enter ou F2 para editar pelo
           teclado.

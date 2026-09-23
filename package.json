@@ -5,32 +5,33 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run typecheck && vite build",
+    "build": "npm run typecheck:typescript && npm run build:frontend",
+    "build:frontend": "vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
-    "lint": "eslint . --max-warnings 0",
-    "lint:fix": "eslint . --fix --max-warnings 0",
-    "lint:styles": "stylelint \"src/**/*.scss\" --max-warnings 0",
-    "lint:styles:fix": "stylelint \"src/**/*.scss\" --fix --max-warnings 0",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "format:ts": "prettier --write .",
-    "check:format:ts": "prettier --check .",
-    "format:rs": "cargo fmt --manifest-path src-tauri/Cargo.toml --all",
-    "check:format:rs": "cargo fmt --manifest-path src-tauri/Cargo.toml --all -- --check",
-    "format": "npm run format:ts && npm run format:rs",
-    "check:format": "npm run check:format:ts && npm run check:format:rs",
-    "lint:rs": "cargo clippy --manifest-path src-tauri/Cargo.toml --workspace --all-targets --all-features --locked -- -D warnings",
-    "test:rs": "cargo test --manifest-path src-tauri/Cargo.toml --workspace --all-features --locked",
-    "bindings:generate": "node scripts/bindings.mts",
+    "check": "npm run check:format && npm run typecheck && npm run lint && npm test && npm run check:bindings && npm run build:frontend",
+    "check:format": "npm run check:prettier && npm run check:rustfmt",
+    "check:prettier": "prettier --check .",
+    "check:rustfmt": "cargo fmt --manifest-path src-tauri/Cargo.toml --all -- --check",
     "check:bindings": "node scripts/bindings.mts --check",
-    "check:ts": "npm run typecheck && npm run lint && npm run lint:styles && npm run check:format:ts && npm test",
-    "check:rs": "npm run check:format:rs && npm run lint:rs && npm run test:rs",
-    "check": "npm run check:ts && npm run check:rs && npm run check:bindings"
+    "typecheck": "npm run typecheck:typescript && npm run typecheck:rust",
+    "typecheck:typescript": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
+    "typecheck:rust": "cargo check --manifest-path src-tauri/Cargo.toml --workspace --locked",
+    "lint": "npm run lint:typescript && npm run lint:styles && npm run lint:rust",
+    "lint:typescript": "eslint . --max-warnings 0",
+    "lint:styles": "stylelint \"src/**/*.scss\" --max-warnings 0",
+    "lint:rust": "cargo clippy --manifest-path src-tauri/Cargo.toml --workspace --all-targets --all-features --locked -- -D warnings",
+    "test": "npm run test:frontend && npm run test:rust",
+    "test:frontend": "vitest run",
+    "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml --workspace --all-features --locked",
+    "format": "npm run format:prettier && npm run format:rustfmt",
+    "format:prettier": "prettier --write .",
+    "format:rustfmt": "cargo fmt --manifest-path src-tauri/Cargo.toml --all",
+    "bindings:generate": "node scripts/bindings.mts"
   },
   "dependencies": {
     "@tauri-apps/api": "2.11.1",
+    "@tauri-apps/plugin-dialog": "2.7.3",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
@@ -62,8 +63,8 @@
     "vitest": "5.0.1"
   },
   "engines": {
-    "node": ">=24.19.0 <25",
-    "npm": ">=12 <13"
+    "node": "24.21.x",
+    "npm": "11.19.x"
   },
-  "packageManager": "npm@12.0.2"
+  "packageManager": "npm@11.19.0"
 }

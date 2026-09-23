@@ -1,10 +1,13 @@
 import type { CampaignDto, SceneDto, SessionDto } from "@/api";
 import {
   ActiveScenePanel,
+  RuntimeFeedback,
+  SceneAudioRuntimePanel,
   SceneSequence,
   SessionRuntimeHeader,
 } from "@/components";
-import { useSessionRuntime } from "@/hooks";
+import { useSessionAudioRuntime, useSessionRuntime } from "@/hooks";
+import { RuntimeError } from "@/runtime";
 import styles from "./SessionRuntimePage.module.scss";
 
 interface SessionRuntimePageProps {
@@ -22,40 +25,70 @@ export function SessionRuntimePage({
 }: SessionRuntimePageProps) {
   const runtime = useSessionRuntime(session, scenes);
   const { snapshot } = runtime;
-  const previousScene = snapshot.scenes[snapshot.currentSceneIndex - 1];
-  const nextScene = snapshot.scenes[snapshot.currentSceneIndex + 1];
+  const audio = useSessionAudioRuntime(
+    session,
+    scenes,
+    snapshot?.currentScene.sceneId,
+    snapshot?.sceneRuntime.currentLevelId,
+  );
+  const sceneNames = new Map(scenes.map((scene) => [scene.id, scene.name]));
+  const currentScene = snapshot
+    ? scenes.find((scene) => scene.id === snapshot.currentScene.sceneId)
+    : undefined;
+  const unavailableSceneError =
+    snapshot && !currentScene
+      ? new RuntimeError({
+          code: "ACTIVE_SCENE_DEFINITION_NOT_FOUND",
+          message: "A definição da cena ativa não está disponível.",
+          operation: "render_session_runtime",
+          entityId: snapshot.currentScene.sceneId,
+          details: "The active Scene identity has no matching read-only DTO.",
+          recoverable: false,
+        })
+      : null;
+  const error = runtime.error ?? unavailableSceneError;
+  const diagnostics = unavailableSceneError
+    ? [...runtime.diagnostics, unavailableSceneError]
+    : runtime.diagnostics;
+  const previousScene = snapshot?.scenes[snapshot.currentSceneIndex - 1];
+  const nextScene = snapshot?.scenes[snapshot.currentSceneIndex + 1];
 
   return (
     <main className={styles.shell}>
       <SessionRuntimeHeader
         campaign={campaign}
         session={session}
-        onEnd={onEnd}
+        onEnd={() => {
+          runtime.dispose();
+          onEnd();
+        }}
       />
-      <p className={styles.notice} role="note">
-        Este é o modo de execução. Scene e SceneLevel ativos são temporários e
-        não alteram a preparação salva.
-      </p>
-      <div className={styles.workspace}>
-        <SceneSequence
-          scenes={snapshot.scenes}
-          currentSceneId={snapshot.currentScene.scene.id}
-          onSelect={(sceneId) => runtime.switchScene(sceneId)}
-        />
-        <ActiveScenePanel
-          runtimeScene={snapshot.currentScene}
-          currentLevelId={snapshot.sceneRuntime.currentLevel.id}
-          currentIndex={snapshot.currentSceneIndex}
-          sceneCount={snapshot.scenes.length}
-          onSelectLevel={(levelId) => runtime.switchLevel(levelId)}
-          onPreviousScene={() =>
-            previousScene && runtime.switchScene(previousScene.scene.id)
-          }
-          onNextScene={() =>
-            nextScene && runtime.switchScene(nextScene.scene.id)
-          }
-        />
-      </div>
+      <RuntimeFeedback error={error} diagnostics={diagnostics} />
+      <RuntimeFeedback error={audio.error} diagnostics={audio.diagnostics} />
+      {snapshot && currentScene && (
+        <div className={styles.workspace}>
+          <SceneSequence
+            scenes={snapshot.scenes}
+            sceneNames={sceneNames}
+            currentSceneId={snapshot.currentScene.sceneId}
+            onSelect={(sceneId) => runtime.switchScene(sceneId)}
+          />
+          <ActiveScenePanel
+            scene={currentScene}
+            currentLevelId={snapshot.sceneRuntime.currentLevelId}
+            currentIndex={snapshot.currentSceneIndex}
+            sceneCount={snapshot.scenes.length}
+            onSelectLevel={(levelId) => runtime.switchLevel(levelId)}
+            onPreviousScene={() =>
+              previousScene && runtime.switchScene(previousScene.sceneId)
+            }
+            onNextScene={() =>
+              nextScene && runtime.switchScene(nextScene.sceneId)
+            }
+            tools={<SceneAudioRuntimePanel audio={audio} />}
+          />
+        </div>
+      )}
     </main>
   );
 }

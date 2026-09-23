@@ -1,39 +1,41 @@
 import { Panel, SectionHeading } from "./primitives";
-import type { RuntimeScene } from "@/tools/runtime";
+import type { RuntimeScene } from "@/runtime";
 import styles from "./SceneSequence.module.scss";
 
 interface SceneSequenceProps {
-  scenes: RuntimeScene[];
+  scenes: readonly RuntimeScene[];
+  sceneNames: ReadonlyMap<string, string>;
   currentSceneId: string;
   onSelect: (sceneId: string) => void;
 }
 
 export function SceneSequence({
   scenes,
+  sceneNames,
   currentSceneId,
   onSelect,
 }: SceneSequenceProps) {
   return (
     <Panel as="section" className={styles.panel}>
       <SectionHeading eyebrow="Roteiro" title="Cenas da sessão" />
-      <p className={styles.description}>
-        Trocar de cena encerra o runtime da cena atual e inicia outro.
-      </p>
       <ol className={styles.list}>
         {scenes.map((runtimeScene, index) => {
-          const active = runtimeScene.scene.id === currentSceneId;
+          const active = runtimeScene.sceneId === currentSceneId;
           return (
             <li key={runtimeScene.associationId}>
               <button
                 type="button"
                 className={styles.scene}
                 aria-current={active ? "step" : undefined}
-                onClick={() => onSelect(runtimeScene.scene.id)}
+                onClick={() => onSelect(runtimeScene.sceneId)}
               >
                 <span className={styles.position}>{index + 1}</span>
                 <span>
-                  <strong>{runtimeScene.scene.name}</strong>
-                  <small>{active ? "Em execução" : "Preparada"}</small>
+                  <strong>
+                    {sceneNames.get(runtimeScene.sceneId) ??
+                      "Cena indisponível"}
+                  </strong>
+                  <small>{active ? "Ativa" : "Preparada"}</small>
                 </span>
               </button>
             </li>

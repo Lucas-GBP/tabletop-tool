@@ -13,12 +13,33 @@ export const commands = {
 	renameSession: (sessionId: string, name: string) => typedError<CoreSnapshotDto, AppErrorDto>(__TAURI_INVOKE("rename_session", { sessionId, name })),
 	renameScene: (sceneId: string, name: string) => typedError<CoreSnapshotDto, AppErrorDto>(__TAURI_INVOKE("rename_scene", { sceneId, name })),
 	renameSceneLevel: (levelId: string, name: string) => typedError<CoreSnapshotDto, AppErrorDto>(__TAURI_INVOKE("rename_scene_level", { levelId, name })),
+	moveSession: (sessionId: string, position: number) => typedError<CoreSnapshotDto, AppErrorDto>(__TAURI_INVOKE("move_session", { sessionId, position })),
+	moveScene: (sessionId: string, sceneId: string, position: number) => typedError<CoreSnapshotDto, AppErrorDto>(__TAURI_INVOKE("move_scene", { sessionId, sceneId, position })),
+	moveSceneLevel: (levelId: string, position: number) => typedError<CoreSnapshotDto, AppErrorDto>(__TAURI_INVOKE("move_scene_level", { levelId, position })),
 	associateScene: (sessionId: string, sceneId: string) => typedError<CoreSnapshotDto, AppErrorDto>(__TAURI_INVOKE("associate_scene", { sessionId, sceneId })),
 	deleteCampaign: (campaignId: string) => typedError<CoreSnapshotDto, AppErrorDto>(__TAURI_INVOKE("delete_campaign", { campaignId })),
 	deleteSession: (sessionId: string) => typedError<CoreSnapshotDto, AppErrorDto>(__TAURI_INVOKE("delete_session", { sessionId })),
 	deleteScene: (sceneId: string) => typedError<CoreSnapshotDto, AppErrorDto>(__TAURI_INVOKE("delete_scene", { sceneId })),
 	deleteSceneLevel: (levelId: string) => typedError<CoreSnapshotDto, AppErrorDto>(__TAURI_INVOKE("delete_scene_level", { levelId })),
 	removeSceneFromSession: (sessionId: string, sceneId: string) => typedError<CoreSnapshotDto, AppErrorDto>(__TAURI_INVOKE("remove_scene_from_session", { sessionId, sceneId })),
+	listAudioLibrary: () => typedError<AudioLibraryDto, AppErrorDto>(__TAURI_INVOKE("list_audio_library")),
+	getAppSettings: () => typedError<AppSettingsDto, AppErrorDto>(__TAURI_INVOKE("get_app_settings")),
+	configureAssetDirectory: (directory: string) => typedError<AppSettingsDto, AppErrorDto>(__TAURI_INVOKE("configure_asset_directory", { directory })),
+	resolveAssetPath: (relativePath: string) => typedError<string, AppErrorDto>(__TAURI_INVOKE("resolve_asset_path", { relativePath })),
+	createAudioObject: (input: AudioObjectInputDto) => typedError<AudioLibraryDto, AppErrorDto>(__TAURI_INVOKE("create_audio_object", { input })),
+	updateAudioObject: (audioObjectId: string, input: AudioObjectInputDto) => typedError<AudioLibraryDto, AppErrorDto>(__TAURI_INVOKE("update_audio_object", { audioObjectId, input })),
+	deleteAudioObject: (audioObjectId: string) => typedError<AudioLibraryDto, AppErrorDto>(__TAURI_INVOKE("delete_audio_object", { audioObjectId })),
+	createAudioList: (input: AudioListInputDto) => typedError<AudioLibraryDto, AppErrorDto>(__TAURI_INVOKE("create_audio_list", { input })),
+	updateAudioList: (audioListId: string, input: AudioListInputDto) => typedError<AudioLibraryDto, AppErrorDto>(__TAURI_INVOKE("update_audio_list", { audioListId, input })),
+	deleteAudioList: (audioListId: string) => typedError<AudioLibraryDto, AppErrorDto>(__TAURI_INVOKE("delete_audio_list", { audioListId })),
+	createAudioComposition: (input: AudioCompositionInputDto) => typedError<AudioLibraryDto, AppErrorDto>(__TAURI_INVOKE("create_audio_composition", { input })),
+	updateAudioComposition: (audioCompositionId: string, input: AudioCompositionInputDto) => typedError<AudioLibraryDto, AppErrorDto>(__TAURI_INVOKE("update_audio_composition", { audioCompositionId, input })),
+	deleteAudioComposition: (audioCompositionId: string) => typedError<AudioLibraryDto, AppErrorDto>(__TAURI_INVOKE("delete_audio_composition", { audioCompositionId })),
+	updateAudioMixerSettings: (input: AudioMixerSettingsInputDto) => typedError<AudioLibraryDto, AppErrorDto>(__TAURI_INVOKE("update_audio_mixer_settings", { input })),
+	getSceneAudioConfiguration: (sceneId: string) => typedError<SceneAudioConfigurationDto, AppErrorDto>(__TAURI_INVOKE("get_scene_audio_configuration", { sceneId })),
+	updateSceneAudioConfiguration: (sceneId: string, audioObjectIds: string[], audioListIds: string[], audioCompositionIds: string[]) => typedError<SceneAudioConfigurationDto, AppErrorDto>(__TAURI_INVOKE("update_scene_audio_configuration", { sceneId, audioObjectIds, audioListIds, audioCompositionIds })),
+	getSceneLevelAudioConfiguration: (sceneLevelId: string) => typedError<SceneLevelAudioConfigurationDto, AppErrorDto>(__TAURI_INVOKE("get_scene_level_audio_configuration", { sceneLevelId })),
+	updateSceneLevelAudioConfiguration: (sceneLevelId: string, disabledLayerIds: string[]) => typedError<SceneLevelAudioConfigurationDto, AppErrorDto>(__TAURI_INVOKE("update_scene_level_audio_configuration", { sceneLevelId, disabledLayerIds })),
 };
 
 /* Types */
@@ -31,21 +52,154 @@ export type AppErrorDto = {
 	recoverable: boolean,
 };
 
+export type AppSettingsDto = {
+	assetDirectory: string | null,
+};
+
+export type AudioAssetDto = {
+	name: string,
+	originalFileName: string,
+	relativePath: string,
+	mediaType: string,
+	durationUs: number,
+	sizeBytes: number,
+};
+
+export type AudioCompositionDto = {
+	id: string,
+	name: string,
+	layers: CompositionLayerDto[],
+};
+
+export type AudioCompositionInputDto = {
+	name: string,
+	layers: CompositionLayerInputDto[],
+};
+
+export type AudioLibraryDto = {
+	assetDirectory: string | null,
+	files: AudioAssetDto[],
+	objects: AudioObjectDto[],
+	lists: AudioListDto[],
+	compositions: AudioCompositionDto[],
+	settings: AudioMixerSettingsDto,
+};
+
+export type AudioListDto = {
+	id: string,
+	name: string,
+	selectionMode: AudioListSelectionModeDto,
+	entries: AudioListEntryDto[],
+};
+
+export type AudioListEntryDto = {
+	audioObjectId: string,
+	position: number,
+	weight: number,
+};
+
+export type AudioListEntryInputDto = {
+	audioObjectId: string,
+	weight: number,
+};
+
+export type AudioListInputDto = {
+	name: string,
+	selectionMode: AudioListSelectionModeDto,
+	entries: AudioListEntryInputDto[],
+};
+
+export type AudioListSelectionModeDto = "sequential" | "random" | "weightedRandom";
+
+export type AudioMixerSettingsDto = {
+	masterVolumeDb: number,
+};
+
+export type AudioMixerSettingsInputDto = {
+	masterVolumeDb: number,
+};
+
+export type AudioObjectDto = {
+	id: string,
+	name: string,
+	assetPath: string,
+	volumeDb: number,
+	startTimeUs: number,
+	endTimeUs: number,
+	startLoopTimeUs: number | null,
+	endLoopTimeUs: number | null,
+	fadeInDurationUs: number,
+	fadeOutDurationUs: number,
+	loopCrossfadeDurationUs: number | null,
+};
+
+export type AudioObjectInputDto = {
+	name: string,
+	assetPath: string,
+	volumeDb: number,
+	startTimeUs: number,
+	endTimeUs: number,
+	startLoopTimeUs: number | null,
+	endLoopTimeUs: number | null,
+	fadeInDurationUs: number,
+	fadeOutDurationUs: number,
+	loopCrossfadeDurationUs: number | null,
+};
+
 export type CampaignDto = {
 	id: string,
 	name: string,
 	sessions: SessionDto[],
 };
 
+export type CompositionLayerDto = {
+	id: string,
+	name: string,
+	position: number,
+	source: CompositionLayerSourceDto,
+	execution: LayerExecutionDto,
+	disableBehavior: DisableBehaviorDto,
+};
+
+export type CompositionLayerInputDto = {
+	id: string | null,
+	name: string,
+	source: CompositionLayerSourceInputDto,
+	execution: LayerExecutionInputDto,
+	disableBehavior: DisableBehaviorDto,
+};
+
+export type CompositionLayerSourceDto = { kind: "audioObject"; audioObjectId: string } | { kind: "audioList"; audioListId: string };
+
+export type CompositionLayerSourceInputDto = { kind: "audioObject"; audioObjectId: string } | { kind: "audioList"; audioListId: string };
+
 export type CoreSnapshotDto = {
 	campaigns: CampaignDto[],
 	scenes: SceneDto[],
+};
+
+export type DisableBehaviorDto = "stop" | "finish";
+
+export type LayerExecutionDto = { kind: "continuous" } | { kind: "randomInterval"; minIntervalUs: number; maxIntervalUs: number };
+
+export type LayerExecutionInputDto = { kind: "continuous" } | { kind: "randomInterval"; minIntervalUs: number; maxIntervalUs: number };
+
+export type SceneAudioConfigurationDto = {
+	sceneId: string,
+	audioObjectIds: string[],
+	audioListIds: string[],
+	audioCompositionIds: string[],
 };
 
 export type SceneDto = {
 	id: string,
 	name: string,
 	levels: SceneLevelDto[],
+};
+
+export type SceneLevelAudioConfigurationDto = {
+	sceneLevelId: string,
+	disabledLayerIds: string[],
 };
 
 export type SceneLevelDto = {

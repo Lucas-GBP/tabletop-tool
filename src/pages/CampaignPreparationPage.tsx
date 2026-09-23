@@ -33,7 +33,7 @@ export function CampaignPreparationPage({
         onDelete={() => workspace.deleteCampaign(campaign.id)}
         onBack={onBack}
       />
-      <WorkspaceFeedback error={workspace.error} notice={workspace.notice} />
+      <WorkspaceFeedback error={workspace.error} />
       <div className={styles.workspace}>
         <CampaignWorkspace
           campaign={campaign}
@@ -48,7 +48,9 @@ export function CampaignPreparationPage({
           }
           onRenameSession={workspace.renameSession}
           onDeleteSession={workspace.deleteSession}
+          onMoveSession={workspace.moveSession}
           onAssociateScene={workspace.associateScene}
+          onMoveScene={workspace.moveScene}
           onRemoveScene={workspace.removeSceneFromSession}
         />
       </div>

@@ -1,0 +1,142 @@
+.editor {
+  display: grid;
+  gap: var(--space-small);
+}
+
+.waveform {
+  width: 100%;
+  min-height: 14rem;
+  display: block;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-soft);
+  touch-action: none;
+  user-select: none;
+
+  &[data-interaction="create"] {
+    cursor: crosshair;
+  }
+
+  &[data-interaction="start"],
+  &[data-interaction="end"] {
+    cursor: ew-resize;
+  }
+
+  &[data-interaction="move"] {
+    cursor: grab;
+  }
+}
+
+.background {
+  fill: var(--color-surface-soft);
+}
+
+.peaks {
+  pointer-events: none;
+  stroke: var(--color-text-muted);
+  stroke-width: 1.2;
+  opacity: 0.7;
+}
+
+.region,
+.handles,
+.playhead {
+  pointer-events: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.region {
+  transition: opacity 120ms ease;
+}
+
+.playback {
+  fill: var(--color-accent-soft);
+  fill-opacity: 0.4;
+  stroke: var(--color-accent);
+  stroke-width: 2;
+}
+
+.loop {
+  fill: var(--color-success);
+  fill-opacity: 0.2;
+  stroke: var(--color-success);
+  stroke-width: 2;
+  stroke-dasharray: 8 5;
+}
+
+.active {
+  opacity: 1;
+}
+
+.inactive {
+  opacity: 0.45;
+}
+
+.handles {
+  color: var(--color-text);
+
+  line {
+    stroke: currentcolor;
+    stroke-width: 2;
+  }
+
+  path {
+    fill: currentcolor;
+  }
+}
+
+.move-bar {
+  fill: var(--color-accent);
+  fill-opacity: 0.42;
+}
+
+.playhead {
+  color: var(--color-text);
+
+  line {
+    stroke: currentcolor;
+    stroke-width: 2;
+  }
+
+  path {
+    fill: currentcolor;
+  }
+}
+
+.legend {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-medium);
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+
+  output {
+    flex: 0 0 auto;
+    color: var(--color-text);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.seek {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-small);
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+
+  input {
+    width: 100%;
+    accent-color: var(--color-accent);
+  }
+}
+
+@media (width <= 600px) {
+  .legend span {
+    display: none;
+  }
+
+  .legend {
+    justify-content: flex-end;
+  }
+}

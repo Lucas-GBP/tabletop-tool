@@ -1,0 +1,137 @@
+@use "workspace-page";
+
+.shell,
+.loading {
+  @include workspace-page.shell(1.5rem clamp(1rem, 4vw, 4rem) 3rem);
+}
+
+.loading {
+  @include workspace-page.loading;
+}
+
+.header,
+.tabs,
+.search,
+.panel,
+.settings {
+  @include workspace-page.container(1400px);
+}
+
+.header {
+  @include workspace-page.header(var(--space-medium), true, 0.08em);
+
+  h1 {
+    font-family: var(--font-family-display);
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+  }
+
+  span {
+    color: var(--color-text-muted);
+  }
+}
+
+.tabs {
+  margin-block: var(--space-medium);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-small);
+}
+
+.search {
+  margin-bottom: var(--space-medium);
+  display: block;
+}
+
+.panel {
+  margin-bottom: var(--space-medium);
+  padding: var(--space-large);
+}
+
+.section-header {
+  margin-bottom: var(--space-medium);
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: var(--space-medium);
+}
+
+.resources {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-small);
+  list-style: none;
+
+  li {
+    padding: var(--space-medium);
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-medium);
+    align-items: center;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: var(--color-surface-soft);
+  }
+
+  small {
+    display: block;
+    color: var(--color-text-muted);
+  }
+}
+
+.actions,
+.volume,
+.source-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-small);
+  align-items: end;
+}
+
+.settings {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
+  gap: var(--space-medium);
+  align-items: start;
+
+  .panel {
+    margin-bottom: 0;
+  }
+}
+
+.directory {
+  margin-top: var(--space-small);
+  display: block;
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.summary {
+  margin: var(--space-medium) 0 0;
+  color: var(--color-text-muted);
+}
+
+.definition-with-warning {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.volume label {
+  display: grid;
+  gap: 0.25rem;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+@media (width <= 800px) {
+  .settings {
+    grid-template-columns: 1fr;
+  }
+
+  .header,
+  .section-header,
+  .resources li {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

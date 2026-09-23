@@ -1,0 +1,119 @@
+@use "workspace-page";
+
+.shell,
+.loading {
+  @include workspace-page.shell(1.5rem clamp(1rem, 4vw, 4rem) 3rem);
+}
+
+.loading {
+  @include workspace-page.loading;
+}
+
+.header,
+.workspace {
+  @include workspace-page.container(1400px);
+}
+
+.header {
+  @include workspace-page.header(var(--space-large));
+}
+
+.header-save {
+  margin-left: auto;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(18rem, 0.8fr);
+  gap: var(--space-large);
+  align-items: start;
+}
+
+.waveform-panel,
+.settings {
+  padding: var(--space-large);
+}
+
+.waveform-loading {
+  min-height: 14rem;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-soft);
+}
+
+.asset-control {
+  padding: var(--space-small);
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-small);
+  align-items: center;
+  color: var(--color-text);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-soft);
+
+  > span {
+    overflow-wrap: anywhere;
+  }
+}
+
+.region-buttons,
+.preview {
+  margin: var(--space-medium) 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-small);
+  align-items: center;
+
+  button[aria-pressed="true"] {
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+    background: var(--color-accent-soft);
+  }
+
+  span {
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+  }
+}
+
+.settings {
+  display: grid;
+  gap: var(--space-medium);
+
+  label {
+    display: grid;
+    gap: 0.3rem;
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+  }
+
+  select {
+    width: 100%;
+    padding: 0.7rem;
+    color: var(--color-text);
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-control);
+    background: var(--color-surface-soft);
+  }
+
+  .checkbox {
+    display: flex;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+  }
+}
+
+@media (width <= 900px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .header {
+    flex-wrap: wrap;
+  }
+}

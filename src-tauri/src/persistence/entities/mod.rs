@@ -1,5 +1,16 @@
+pub mod app_settings;
+pub mod audio_composition;
+pub mod audio_composition_layer;
+pub mod audio_list;
+pub mod audio_list_entry;
+pub mod audio_mixer_settings;
+pub mod audio_object;
 pub mod campaign;
 pub mod scene;
+pub mod scene_audio_composition;
+pub mod scene_audio_list;
+pub mod scene_audio_object;
 pub mod scene_level;
+pub mod scene_level_audio_disabled_layer;
 pub mod session;
 pub mod session_scene;

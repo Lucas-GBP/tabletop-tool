@@ -18,13 +18,13 @@ Tavern Ambience
 │   └── Continuous
 ├── Mug Clanks
 │   ├── AudioList
-│   └── Periodic
+│   └── RandomInterval
 ├── Coins
 │   ├── AudioList
-│   └── Periodic
+│   └── RandomInterval
 └── Laughter
     ├── AudioList
-    └── Periodic
+    └── RandomInterval
 ```
 
 ## Responsibility
@@ -82,7 +82,7 @@ A layer has one execution mode:
 
 ```text
 Continuous
-Periodic
+RandomInterval
 ```
 
 ### Continuous
@@ -103,9 +103,9 @@ execute source
 source continues according to its own behavior
 ```
 
-### Periodic
+### RandomInterval
 
-A periodic layer automatically executes its source repeatedly at independently sampled intervals.
+A random-interval layer automatically executes its source repeatedly at independently sampled intervals.
 
 It stores:
 
@@ -144,9 +144,9 @@ execute source
 
 The interval is measured from the moment the previous execution begins, not from when that playback ends.
 
-Therefore, periodic executions may overlap.
+Therefore, random-interval executions may overlap.
 
-## Periodic Scheduling
+## RandomInterval Scheduling
 
 Each delay is sampled uniformly from the configured interval.
 
@@ -184,7 +184,7 @@ There is no persistent or cumulative probability state.
 
 ### Enabling
 
-Enabling a periodic layer always starts a new schedule:
+Enabling a random-interval layer always starts a new schedule:
 
 ```text
 OFF
@@ -200,13 +200,13 @@ It does not execute immediately.
 
 ### Disabling
 
-Disabling a periodic layer cancels its pending schedule.
+Disabling a random-interval layer cancels its pending schedule.
 
 If later re-enabled, the layer samples a new interval from scratch. It does not resume a partially elapsed delay.
 
 ## Overlapping Executions
 
-Periodic layers explicitly allow overlapping executions.
+RandomInterval layers explicitly allow overlapping executions.
 
 If a new scheduled execution occurs while a previous `Playback Instance` created by the same layer is still active, another playback may be created.
 
@@ -271,7 +271,7 @@ natural fade-out
 Finished
 ```
 
-For periodic layers, disabling also cancels all future scheduled executions.
+For random-interval layers, disabling also cancels all future scheduled executions.
 
 The configured `Stop` or `Finish` behavior applies to playback instances already active when the layer is disabled.
 
@@ -291,7 +291,7 @@ The runtime instance may manage:
 
 - enabled/disabled layer state;
 - active `Playback Instance`s;
-- periodic timers/schedulers;
+- random-interval timers/schedulers;
 - pending next execution times.
 
 None of this runtime state is persisted in SQLite.
@@ -353,7 +353,7 @@ Disabled
 Scene Levels do not initially override:
 
 - volume;
-- periodic intervals;
+- random-interval intervals;
 - Audio Object configuration;
 - Audio List selection mode;
 - fade durations;
@@ -434,7 +434,7 @@ AudioComposition
     │
     ├── execution_mode
     │   ├── Continuous
-    │   └── Periodic
+    │   └── RandomInterval
     │       ├── min_interval_us
     │       └── max_interval_us
     │
@@ -461,13 +461,13 @@ source is exactly one of:
 - AudioList
 ```
 
-For periodic layers:
+For random-interval layers:
 
 ```text
 0 <= min_interval_us <= max_interval_us
 ```
 
-Periodic scheduling state is runtime-only.
+RandomInterval scheduling state is runtime-only.
 
 ## Explicitly Out of Scope
 
@@ -519,7 +519,7 @@ Runtime
 ───────
 AudioCompositionInstance
 ├── active layer state
-├── periodic schedules
+├── random-interval schedules
 ├── PlaybackIds
 └── commands sent to AudioMixer
 ```

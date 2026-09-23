@@ -3,9 +3,10 @@
 This directory contains the architectural and domain documentation for
 `tabletop-tools`.
 
-The architecture is ready for implementation. These documents define mandatory
-concepts, responsibilities, boundaries, dependencies, invariants, and lifecycle
-rules. Development tooling is configured; product features remain to be implemented.
+These documents define mandatory concepts, responsibilities, boundaries,
+dependencies, invariants, and lifecycle rules. The local application currently
+implements the persistent Core workflow and the Audio Mixer from preparation
+through Session runtime; future tools must continue to follow these contracts.
 
 See [Development Setup](./DEVELOPMENT.md) for installation, quality checks,
 generated IPC bindings, migrations, and CI.

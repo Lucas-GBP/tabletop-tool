@@ -2,7 +2,7 @@
 
 Aplicação desktop local para preparar e conduzir sessões de RPG, com Tauri 2, React, TypeScript e Vite. A tela inicial organiza Campaigns; dentro de cada Campaign, a interface separa o modo de preparação da mesa em andamento, permite preparar Sessions, criar Scenes e SceneLevels e reutilizar Scenes entre Sessions.
 
-A arquitetura documentada define requisitos obrigatórios para a implementação. O Core Domain está integrado ao backend Tauri, com entidades SeaORM, migração SQLite, IPC tipado e interface React. O Audio Mixer ainda não foi implementado. As marcações `[x]` em [Implementation Readiness](docs/ARCHITECTURE/IMPLEMENTATION_READINESS.md) indicam decisões fechadas, não funcionalidades entregues.
+A arquitetura documentada define requisitos obrigatórios para a implementação. O Core Domain e o Audio Mixer estão integrados ao backend Tauri e à interface React, com persistência SQLite, raiz geral de assets configurável, referências relativas, IPC tipado e runtime Web Audio. [Implementation Readiness](docs/ARCHITECTURE/IMPLEMENTATION_READINESS.md) reúne as decisões fechadas; o progresso fica em `.agents/`.
 
 Para orientar as próximas tarefas, leia:
 
@@ -14,7 +14,7 @@ As instruções locais para agentes ficam em `AGENTS.md` e `.agents/`, quando pr
 
 ## Executar localmente
 
-Pré-requisitos: Node.js 24.19.0, npm 12.0.2, Rust 1.95.0 e as dependências de sistema do Tauri. As versões estão registradas em `.node-version`, `package.json` e `rust-toolchain.toml`; consulte o [guia de desenvolvimento](docs/DEVELOPMENT.md).
+Pré-requisitos: Node.js 24.21.x, npm 11.19.x, Rust 1.95.0 e as dependências de sistema do Tauri. As versões estão registradas em `.node-version`, `package.json` e `rust-toolchain.toml`; consulte o [guia de desenvolvimento](docs/DEVELOPMENT.md).
 
 Na raiz do repositório:
 
@@ -30,21 +30,22 @@ O último comando inicia o frontend Vite e a aplicação desktop Tauri.
 
 Os scripts atuais estão definidos em [package.json](package.json):
 
-| Comando                     | Função                                                              |
-| --------------------------- | ------------------------------------------------------------------- |
-| `npm run dev`               | Iniciar somente o frontend Vite.                                    |
-| `npm run check`             | Verificar frontend, Rust, testes e sincronização dos contratos IPC. |
-| `npm run format`            | Aplicar Prettier e rustfmt.                                         |
-| `npm test`                  | Executar os testes do frontend.                                     |
-| `npm run test:rs`           | Executar os testes do workspace Rust.                               |
-| `npm run bindings:generate` | Gerar TypeScript a partir dos contratos Rust.                       |
-| `npm run build`             | Verificar TypeScript e gerar o build do frontend.                   |
-| `npm run preview`           | Servir localmente o build do frontend.                              |
-| `npm run tauri dev`         | Executar a aplicação desktop em desenvolvimento.                    |
-| `npm run tauri build`       | Compilar e empacotar a aplicação desktop.                           |
+| Comando                     | Função                                                             |
+| --------------------------- | ------------------------------------------------------------------ |
+| `npm run dev`               | Iniciar somente o frontend Vite.                                   |
+| `npm run check`             | Executar o quality gate completo e gerar o bundle frontend.        |
+| `npm run typecheck`         | Verificar TypeScript e o workspace Rust.                           |
+| `npm run lint`              | Executar ESLint, Stylelint e Clippy.                               |
+| `npm test`                  | Executar os testes frontend e Rust.                                |
+| `npm run format`            | Aplicar Prettier e rustfmt.                                        |
+| `npm run bindings:generate` | Gerar TypeScript a partir dos contratos Rust.                      |
+| `npm run build`             | Verificar TypeScript e gerar o build do frontend usado pelo Tauri. |
+| `npm run preview`           | Servir localmente o build do frontend.                             |
+| `npm run tauri dev`         | Executar a aplicação desktop em desenvolvimento.                   |
+| `npm run tauri build`       | Compilar e empacotar a aplicação desktop.                          |
 
 `tauri` encaminha os argumentos à CLI do Tauri. ESLint, Stylelint, Prettier, Vitest/Testing Library, SCSS Modules, rustfmt e Clippy estão configurados. SeaORM/SQLite persiste o Core no diretório local da aplicação; Specta/tauri-specta gera o contrato consumido pela interface. Veja a [lista completa de comandos](docs/DEVELOPMENT.md#commands).
 
 ## Automação
 
-O [CI](.github/workflows/ci.yml) verifica qualidade, testes, contratos gerados e compilação desktop em Windows, Linux e macOS. A execução manual pode gerar instaladores de teste como artifacts, sem publicar releases. Consulte os [detalhes dos workflows](.github/workflows/README.md).
+O [CI](.github/workflows/ci.yml) verifica qualidade, testes, contratos gerados e compilação desktop em Windows e Linux. A execução manual pode gerar instaladores de teste como artifacts, sem publicar releases. Consulte os [detalhes dos workflows](.github/workflows/README.md).

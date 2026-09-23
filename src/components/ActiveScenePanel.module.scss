@@ -1,11 +1,11 @@
 .panel {
-  padding: clamp(1.25rem, 3vw, 2rem);
+  padding: var(--space-large);
 }
 
 .levels,
 .tools {
-  margin-top: var(--space-large);
-  padding-top: var(--space-large);
+  margin-top: var(--space-medium);
+  padding-top: var(--space-medium);
   border-top: 1px solid var(--color-border);
 
   h3,
@@ -25,7 +25,7 @@
 }
 
 .level-list {
-  margin-top: var(--space-medium);
+  margin-top: var(--space-small);
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-small);
@@ -43,32 +43,22 @@
 }
 
 .tools > div {
-  margin-top: var(--space-medium);
+  margin-top: var(--space-small);
 }
 
 .navigation {
-  margin-top: var(--space-large);
-  padding-top: var(--space-large);
-  display: grid;
-  grid-template-columns: auto minmax(10rem, 1fr) auto;
+  margin-top: var(--space-medium);
+  padding-top: var(--space-medium);
+  display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: var(--space-medium);
   border-top: 1px solid var(--color-border);
-
-  span {
-    color: var(--color-text-muted);
-    font-size: 0.78rem;
-    text-align: center;
-  }
 }
 
 @media (width <= 720px) {
   .navigation {
+    display: grid;
     grid-template-columns: 1fr 1fr;
-
-    span {
-      grid-column: 1 / -1;
-      grid-row: 1;
-    }
   }
 }

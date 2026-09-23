@@ -8,148 +8,150 @@ Further architecture-first modeling should stop unless implementation reveals a 
 
 ## Core Domain
 
-- [x] `Campaign`, `Session`, `Scene`, and `SceneLevel` defined.
-- [x] Entity identity uses UUID.
-- [x] User-visible Core definitions have a non-empty display name; surrounding
-      whitespace is removed before persistence.
-- [x] Campaign, Session, Scene, and SceneLevel expose basic create, read,
-      rename, and delete operations.
-- [x] SessionScene associations can be added and removed without deleting their
-      reusable Scene.
-- [x] `Session` belongs to exactly one `Campaign`.
-- [x] A `Campaign` always contains at least one `Session`.
-- [x] Creating a `Campaign` creates its first `Session`.
-- [x] Creating a `Campaign` atomically creates an independent initial `Scene`,
-      its first `SceneLevel`, and the initial `SessionScene` association.
-- [x] Creating an additional `Session` requires an existing `Scene` for that
-      Session's initial `SessionScene` association.
-- [x] `Scene` is reusable across Sessions.
-- [x] `Session` and `Scene` have an N:N relationship through `SessionScene`.
-- [x] The same `Scene` cannot appear more than once in the same `Session`.
-- [x] A `Scene` always contains at least one `SceneLevel`.
-- [x] Creating a `Scene` creates its first `SceneLevel`.
-- [x] Deleting a `Campaign` deletes its Sessions and their `SessionScene` associations.
-- [x] Deleting a `Session` does not delete Scenes.
-- [x] The last `Session` of a Campaign cannot be deleted directly.
-- [x] Deleting a `Scene` deletes its SceneLevels and Session associations.
-- [x] Deleting a `Scene` is rejected before mutation if an affected `Session`
-      would otherwise become empty.
-- [x] The last `SceneLevel` of a Scene cannot be deleted directly.
-- [x] Ordering uses dense integer `position` values starting at zero.
-- [x] Insert, remove, and reorder operations keep positions normalized.
+- `Campaign`, `Session`, `Scene`, and `SceneLevel` defined.
+- Entity identity uses UUID.
+- User-visible Core definitions have a non-empty display name; surrounding
+  whitespace is removed before persistence.
+- Campaign, Session, Scene, and SceneLevel expose basic create, read,
+  rename, and delete operations.
+- SessionScene associations can be added and removed without deleting their
+  reusable Scene.
+- `Session` belongs to exactly one `Campaign`.
+- A `Campaign` always contains at least one `Session`.
+- Creating a `Campaign` creates its first `Session`.
+- Creating a `Campaign` atomically creates an independent initial `Scene`,
+  its first `SceneLevel`, and the initial `SessionScene` association.
+- Creating an additional `Session` requires an existing `Scene` for that
+  Session's initial `SessionScene` association.
+- `Scene` is reusable across Sessions.
+- `Session` and `Scene` have an N:N relationship through `SessionScene`.
+- The same `Scene` cannot appear more than once in the same `Session`.
+- A `Scene` always contains at least one `SceneLevel`.
+- Creating a `Scene` creates its first `SceneLevel`.
+- Deleting a `Campaign` deletes its Sessions and their `SessionScene` associations.
+- Deleting a `Session` does not delete Scenes.
+- The last `Session` of a Campaign cannot be deleted directly.
+- Deleting a `Scene` deletes its SceneLevels and Session associations.
+- Deleting a `Scene` is rejected before mutation if an affected `Session`
+  would otherwise become empty.
+- The last `SceneLevel` of a Scene cannot be deleted directly.
+- Ordering uses dense integer `position` values starting at zero.
+- Insert, remove, and reorder operations keep positions normalized.
 
 ## Persistence
 
-- [x] SQLite is the structured-data store.
-- [x] SeaORM is the Rust persistence layer.
-- [x] Migrations are used from the beginning.
-- [x] Binary files are not stored as SQLite BLOBs.
-- [x] User audio is imported into application-managed storage.
-- [x] Initial audio storage path is conceptually `AppData/media/audio/`.
-- [x] Each import creates a new physical copy.
-- [x] Physical filenames are UUID-based.
-- [x] No content deduplication is performed.
-- [x] Rust owns filesystem import and persistent metadata.
+- SQLite is the structured-data store.
+- SeaORM is the Rust persistence layer.
+- Migrations are used from the beginning.
+- Binary files are not stored as SQLite BLOBs.
+- The user configures one general asset root for the application.
+- Supported audio files are discovered recursively and referenced in place.
+- The application does not copy, rename, or delete source asset files.
+- Rust owns directory scanning, media probing, and safe relative-path resolution.
+- The absolute asset root is stored once; persistent definitions store relative paths.
+- The discovered file catalog is transient and has no persistent `AudioFile` entity.
+- Referenced missing files remain in their owning definitions and are reported as unavailable.
 
 ## Persistent vs Runtime Boundary
 
-- [x] Persistent definitions and runtime state are separate concepts.
-- [x] Rust is the default authority over persistent definitions.
-- [x] TypeScript is the default authority over volatile Scene execution.
-- [x] Runtime changes never implicitly modify persistent definitions.
-- [x] `SceneRuntime` survives SceneLevel changes.
-- [x] `SceneRuntime` is discarded when leaving the Scene.
-- [x] Application shutdown discards runtime state.
-- [x] Core Domain never depends on Tools.
-- [x] Tools may depend on Core Domain.
-- [x] No generic `ToolRuntime` Rust trait is introduced before multiple Tools demonstrate a stable shared API.
+- Persistent definitions and runtime state are separate concepts.
+- Rust is the default authority over persistent definitions.
+- TypeScript is the default authority over volatile Scene execution.
+- Runtime changes never implicitly modify persistent definitions.
+- `SceneRuntime` survives SceneLevel changes.
+- `SceneRuntime` is discarded when leaving the Scene.
+- Application shutdown discards runtime state.
+- Core Domain never depends on Tools.
+- Tools may depend on Core Domain.
+- No generic `ToolRuntime` Rust trait is introduced before multiple Tools demonstrate a stable shared API.
 
 ## Persistent Audio Model
 
-- [x] `AudioFile` defined.
-- [x] `AudioObject` defined.
-- [x] `AudioList` defined.
-- [x] `AudioCue = AudioObject | AudioList`.
-- [x] `AudioComposition` is not an AudioCue.
-- [x] Volume is stored in dB.
-- [x] Time values are stored as integer microseconds.
-- [x] Playback region defined.
-- [x] Optional loop region defined.
-- [x] Fade-in and fade-out defined.
-- [x] Loop crossfade is a required first-version feature.
-- [x] `AudioList` supports Sequential, Random, and WeightedRandom.
-- [x] Random modes allow immediate repetition.
-- [x] WeightedRandom uses positive relative integer weights.
-- [x] Sequential cursor is runtime-only.
-- [x] Composition layers use Continuous or RandomInterval activation.
-- [x] RandomInterval allows overlapping executions.
-- [x] Layer disable behavior is Stop or Finish.
-- [x] All Composition layers are ON by default.
+- Transient audio-asset discovery defined for WAV, MP3, OGG, FLAC, M4A, AAC, and WebM.
+- `AudioObject` defined.
+- `AudioObject` stores a normalized path relative to the configured asset root.
+- `AudioList` defined.
+- `AudioCue = AudioObject | AudioList`.
+- `AudioComposition` is not an AudioCue.
+- Volume is stored in dB.
+- Time values are stored as integer microseconds.
+- Playback region defined.
+- Optional loop region defined.
+- Fade-in and fade-out defined.
+- Loop crossfade is a required first-version feature.
+- `AudioList` supports Sequential, Random, and WeightedRandom.
+- Random modes allow immediate repetition.
+- WeightedRandom uses positive relative integer weights.
+- Sequential cursor is runtime-only.
+- Composition layers use Continuous or RandomInterval activation.
+- RandomInterval allows overlapping executions.
+- Layer disable behavior is Stop or Finish.
+- All Composition layers are ON by default.
 
 ## Scene Audio Configuration
 
-- [x] A Scene may expose zero or more AudioCues.
-- [x] A Scene may expose zero or more AudioCompositions.
-- [x] Audio resources may be reused across Scenes.
-- [x] Direct Scene AudioCues are available during every SceneLevel.
-- [x] Every Composition belonging to a Scene is available to every SceneLevel.
-- [x] SceneLevel configuration stores only Composition-layer overrides from the default ON state.
-- [x] Runtime layer overrides take precedence over SceneLevel overrides.
-- [x] Runtime overrides survive SceneLevel changes.
-- [x] Runtime overrides are discarded when leaving the Scene or closing the application.
+- A Scene may expose zero or more AudioCues.
+- A Scene may expose zero or more AudioCompositions.
+- Audio resources may be reused across Scenes.
+- Direct Scene AudioCues are available during every SceneLevel.
+- Every Composition belonging to a Scene is available to every SceneLevel.
+- SceneLevel configuration stores only Composition-layer overrides from the default ON state.
+- Runtime layer overrides take precedence over SceneLevel overrides.
+- Runtime overrides survive SceneLevel changes.
+- Runtime overrides are discarded when leaving the Scene or closing the application.
 
 ## Audio Runtime
 
-- [x] The initial audio engine is the Web Audio API.
-- [x] No native Rust audio engine is required initially.
-- [x] `AudioMixer` lives in TypeScript.
-- [x] `PlaybackInstance` lives in TypeScript.
-- [x] `AudioCompositionInstance` lives in TypeScript.
-- [x] `SceneAudioRuntime` lives in TypeScript.
-- [x] `AudioMixer.play(AudioCue) -> PlaybackId`.
-- [x] Mixer owns active PlaybackInstances.
-- [x] Finished PlaybackInstances are removed.
-- [x] `PlaybackId` does not retain playback ownership.
-- [x] `PlaybackInfo` is a read-only runtime snapshot.
-- [x] Pause/resume semantics defined.
-- [x] Stop semantics defined.
-- [x] Finish semantics defined.
-- [x] Fade-in/fade-out required.
-- [x] Loop region required.
-- [x] Loop crossfade required.
-- [x] Crossfade loops may use overlapping scheduled Web Audio sources.
-- [x] Master volume is persistent configuration represented in dB.
-- [x] Initial output uses the system/default WebView audio output.
-- [x] No global audio scope exists initially.
-- [x] All runtime audio belongs to the current Scene.
-- [x] Leaving a Scene stops its audio, cancels timers, discards CompositionInstances and runtime overrides.
-- [x] Continuous state that must survive a transition should normally be modeled as SceneLevels of the same Scene rather than separate Scenes.
+- The initial audio engine is the Web Audio API.
+- No native Rust audio engine is required initially.
+- `AudioMixer` lives in TypeScript.
+- `PlaybackInstance` lives in TypeScript.
+- `AudioCompositionInstance` lives in TypeScript.
+- `SceneAudioRuntime` lives in TypeScript.
+- `AudioMixer.play(AudioCue) -> PlaybackId`.
+- Mixer owns active PlaybackInstances.
+- Finished PlaybackInstances are removed.
+- `PlaybackId` does not retain playback ownership.
+- `PlaybackInfo` is a read-only runtime snapshot.
+- Pause/resume semantics defined.
+- Stop semantics defined.
+- Finish semantics defined.
+- Fade-in/fade-out required.
+- Loop region required.
+- Loop crossfade required.
+- Crossfade loops may use overlapping scheduled Web Audio sources.
+- Master volume is persistent configuration represented in dB.
+- Initial output uses the system/default WebView audio output.
+- No global audio scope exists initially.
+- All runtime audio belongs to the current Scene.
+- Leaving a Scene stops its audio, cancels timers, discards CompositionInstances and runtime overrides.
+- Continuous state that must survive a transition should normally be modeled as SceneLevels of the same Scene rather than separate Scenes.
 
 ## Error Handling
 
-- [x] Invalid persistent configuration is rejected before saving.
-- [x] Rust uses typed validation/persistence errors.
-- [x] IPC exposes structured stable error DTOs.
-- [x] Runtime errors are non-fatal by default.
-- [x] A failed playback or layer does not terminate unrelated Scene runtime.
-- [x] Runtime errors are structured and diagnosable.
-- [x] User-facing feedback and technical diagnostic context are distinct.
-- [x] Rust persistent errors and TypeScript runtime errors remain distinguishable.
-- [x] General policy: **fail fast while configuring; fail gracefully while executing**.
+- Invalid persistent configuration is rejected before saving.
+- Rust uses typed validation/persistence errors.
+- IPC exposes structured stable error DTOs.
+- Runtime errors are non-fatal by default.
+- A failed playback or layer does not terminate unrelated Scene runtime.
+- Runtime errors are structured and diagnosable.
+- User-facing feedback and technical diagnostic context are distinct.
+- Rust persistent errors and TypeScript runtime errors remain distinguishable.
+- General policy: **fail fast while configuring; fail gracefully while executing**.
 
 ## Open but Non-Blocking
 
 These decisions intentionally remain open and must not delay implementation:
 
-- [ ] explicit output-device selection;
-- [ ] persistence of output-device selection;
-- [ ] Scene export/import format;
-- [ ] restoring runtime state after application restart;
-- [ ] global audio spanning multiple Scenes;
-- [ ] common generic Tool runtime abstraction;
-- [ ] Encounter Tool implementation details;
-- [ ] final shape of individual IPC DTOs;
-- [ ] future native-audio backend if a concrete requirement appears.
+- explicit output-device selection;
+- persistence of output-device selection;
+- Scene export/import format;
+- restoring runtime state after application restart;
+- global audio spanning multiple Scenes;
+- common generic Tool runtime abstraction;
+- Encounter Tool implementation details;
+- final shape of individual IPC DTOs;
+- future native-audio backend if a concrete requirement appears.
 
 ## Development Process From This Point
 
@@ -179,7 +181,7 @@ Do not continue speculative modeling when no implementation requirement demands 
 3. Core tests and invariants
 4. SeaORM entities and migrations
 5. Persistent audio definitions
-6. Audio-file import/storage
+6. General asset-root settings and transient audio discovery
 7. IPC DTOs and generated TypeScript bindings
 8. TypeScript runtime foundations
 9. Web Audio PlaybackInstance
@@ -194,17 +196,20 @@ Do not continue speculative modeling when no implementation requirement demands 
 
 The initial AudioObject editor has the following implementation requirements:
 
-- [x] available AudioFiles are listed from persistent application data;
-- [x] selected audio is represented by a waveform;
-- [x] playback region can be created and edited directly by dragging over the waveform;
-- [x] optional loop region can be created and edited directly by dragging;
-- [x] region edges resize the selection;
-- [x] dragging a selected region moves it;
-- [x] numeric inputs remain synchronized with visual regions;
-- [x] unsaved draft can be previewed;
-- [x] preview respects region, loop, crossfade, fades, and volume;
-- [x] preview displays a playback playhead;
-- [x] pointer edits remain frontend-local until explicit Save;
-- [x] Rust validates the final draft before persistence.
+- available audio assets come from a recursive scan of the configured asset root;
+- one searchable, folder-filterable, refreshable picker creates an object or replaces its asset;
+- choosing an asset for creation immediately persists the object and opens its editor;
+- missing assets remain replaceable and display warnings on affected definitions and Scenes;
+- selected audio is represented by a waveform;
+- playback region can be created and edited directly by dragging over the waveform;
+- optional loop region can be created and edited directly by dragging;
+- region edges resize the selection;
+- dragging a selected region moves it;
+- numeric inputs remain synchronized with visual regions;
+- unsaved draft can be previewed;
+- preview respects region, loop, crossfade, fades, and volume;
+- preview displays a playback playhead;
+- pointer edits remain frontend-local until explicit Save;
+- Rust validates the final draft before persistence.
 
 These are UX/implementation requirements and do not reopen the architectural readiness decision.

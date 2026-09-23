@@ -1,7 +1,9 @@
 //! SeaORM infrastructure for local persistent definitions.
 
+pub mod audio;
 pub mod core;
 pub mod entities;
+pub mod settings;
 
 use crate::domain::DomainError;
 use migration::{Migrator, MigratorTrait};

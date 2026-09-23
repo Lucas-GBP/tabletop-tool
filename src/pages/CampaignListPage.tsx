@@ -1,4 +1,5 @@
 import {
+  Button,
   CampaignHome,
   SceneLibrary,
   WorkspaceFeedback,
@@ -11,12 +12,16 @@ interface CampaignListPageProps {
   workspace: CoreWorkspace;
   onOpenCampaign: (campaignId: string) => void;
   onOpenScene: (sceneId: string) => void;
+  onOpenAudioLibrary: () => void;
+  onOpenSettings: () => void;
 }
 
 export function CampaignListPage({
   workspace,
   onOpenCampaign,
   onOpenScene,
+  onOpenAudioLibrary,
+  onOpenSettings,
 }: CampaignListPageProps) {
   return (
     <main className={styles.shell}>
@@ -24,7 +29,15 @@ export function CampaignListPage({
         campaignCount={workspace.snapshot.campaigns.length}
         sceneCount={workspace.snapshot.scenes.length}
       />
-      <WorkspaceFeedback error={workspace.error} notice={workspace.notice} />
+      <WorkspaceFeedback error={workspace.error} />
+      <nav className={styles.tools} aria-label="Ferramentas globais">
+        <Button tone="primary" onClick={onOpenAudioLibrary}>
+          Audio Mixer
+        </Button>
+        <Button tone="subtle" onClick={onOpenSettings}>
+          Configurações
+        </Button>
+      </nav>
       <div className={styles.home}>
         <CampaignHome
           campaigns={workspace.snapshot.campaigns}

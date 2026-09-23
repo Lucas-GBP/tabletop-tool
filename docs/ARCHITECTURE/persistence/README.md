@@ -30,7 +30,8 @@ Application Data
 - SeaORM is the persistence abstraction used to access SQLite.
 - Binary files such as audio, images, and videos are stored in the filesystem.
 - Binary assets are not stored in SQLite as BLOBs.
-- SQLite stores the structured metadata and references required to manage those files.
+- SQLite stores the general asset-root setting and relative paths used by
+  persistent definitions. Discovery catalogs are transient.
 - The Core Domain and Scene Tools must not depend directly on SeaORM, SQLite, or filesystem layout.
 
 ## Documents
@@ -50,17 +51,11 @@ those representations are convenient for storage.
 
 ## Consistency
 
-Operations that affect both SQLite records and filesystem assets may require
-explicit consistency handling because a filesystem operation and a SQLite
-transaction cannot be assumed to form one atomic transaction.
-
-The exact strategy is not yet defined and should be designed when file lifecycle
-operations are specified.
+Tools reference files beneath the user-selected asset root without mutating them.
+Each scan creates a transient catalog. Missing files remain represented by the
+relative paths in their owning definitions, allowing the UI to warn the user and
+recover when the path becomes valid again.
 
 ## Open Questions
 
-- Where inside the application's local data directory should managed assets live?
-- Should imported files be copied into application-managed storage or referenced in place?
-- How should file identity and deduplication work?
-- How should deletion handle files referenced by more than one domain object?
-- How should failed operations spanning SQLite and the filesystem be recovered?
+- What concrete workflow would require more than one application asset root?

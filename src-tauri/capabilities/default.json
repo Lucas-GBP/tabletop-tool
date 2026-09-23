@@ -3,5 +3,5 @@
   "identifier": "default",
   "description": "Permissions required by the main Tabletop Tool window",
   "windows": ["main"],
-  "permissions": ["core:default"]
+  "permissions": ["core:default", "dialog:allow-open"]
 }

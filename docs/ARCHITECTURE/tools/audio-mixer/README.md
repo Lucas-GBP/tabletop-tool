@@ -13,11 +13,14 @@ classDiagram
         <<concept>>
     }
 
+    class AudioAssetPath {
+        <<value>>
+    }
+
     AudioCue <|-- AudioObject
     AudioCue <|-- AudioList
-    AudioCue <|-- AudioComposition
 
-    AudioFile "1" -- "0..*" AudioObject : source_for
+    AudioObject --> AudioAssetPath : stores
     AudioList "1" *-- "1..*" AudioListEntry : contains
     AudioListEntry --> "1" AudioObject : references
 
@@ -25,12 +28,13 @@ classDiagram
     CompositionLayer --> "0..1" AudioObject : object_source
     CompositionLayer --> "0..1" AudioList : list_source
 
-    AudioTrigger --> "1" AudioCue : plays
+    SceneAudioConfiguration --> AudioCue : exposes
+    SceneAudioConfiguration --> AudioComposition : activates
 ```
 
 ## Components
 
-- [Audio File](./audio-file.md)
+- [Audio Asset Reference](./audio-file.md)
 - [Audio Object](./audio-object.md)
 - [Playback Instance](./playback-instance.md)
 - [Audio List](./audio-list.md)
@@ -42,7 +46,8 @@ their parent concepts rather than as independent components.
 
 ## Core Ideas
 
-- An Audio File represents the underlying audio resource.
+- An audio asset is discovered transiently below the configured root; an Audio
+  Object persists only its relative path.
 - An Audio Object is the smallest directly playable persistent audio concept and defines a reusable playback region, gain, optional loop, and fade behavior.
 - A Playback Instance is one transient runtime execution of an Audio Object and is never persisted.
 - An Audio List selects or advances through Audio Objects.
@@ -52,25 +57,14 @@ their parent concepts rather than as independent components.
 
 ## Core Domain Relationship
 
-An Audio Trigger may be associated with a Scene Level or another supported
-owner.
-
-The Audio Mixer owns that relationship.
-
-For example:
-
-```text
-Audio Mixer
-└── Audio Trigger
-        └── references → Scene Level
-```
-
-The Scene Level does not store or require Audio Trigger as part of its own
-definition.
+Audio Mixer configuration may reference a Core `Scene` or `SceneLevel`, while
+Core remains unaware of audio. `SceneAudioConfiguration` exposes reusable cues
+and compositions in a Scene. `SceneLevelAudioConfiguration` stores only layer
+state overrides owned by the Audio Mixer.
 
 ## Invariants
 
-- Every Audio Object references exactly one Audio File.
+- Every Audio Object stores exactly one normalized relative asset path.
 - Every Audio List contains at least one Audio List Entry.
 - Every Audio List Entry references exactly one Audio Object.
 - Every Audio Composition contains at least one Composition Layer.
@@ -85,12 +79,6 @@ model.
 This avoids recursive composition and cycle-detection complexity until a real
 use case justifies it.
 
-## Open Questions
-
-- Which scheduling modes are needed for compositions?
-- Should Audio Mixer state be configurable per Scene, Scene Level, Campaign, or
-  a combination of these?
-
 ## Current specification status
 
 The following concepts have an initial specification sufficient for implementation-oriented design:
@@ -102,6 +90,10 @@ The following concepts have an initial specification sufficient for implementati
 - `Audio Composition`
 - `Audio Composition Instance`
 - global `Audio Mixer`
+
+Persistent definitions have stable UUID identities and user-facing names. Those
+fields are required to reference and manage reusable definitions even when a
+conceptual diagram focuses only on playback behavior.
 
 `Audio Trigger` is not part of the initial architecture.
 

@@ -1,13 +1,15 @@
 ﻿# Development Setup
 
-The project has a configured development baseline and an application-integrated
-Core Domain. Core definitions are persisted locally and managed through the React
-UI. Audio import, Scene execution, and Audio Mixer features are still pending.
+The project has a configured development baseline, an application-integrated
+Core Domain, and the first complete Audio Mixer implementation. Core and audio
+definitions are persisted locally and managed through the React UI; Session
+execution remains volatile in TypeScript.
 
 ## Prerequisites
 
-- Node.js **24.19.0**, selected by `.node-version`.
-- npm **12.0.2**, recorded in `package.json` (`packageManager`).
+- Node.js **24.21.x**, selected by `.node-version`.
+- npm **11.19.x**, constrained by `engines`; the baseline **11.19.0** is recorded
+  in `package.json` (`packageManager`).
 - Rust **1.95.0**, with rustfmt and Clippy, selected by `rust-toolchain.toml`.
 - The [Tauri system prerequisites](https://v2.tauri.app/start/prerequisites/):
   MSVC C++ build tools and WebView2 on Windows, Xcode tools on macOS, or the
@@ -16,7 +18,7 @@ UI. Audio import, Scene execution, and Audio Mixer features are still pending.
 Install these prerequisites before running the project. `rustup show` from the
 repository root installs/selects the pinned Rust toolchain if necessary. If the
 Node installation contains another npm version, install the recorded version
-with `npm install --global npm@12.0.2`.
+with `npm install --global npm@11.19.0`.
 
 Then run from the repository root:
 
@@ -38,23 +40,25 @@ the generated command boundary and do not start a desktop window.
 
 ## Commands
 
-| Command                                                       | Purpose                                                                                  |
-| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `npm run check`                                               | Frontend quality/tests, Rust workspace quality/tests, and generated IPC synchronization. |
-| `npm run check:ts`                                            | Type checking, ESLint, Stylelint, Prettier check, and Vitest.                            |
-| `npm run check:rs`                                            | rustfmt check, Clippy with warnings denied, and Rust workspace tests.                    |
-| `npm run typecheck`                                           | `tsc --noEmit` for application and tooling configurations.                               |
-| `npm run lint` / `npm run lint:fix`                           | Type-aware TypeScript/React linting, including Hooks rules.                              |
-| `npm run lint:styles` / `npm run lint:styles:fix`             | SCSS linting.                                                                            |
-| `npm run format` / `npm run check:format`                     | Write/check Prettier and rustfmt formatting.                                             |
-| `npm run format:ts` / `npm run check:format:ts`               | Prettier for supported frontend/configuration/documentation files.                       |
-| `npm run format:rs` / `npm run check:format:rs`               | Rust workspace formatting.                                                               |
-| `npm test` / `npm run test:watch`                             | Frontend tests once/in watch mode.                                                       |
-| `npm run test:rs`                                             | Rust workspace tests, including the migration crate.                                     |
-| `npm run bindings:generate` / `npm run check:bindings`        | Generate/check TypeScript IPC contracts.                                                 |
-| `npm run build`                                               | Type-check and build the frontend.                                                       |
-| `npm run tauri build -- --debug --no-bundle --ci -- --locked` | Compile the desktop app without producing an installer.                                  |
-| `npm run tauri build`                                         | Compile a release app and platform bundles.                                              |
+| Command                                                                 | Purpose                                                                          |
+| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `npm run check`                                                         | Complete gate: formatting, types, linters, tests, bindings, and frontend bundle. |
+| `npm run check:format`                                                  | Check all Prettier and rustfmt formatting without modifying files.               |
+| `npm run check:prettier` / `npm run check:rustfmt`                      | Check one formatting tool.                                                       |
+| `npm run check:bindings`                                                | Verify generated TypeScript IPC contracts without overwriting them.              |
+| `npm run typecheck`                                                     | Check TypeScript and the default-feature Rust workspace.                         |
+| `npm run typecheck:typescript` / `npm run typecheck:rust`               | Run one type-checking scope.                                                     |
+| `npm run lint`                                                          | Run ESLint, Stylelint, and Clippy with warnings denied.                          |
+| `npm run lint:typescript` / `npm run lint:styles` / `npm run lint:rust` | Run one linter scope.                                                            |
+| `npm test`                                                              | Run all frontend and Rust tests.                                                 |
+| `npm run test:frontend` / `npm run test:rust`                           | Run one test scope; append `-- --watch` to the frontend command for watch mode.  |
+| `npm run format`                                                        | Apply Prettier and rustfmt.                                                      |
+| `npm run format:prettier` / `npm run format:rustfmt`                    | Apply one formatter.                                                             |
+| `npm run bindings:generate`                                             | Generate the TypeScript IPC contracts.                                           |
+| `npm run build`                                                         | Type-check TypeScript and build the frontend used by Tauri.                      |
+| `npm run build:frontend`                                                | Build only the Vite bundle after a separate TypeScript check.                    |
+| `npm run tauri build -- --debug --no-bundle --ci -- --locked`           | Compile the desktop app without producing an installer.                          |
+| `npm run tauri build`                                                   | Compile a release app and platform bundles.                                      |
 
 ## Frontend Structure
 
@@ -67,9 +71,10 @@ the generated command boundary and do not start a desktop window.
 - `src/pages/`: screen composition for Campaigns, Sessions, Scenes, and Session
   execution, exposed through a single `index.ts`.
 - `src/hooks/`: React orchestration for persistent workspace and volatile runtime.
-- `src/tools/runtime/`: framework-independent transient `SessionRuntime` and
-  `SceneRuntime` state. Other directories under `src/tools/` hold future Scene
-  Tool implementations.
+- `src/runtime/`: framework-independent, tool-agnostic `SessionRuntime` and
+  `SceneRuntime` state.
+- `src/tools/`: Scene Tool implementations. `audio-mixer` contains the Web Audio
+  runtime independently from React rendering.
 - `src/lib/`: framework-independent frontend helpers with a concise public index.
 - `src/api/index.ts`: application-facing API over generated bindings.
 - `src/api/bindings.ts`: generated Rust contract; do not edit manually.
@@ -79,7 +84,7 @@ the generated command boundary and do not start a desktop window.
 
 Cross-directory frontend imports use the single `@/*` alias mapped to `src/*`.
 Public `index.ts` files keep imports such as `@/components`, `@/pages`,
-`@/hooks`, and `@/tools/runtime` concise. Files within the same directory use direct relative imports
+`@/hooks`, and `@/runtime` concise. Files within the same directory use direct relative imports
 to avoid unnecessary barrel cycles. TypeScript, Vite, and Vitest declare the same
 alias.
 
@@ -108,7 +113,7 @@ TypeScript command list. Generate and include changed bindings in the same commi
 ```sh
 npm run bindings:generate
 npm run check:bindings
-npm run typecheck
+npm run typecheck:typescript
 ```
 
 The generator runs headlessly but compiles the Tauri crate, so it needs the native
@@ -124,8 +129,19 @@ the registered migrations.
 
 The initial migration creates Campaign, Session, Scene, SceneLevel, and
 SessionScene tables with foreign keys, uniqueness rules, and dense-position
-constraints. Persistence tests run the schema and Core operations against SQLite
-in memory, including repeatable migrations and duplicate-association rejection.
+constraints. Persistence tests run the schema and Core and Audio Mixer operations
+against SQLite in memory, including repeatable migrations, CRUD round trips,
+transaction rollback, ordering, foreign keys, and cascades.
+
+SeaORM Migrator owns database versioning. Applied migration modules are
+immutable, and each schema change receives a new migration. New migrations use
+SeaORM Migration/SeaQuery builders with migration-local `DeriveIden` enums;
+they do not import identifiers from current entities. Persistence code uses the
+typed SeaORM Entity API for normal queries and SeaQuery for complex expressions.
+Raw SQL is a localized, documented, and tested exception. The complete policy is
+documented in [Structured Data](./ARCHITECTURE/persistence/structured-data.md).
+The undistributed development baseline was reset so both existing migrations
+already follow this typed schema pattern.
 
 Rust keeps three concrete boundaries without a generic repository framework:
 
@@ -161,7 +177,15 @@ or removes reusable Scene associations. Opening or creating a Scene enters its
 dedicated preparation screen, where the user renames or deletes the Scene and
 creates, renames, or deletes SceneLevels. Scene Tool configuration is presented
 there as well. Rust trims and rejects empty names before any persistent mutation
-and returns structured IPC errors.
+and returns structured IPC errors. Sessions, Scene associations, and SceneLevels
+can be reordered with persistent positions kept dense by the domain and database
+boundaries.
+
+Short metadata reads have a frontend timeout and a persistent retry surface when
+their initial load fails. Mutations wait for the definitive Tauri response so a
+write cannot finish after the interface has reported a timeout. Asset discovery
+is also exempt from the short read timeout because it may traverse a large local
+directory.
 
 Each Session displays its ordered `SessionScene` sequence and an always-visible
 “Adicionar cena” area. Referenced Scenes link to the same global Scene
@@ -174,15 +198,63 @@ preserves the current `SceneRuntime`; changing Scene disposes it and starts a ne
 one. “Encerrar sessão” disposes the active runtime and returns to preparation.
 These transitions do not invoke persistent mutation commands.
 
+The runtime stores Core identities and transient execution state rather than
+mutable copies of IPC DTOs. Runtime failures use a structured `RuntimeError` and
+are isolated by the React orchestration hook. The Session remains open while the
+UI presents a user message and an in-memory technical diagnostic log.
+
+## Audio Mixer
+
+The Audio Mixer has its own persistent API and does not enlarge `CoreSnapshot`.
+Rust stores AudioObjects, AudioLists, AudioCompositions, Scene audio associations,
+SceneLevel layer overrides, and the master volume. General application settings
+store one absolute asset root. AudioObjects store relative paths, while Rust
+recursively discovers WAV, MP3, OGG, FLAC, M4A, AAC, and WebM files as transient
+metadata. There is no persistent AudioFile entity. Files stay in their original
+location and are never renamed or deleted by the application.
+The backend grants only the configured asset root to Tauri's asset protocol and
+restores that narrow grant from SQLite when the application starts. Changing the
+root authorizes the validated replacement before persistence, revokes the former
+root after the write, and compensates the scope or stored setting when a step
+fails. Recursive discovery and media probing run on a blocking worker; an
+unreadable subtree fails the scan with its path in the technical error details.
+Audio tables use the `tool_audio_*` prefix so databases from prototypes with
+legacy `audio_*` tables can be upgraded without overwriting their data.
+
+The home screen opens general settings and the global audio library. A shared
+searchable, folder-filterable picker creates objects and replaces their files;
+creation persists defaults before opening the editor. The library provides CRUD
+for objects, lists, and compositions. The AudioObject editor decodes a waveform
+in the frontend, edits playback/loop regions as a local draft, and previews that
+draft through the same Web Audio runtime used during a Session. Saving sends one
+validated mutation to Rust. Missing paths produce warnings through affected
+definitions and Scenes without making Session runtime failures fatal.
+
+Scene preparation selects reusable cues and compositions. SceneLevel
+configuration stores only disabled composition-layer IDs. During a Session,
+`AudioMixer`, `PlaybackInstance`, `AudioCompositionInstance`, and
+`SceneAudioRuntime` own playback, schedules, overrides, fades, loops, and
+cleanup. Leaving a Scene disposes its audio; changing SceneLevel reconciles the
+same Scene runtime. Runtime controls never persist their temporary state.
+
 ## CI and Packaging
 
 [CI](../.github/workflows/ci.yml) runs on pushes and pull requests to `main` and
 `develop`, and can also be dispatched manually. It checks frontend quality,
-Rust quality/tests, IPC drift, and desktop compilation on Linux x64, Windows x64,
-and macOS ARM64. Dependencies are cached; concurrent obsolete runs are cancelled.
+Rust quality/tests, IPC drift, and desktop compilation on Linux x64 and Windows
+x64. Frontend and backend quality run once on Ubuntu; the desktop
+matrix depends on both and concentrates on native compilation and packaging.
+Platform-shaped path normalization is covered by platform-independent backend
+unit tests, so the native matrix does not repeat Rust tests. Draft pull requests still receive
+frontend and backend feedback, but the desktop matrix starts only when the pull
+request is ready for review. Changing the draft state triggers a new workflow
+evaluation. Independent frontend checks use parallel step groups. Rustfmt can run
+beside Clippy because it does not compile; the compilation-heavy Cargo checks and
+tests remain sequential and reuse one target directory. Dependencies are cached;
+concurrent obsolete runs are cancelled.
 
 For test installers, dispatch the workflow with `package` enabled. It produces
-DEB, NSIS EXE, and DMG artifacts retained for 14 days. This does not publish a
+DEB and NSIS EXE artifacts retained for 14 days. This does not publish a
 GitHub release or configure production signing/notarization. Platform signing
 credentials can be added when distribution becomes part of the implementation.
 

@@ -1,0 +1,50 @@
+@use "workspace-page";
+
+.shell,
+.loading {
+  @include workspace-page.shell(2.5rem clamp(1rem, 4vw, 4rem) 4rem);
+}
+
+.loading {
+  @include workspace-page.loading;
+}
+
+.header,
+.panel {
+  @include workspace-page.container(900px);
+}
+
+.header {
+  @include workspace-page.header(var(--space-large), true);
+
+  span,
+  .description {
+    color: var(--color-text-muted);
+  }
+}
+
+.panel {
+  padding: clamp(1.25rem, 3vw, 2rem);
+  display: grid;
+  gap: var(--space-medium);
+  justify-items: start;
+}
+
+.description {
+  margin: 0;
+}
+
+.directory {
+  max-width: 100%;
+  padding: var(--space-small) var(--space-medium);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-soft);
+  overflow-wrap: anywhere;
+}
+
+@media (width <= 600px) {
+  .header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

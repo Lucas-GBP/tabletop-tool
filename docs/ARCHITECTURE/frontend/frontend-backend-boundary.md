@@ -55,7 +55,7 @@ Session
 Scene
 SceneLevel
 
-AudioFile
+AppSettings asset root
 AudioObject
 AudioList
 AudioComposition
@@ -67,7 +67,7 @@ SceneLevelAudioConfiguration
 Rust is responsible for:
 
 - persistence through SeaORM and SQLite;
-- filesystem import and management;
+- configured-root scanning, media probing, and safe relative-path resolution;
 - domain invariants;
 - creation/deletion/reordering rules;
 - validation before persistent mutation;
@@ -105,7 +105,8 @@ Audio playback uses the Web Audio API in the WebView.
 
 ```text
 Rust
-├── AudioFile definitions
+├── transient AudioAsset catalog
+├── AudioObject definitions with relative paths
 ├── AudioObject definitions
 ├── AudioList definitions
 ├── AudioComposition definitions
@@ -146,22 +147,30 @@ Its responsibilities include:
 
 These operations map directly to Web Audio primitives and do not need a Rust round-trip for every runtime interaction.
 
-## Access to Imported Audio Files
+## Access to audio assets
 
-Imported audio files are managed by Rust under application data storage:
+The user selects one filesystem directory as the application's asset root:
 
 ```text
-AppData/
-└── media/
-    └── audio/
-        └── <uuid>.<extension>
+configured asset root/
+├── ambience.ogg
+└── music/
+    └── theme.flac
 ```
 
-Rust owns import, validation, naming, and persistent metadata.
+Rust scans supported files recursively and returns a transient catalog with
+relative paths and probed metadata. SQLite stores the absolute root once and
+each owning definition stores its relative path. There is no persistent
+`AudioFile` entity. The files remain in place; the application does not copy,
+rename, or delete them.
 
-When TypeScript needs to play a file, Rust exposes the persistent definition/path information through the application contract and Tauri provides a frontend-readable asset URL.
+When TypeScript needs to play a file, Rust safely resolves the definition's
+relative path below the configured root and Tauri provides a frontend-readable
+asset URL.
 
-The frontend does not own the physical file lifecycle.
+The user owns the physical file lifecycle. A referenced file that disappears
+remains as a relative path in its `AudioObject`; availability and warnings are
+derived from the current catalog.
 
 ## IPC Boundary
 

@@ -15,6 +15,7 @@ interface SceneStructurePanelProps {
   onCreateLevel: (name: string) => Promise<boolean>;
   onRenameLevel: (levelId: string, name: string) => Promise<boolean>;
   onDeleteLevel: (levelId: string) => Promise<boolean>;
+  onMoveLevel: (levelId: string, position: number) => Promise<boolean>;
 }
 
 export function SceneStructurePanel({
@@ -23,12 +24,13 @@ export function SceneStructurePanel({
   onCreateLevel,
   onRenameLevel,
   onDeleteLevel,
+  onMoveLevel,
 }: SceneStructurePanelProps) {
   return (
     <Panel as="section" className={styles.panel}>
       <SectionHeading eyebrow="Estrutura" title="Níveis da cena" />
       <ol className={styles.list} aria-label={`Níveis de ${scene.name}`}>
-        {scene.levels.map((level) => (
+        {scene.levels.map((level, index) => (
           <li key={level.id}>
             <span className={styles.position}>{level.position + 1}</span>
             <EditableText
@@ -38,6 +40,24 @@ export function SceneStructurePanel({
               disabled={disabled}
               onSave={(name) => onRenameLevel(level.id, name)}
             />
+            <span className={styles.order}>
+              <Button
+                size="compact"
+                disabled={disabled || index === 0}
+                aria-label={`Mover nível ${level.name} para cima`}
+                onClick={() => void onMoveLevel(level.id, level.position - 1)}
+              >
+                ↑
+              </Button>
+              <Button
+                size="compact"
+                disabled={disabled || index === scene.levels.length - 1}
+                aria-label={`Mover nível ${level.name} para baixo`}
+                onClick={() => void onMoveLevel(level.id, level.position + 1)}
+              >
+                ↓
+              </Button>
+            </span>
             <Button
               tone="danger"
               className={styles.delete}

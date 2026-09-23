@@ -2,61 +2,50 @@
 
 ## Decision
 
-Binary assets are stored in the local filesystem rather than inside SQLite.
+Binary assets remain in the user-managed local filesystem rather than inside
+SQLite. The application has one general asset root, configured as an absolute
+path in application settings. Tools discover the file types they support below
+that root.
 
-This includes, but is not limited to:
+Persistent definitions store normalized paths relative to the asset root. They
+do not store absolute paths and SQLite does not mirror discovered files in a
+generic asset table.
 
-- audio files;
-- images;
-- videos;
-- other binary assets introduced by future Scene Tools.
-
-SQLite stores only the structured metadata and references necessary to identify,
-locate, and manage those assets.
+This model applies to audio now and is prepared for images, videos, and other
+binary assets used by future tools.
 
 ## Responsibility
 
-Filesystem access belongs to the infrastructure/persistence side of the
-application.
-
-Domain concepts should not be defined in terms of operating-system-specific paths
+General application settings own the asset-root configuration. Filesystem access,
+recursive discovery, probing, and safe path resolution belong to Rust application
+and infrastructure code. Domain concepts do not depend on operating-system paths
 or Tauri filesystem APIs.
 
-For example, an Audio Object may conceptually reference an Audio File, while the
-persistence layer decides how that file is represented on disk.
+The frontend receives a transient catalog for selection and display. It never
+constructs an absolute filesystem path from a persistent definition by itself.
 
-## File Lifecycle
+## File lifecycle
 
-File lifecycle needs to be designed together with ownership semantics. Typical
-operations include:
+The user may move or rename the complete asset root and then update the single
+application setting. Relative references continue to work when the layout inside
+the root is preserved.
 
-- importing a file;
-- resolving a stored file for playback or display;
-- replacing a file;
-- deleting a reference;
-- deleting an unreferenced managed file;
-- detecting or recovering missing files.
+The application references files in place and never copies, renames, or deletes
+them. A refresh repeats recursive discovery. A stored reference that no longer
+resolves remains in its owning definition and is shown as unavailable.
 
-## Consistency Boundary
+## Consistency boundary
 
-SQLite transactions cannot automatically make filesystem operations atomic.
+The configured root is external, user-managed state. SQLite and the filesystem
+do not form one transaction. Availability is therefore derived from the current
+scan rather than persisted as authoritative state.
 
-An operation such as importing or deleting a managed asset may involve both:
+Missing assets do not trigger destructive cleanup. Preparation surfaces the
+problem; runtime operations treat it as a recoverable error and isolate it from
+unrelated execution.
 
-```text
-Filesystem change
-      +
-SQLite change
-```
+## Open questions
 
-The application will therefore need an explicit strategy for failure recovery and
-orphan prevention once these workflows are designed.
-
-## Open Questions
-
-- Are imported assets copied into an application-managed directory or referenced
-  at their original location?
-- Should stored references be relative identifiers rather than absolute paths?
-- Should content hashes be used for identity or deduplication?
-- When may the application physically delete a file?
-- How should missing or externally modified files be handled?
+- Whether content hashes would improve relocation assistance without becoming
+  persistent file identity.
+- Whether a concrete future workflow requires more than one asset root.

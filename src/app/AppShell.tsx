@@ -1,9 +1,13 @@
 import { useState } from "react";
+import { LoadFailure } from "@/components";
 import { useCoreWorkspace } from "@/hooks";
 import {
+  AudioLibraryPage,
+  AudioObjectEditorPage,
   CampaignListPage,
   CampaignPreparationPage,
   ScenePreparationPage,
+  SettingsPage,
   SessionRuntimePage,
 } from "@/pages";
 import type { AppRoute } from "./navigation";
@@ -17,6 +21,17 @@ export function AppShell() {
     return <main className={styles.loading}>Abrindo seu espaço de jogo…</main>;
   }
 
+  if (!workspace.loaded) {
+    return (
+      <main className={styles.loading}>
+        <LoadFailure
+          message={workspace.loadError}
+          onRetry={() => void workspace.reload()}
+        />
+      </main>
+    );
+  }
+
   const campaignList = (
     <CampaignListPage
       workspace={workspace}
@@ -26,10 +41,39 @@ export function AppShell() {
       onOpenScene={(sceneId) =>
         setRoute({ screen: "scene-preparation", sceneId })
       }
+      onOpenAudioLibrary={() => setRoute({ screen: "audio-library" })}
+      onOpenSettings={() => setRoute({ screen: "settings" })}
     />
   );
 
   if (route.screen === "campaign-list") return campaignList;
+
+  if (route.screen === "settings") {
+    return (
+      <SettingsPage onBack={() => setRoute({ screen: "campaign-list" })} />
+    );
+  }
+
+  if (route.screen === "audio-library") {
+    return (
+      <AudioLibraryPage
+        onBack={() => setRoute({ screen: "campaign-list" })}
+        onOpenSettings={() => setRoute({ screen: "settings" })}
+        onEditObject={(audioObjectId) =>
+          setRoute({ screen: "audio-object-editor", audioObjectId })
+        }
+      />
+    );
+  }
+
+  if (route.screen === "audio-object-editor") {
+    return (
+      <AudioObjectEditorPage
+        audioObjectId={route.audioObjectId}
+        onBack={() => setRoute({ screen: "audio-library" })}
+      />
+    );
+  }
 
   if (route.screen === "scene-preparation") {
     const scene = workspace.snapshot.scenes.find(
