@@ -40,24 +40,25 @@ the generated command boundary and do not start a desktop window.
 
 ## Commands
 
-| Command                                                       | Purpose                                                                                  |
-| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `npm run check`                                               | Frontend quality/tests, Rust workspace quality/tests, and generated IPC synchronization. |
-| `npm run check:ts`                                            | Type checking, ESLint, Stylelint, Prettier check, and Vitest.                            |
-| `npm run check:rs`                                            | rustfmt check, Clippy with warnings denied, and Rust workspace tests.                    |
-| `npm run typecheck`                                           | `tsc --noEmit` for application and tooling configurations.                               |
-| `npm run lint` / `npm run lint:fix`                           | Type-aware TypeScript/React linting, including Hooks rules.                              |
-| `npm run lint:styles` / `npm run lint:styles:fix`             | SCSS linting.                                                                            |
-| `npm run format` / `npm run check:format`                     | Write/check Prettier and rustfmt formatting.                                             |
-| `npm run format:ts` / `npm run check:format:ts`               | Prettier for supported frontend/configuration/documentation files.                       |
-| `npm run format:rs` / `npm run check:format:rs`               | Rust workspace formatting.                                                               |
-| `npm test` / `npm run test:watch`                             | Frontend tests once/in watch mode.                                                       |
-| `npm run test:rs`                                             | Rust workspace tests, including the migration crate.                                     |
-| `npm run bindings:generate` / `npm run check:bindings`        | Generate/check TypeScript IPC contracts.                                                 |
-| `npm run build`                                               | Type-check and build the frontend.                                                       |
-| `npm run build:app`                                           | Build only the Vite bundle after a separate quality gate.                                |
-| `npm run tauri build -- --debug --no-bundle --ci -- --locked` | Compile the desktop app without producing an installer.                                  |
-| `npm run tauri build`                                         | Compile a release app and platform bundles.                                              |
+| Command                                                                 | Purpose                                                                          |
+| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `npm run check`                                                         | Complete gate: formatting, types, linters, tests, bindings, and frontend bundle. |
+| `npm run check:format`                                                  | Check all Prettier and rustfmt formatting without modifying files.               |
+| `npm run check:prettier` / `npm run check:rustfmt`                      | Check one formatting tool.                                                       |
+| `npm run check:bindings`                                                | Verify generated TypeScript IPC contracts without overwriting them.              |
+| `npm run typecheck`                                                     | Check TypeScript and the default-feature Rust workspace.                         |
+| `npm run typecheck:typescript` / `npm run typecheck:rust`               | Run one type-checking scope.                                                     |
+| `npm run lint`                                                          | Run ESLint, Stylelint, and Clippy with warnings denied.                          |
+| `npm run lint:typescript` / `npm run lint:styles` / `npm run lint:rust` | Run one linter scope.                                                            |
+| `npm test`                                                              | Run all frontend and Rust tests.                                                 |
+| `npm run test:frontend` / `npm run test:rust`                           | Run one test scope; append `-- --watch` to the frontend command for watch mode.  |
+| `npm run format`                                                        | Apply Prettier and rustfmt.                                                      |
+| `npm run format:prettier` / `npm run format:rustfmt`                    | Apply one formatter.                                                             |
+| `npm run bindings:generate`                                             | Generate the TypeScript IPC contracts.                                           |
+| `npm run build`                                                         | Type-check TypeScript and build the frontend used by Tauri.                      |
+| `npm run build:frontend`                                                | Build only the Vite bundle after a separate TypeScript check.                    |
+| `npm run tauri build -- --debug --no-bundle --ci -- --locked`           | Compile the desktop app without producing an installer.                          |
+| `npm run tauri build`                                                   | Compile a release app and platform bundles.                                      |
 
 ## Frontend Structure
 
@@ -112,7 +113,7 @@ TypeScript command list. Generate and include changed bindings in the same commi
 ```sh
 npm run bindings:generate
 npm run check:bindings
-npm run typecheck
+npm run typecheck:typescript
 ```
 
 The generator runs headlessly but compiles the Tauri crate, so it needs the native

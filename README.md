@@ -30,18 +30,19 @@ O último comando inicia o frontend Vite e a aplicação desktop Tauri.
 
 Os scripts atuais estão definidos em [package.json](package.json):
 
-| Comando                     | Função                                                              |
-| --------------------------- | ------------------------------------------------------------------- |
-| `npm run dev`               | Iniciar somente o frontend Vite.                                    |
-| `npm run check`             | Verificar frontend, Rust, testes e sincronização dos contratos IPC. |
-| `npm run format`            | Aplicar Prettier e rustfmt.                                         |
-| `npm test`                  | Executar os testes do frontend.                                     |
-| `npm run test:rs`           | Executar os testes do workspace Rust.                               |
-| `npm run bindings:generate` | Gerar TypeScript a partir dos contratos Rust.                       |
-| `npm run build`             | Verificar TypeScript e gerar o build do frontend.                   |
-| `npm run preview`           | Servir localmente o build do frontend.                              |
-| `npm run tauri dev`         | Executar a aplicação desktop em desenvolvimento.                    |
-| `npm run tauri build`       | Compilar e empacotar a aplicação desktop.                           |
+| Comando                     | Função                                                             |
+| --------------------------- | ------------------------------------------------------------------ |
+| `npm run dev`               | Iniciar somente o frontend Vite.                                   |
+| `npm run check`             | Executar o quality gate completo e gerar o bundle frontend.        |
+| `npm run typecheck`         | Verificar TypeScript e o workspace Rust.                           |
+| `npm run lint`              | Executar ESLint, Stylelint e Clippy.                               |
+| `npm test`                  | Executar os testes frontend e Rust.                                |
+| `npm run format`            | Aplicar Prettier e rustfmt.                                        |
+| `npm run bindings:generate` | Gerar TypeScript a partir dos contratos Rust.                      |
+| `npm run build`             | Verificar TypeScript e gerar o build do frontend usado pelo Tauri. |
+| `npm run preview`           | Servir localmente o build do frontend.                             |
+| `npm run tauri dev`         | Executar a aplicação desktop em desenvolvimento.                   |
+| `npm run tauri build`       | Compilar e empacotar a aplicação desktop.                          |
 
 `tauri` encaminha os argumentos à CLI do Tauri. ESLint, Stylelint, Prettier, Vitest/Testing Library, SCSS Modules, rustfmt e Clippy estão configurados. SeaORM/SQLite persiste o Core no diretório local da aplicação; Specta/tauri-specta gera o contrato consumido pela interface. Veja a [lista completa de comandos](docs/DEVELOPMENT.md#commands).
 

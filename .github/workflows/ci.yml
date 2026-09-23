@@ -48,18 +48,18 @@ jobs:
         run: npm ci
       - parallel:
           - name: Check repository formatting
-            run: npm run check:format:ts
+            run: npm run check:prettier
           - name: Lint TypeScript and React
-            run: npm run lint
+            run: npm run lint:typescript
           - name: Lint SCSS modules
             run: npm run lint:styles
       - name: Check TypeScript
-        run: npm run typecheck
+        run: npm run typecheck:typescript
       - parallel:
           - name: Run frontend tests
-            run: npm test
+            run: npm run test:frontend
           - name: Build frontend bundle
-            run: npm run build:app
+            run: npm run build:frontend
 
   backend:
     name: Backend quality
@@ -93,14 +93,12 @@ jobs:
       - name: Install binding tool dependencies
         run: npm ci
       - name: Check default Rust features
-        run: cargo check --manifest-path src-tauri/Cargo.toml --workspace --locked
+        run: npm run typecheck:rust
       - parallel:
           - name: Check Rust formatting
-            run: cargo fmt --manifest-path src-tauri/Cargo.toml --all -- --check
+            run: npm run check:rustfmt
           - name: Run Clippy
-            run: >-
-              cargo clippy --manifest-path src-tauri/Cargo.toml --workspace
-              --all-targets --all-features --locked -- -D warnings
+            run: npm run lint:rust
       - name: Run Rust unit tests
         run: >-
           cargo test --manifest-path src-tauri/Cargo.toml --workspace
