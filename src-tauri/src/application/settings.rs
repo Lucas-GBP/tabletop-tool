@@ -71,23 +71,20 @@ pub async fn save_asset_directory(
 
 fn storage_path(path: &Path) -> String {
     let value = path.to_string_lossy();
-    #[cfg(windows)]
-    {
-        if let Some(unc) = value.strip_prefix(r"\\?\UNC\") {
-            return format!(r"\\{unc}");
-        }
-        if let Some(local) = value.strip_prefix(r"\\?\") {
-            return local.to_owned();
-        }
+    if let Some(unc) = value.strip_prefix(r"\\?\UNC\") {
+        return format!(r"\\{unc}");
+    }
+    if let Some(local) = value.strip_prefix(r"\\?\") {
+        return local.to_owned();
     }
     value.into_owned()
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::storage_path;
+    use std::path::Path;
 
-    #[cfg(windows)]
     #[test]
     fn removes_windows_verbatim_prefix_from_stored_setting() {
         assert_eq!(

@@ -48,4 +48,4 @@ Os scripts atuais estão definidos em [package.json](package.json):
 
 ## Automação
 
-O [CI](.github/workflows/ci.yml) verifica qualidade, testes, contratos gerados e compilação desktop em Windows, Linux e macOS. A execução manual pode gerar instaladores de teste como artifacts, sem publicar releases. Consulte os [detalhes dos workflows](.github/workflows/README.md).
+O [CI](.github/workflows/ci.yml) verifica qualidade, testes, contratos gerados e compilação desktop em Windows e Linux. A execução manual pode gerar instaladores de teste como artifacts, sem publicar releases. Consulte os [detalhes dos workflows](.github/workflows/README.md).

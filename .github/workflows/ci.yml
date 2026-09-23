@@ -161,12 +161,6 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Install desktop dependencies
         run: npm ci
-      - name: Test Windows path handling
-        if: runner.os == 'Windows'
-        run: >-
-          cargo test --manifest-path src-tauri/Cargo.toml --package tabletop-tool
-          application::settings::tests::removes_windows_verbatim_prefix_from_stored_setting
-          --locked
       - name: Build desktop application
         if: github.event_name != 'workflow_dispatch' || !inputs.package
         run: npm run tauri build -- --debug --no-bundle --ci -- --locked
@@ -181,6 +175,5 @@ jobs:
           path: |
             src-tauri/target/release/bundle/deb/*.deb
             src-tauri/target/release/bundle/nsis/*.exe
-            src-tauri/target/release/bundle/dmg/*.dmg
           if-no-files-found: error
           retention-days: 14

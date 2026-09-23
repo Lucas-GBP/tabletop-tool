@@ -241,11 +241,11 @@ same Scene runtime. Runtime controls never persist their temporary state.
 
 [CI](../.github/workflows/ci.yml) runs on pushes and pull requests to `main` and
 `develop`, and can also be dispatched manually. It checks frontend quality,
-Rust quality/tests, IPC drift, and desktop compilation on Linux x64, Windows x64,
-and macOS ARM64. Frontend and backend quality run once on Ubuntu; the desktop
-matrix depends on both and concentrates on native compilation and packaging. A
-targeted Windows test preserves coverage of platform-specific path handling
-without repeating the complete Rust suite. Draft pull requests still receive
+Rust quality/tests, IPC drift, and desktop compilation on Linux x64 and Windows
+x64. Frontend and backend quality run once on Ubuntu; the desktop
+matrix depends on both and concentrates on native compilation and packaging.
+Platform-shaped path normalization is covered by platform-independent backend
+unit tests, so the native matrix does not repeat Rust tests. Draft pull requests still receive
 frontend and backend feedback, but the desktop matrix starts only when the pull
 request is ready for review. Changing the draft state triggers a new workflow
 evaluation. Independent frontend checks use parallel step groups. Rustfmt can run
@@ -254,7 +254,7 @@ tests remain sequential and reuse one target directory. Dependencies are cached;
 concurrent obsolete runs are cancelled.
 
 For test installers, dispatch the workflow with `package` enabled. It produces
-DEB, NSIS EXE, and DMG artifacts retained for 14 days. This does not publish a
+DEB and NSIS EXE artifacts retained for 14 days. This does not publish a
 GitHub release or configure production signing/notarization. Platform signing
 credentials can be added when distribution becomes part of the implementation.
 
