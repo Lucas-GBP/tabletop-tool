@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { AudioAssetDto } from "@/api";
 import { Button, EmptyState, Input, SectionHeading } from "./primitives";
 import styles from "./AudioAssetPicker.module.scss";
@@ -7,6 +7,7 @@ interface AudioAssetPickerProps {
   assets: readonly AudioAssetDto[];
   title: string;
   busy?: boolean;
+  currentAssetPath?: string;
   onRefresh: () => void;
   onClose: () => void;
   onSelect: (asset: AudioAssetDto) => void;
@@ -16,10 +17,13 @@ export function AudioAssetPicker({
   assets,
   title,
   busy = false,
+  currentAssetPath,
   onRefresh,
   onClose,
   onSelect,
 }: AudioAssetPickerProps) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
   const [folder, setFolder] = useState("all");
   const folders = useMemo(
@@ -36,27 +40,32 @@ export function AudioAssetPicker({
   );
 
   useEffect(() => {
-    function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
-    }
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [onClose]);
+    const invoker = document.activeElement as HTMLElement | null;
+    const dialog = dialogRef.current;
+    if (dialog && typeof dialog.showModal === "function") dialog.showModal();
+    else dialog?.setAttribute("open", "");
+    searchRef.current?.focus();
+    return () => {
+      if (dialog?.open && typeof dialog.close === "function") dialog.close();
+      invoker?.focus();
+    };
+  }, []);
 
   return (
-    <div className={styles.overlay} role="presentation">
-      <button
-        type="button"
-        className={styles.backdrop}
-        aria-label="Fechar seletor de áudio"
-        onClick={onClose}
-      />
-      <section
-        className={styles.dialog}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-      >
+    <dialog
+      ref={dialogRef}
+      className={styles.overlay}
+      aria-label={title}
+      aria-modal="true"
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <section className={styles.dialog}>
         <header className={styles.header}>
           <SectionHeading
             eyebrow={`${assets.length} arquivos disponíveis`}
@@ -71,7 +80,7 @@ export function AudioAssetPicker({
         </header>
         <div className={styles.filters}>
           <Input
-            autoFocus
+            ref={searchRef}
             aria-label="Buscar arquivo de áudio"
             placeholder="Buscar por nome ou caminho"
             value={query}
@@ -96,9 +105,17 @@ export function AudioAssetPicker({
               key={asset.relativePath}
               type="button"
               className={styles.asset}
+              aria-current={
+                asset.relativePath === currentAssetPath ? "true" : undefined
+              }
               onClick={() => onSelect(asset)}
             >
-              <strong>{asset.name}</strong>
+              <strong>
+                {asset.name}
+                {asset.relativePath === currentAssetPath ? (
+                  <span className={styles.current}>Atual</span>
+                ) : null}
+              </strong>
               <small>
                 {asset.relativePath} ·{" "}
                 {(asset.durationUs / 1_000_000).toFixed(1)} s
@@ -112,7 +129,7 @@ export function AudioAssetPicker({
           ) : null}
         </div>
       </section>
-    </div>
+    </dialog>
   );
 }
 

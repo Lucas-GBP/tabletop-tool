@@ -32,13 +32,7 @@ export function ActiveScenePanel({
       />
 
       <section className={styles.levels} aria-labelledby="active-level-heading">
-        <div>
-          <h3 id="active-level-heading">Nível ativo</h3>
-          <p>
-            Trocar de nível mantém o runtime e os estados temporários desta
-            cena.
-          </p>
-        </div>
+        <h3 id="active-level-heading">Nível ativo</h3>
         <div className={styles["level-list"]}>
           {[...scene.levels]
             .sort((left, right) => left.position - right.position)
@@ -46,6 +40,7 @@ export function ActiveScenePanel({
               <Button
                 key={level.id}
                 className={styles.level}
+                size="compact"
                 aria-pressed={level.id === currentLevelId}
                 onClick={() => onSelectLevel(level.id)}
               >
@@ -56,19 +51,20 @@ export function ActiveScenePanel({
       </section>
 
       <section className={styles.tools} aria-labelledby="scene-tools-heading">
-        <h3 id="scene-tools-heading">Ferramentas da cena</h3>
+        <h3 id="scene-tools-heading">Áudio da cena</h3>
         {tools}
       </section>
 
       <footer className={styles.navigation}>
-        <Button onClick={onPreviousScene} disabled={currentIndex === 0}>
+        <Button
+          size="compact"
+          onClick={onPreviousScene}
+          disabled={currentIndex === 0}
+        >
           ← Cena anterior
         </Button>
-        <span>
-          O estado temporário é descartado ao sair de{" "}
-          <strong>{scene.name}</strong>.
-        </span>
         <Button
+          size="compact"
           onClick={onNextScene}
           disabled={currentIndex === sceneCount - 1}
         >

@@ -132,9 +132,9 @@ describe("Application navigation", () => {
       screen.queryByRole("heading", { name: "Sombras do Norte" }),
     ).not.toBeInTheDocument();
     expect(screen.getByText("Mesa em andamento")).toBeVisible();
-    expect(screen.getByRole("note")).toHaveTextContent(
-      "Scene e SceneLevel ativos são temporários",
-    );
+    expect(
+      screen.getByText("Alterações durante a mesa são temporárias."),
+    ).toBeVisible();
     expect(
       screen.queryByRole("textbox", { name: "Nome da nova cena" }),
     ).not.toBeInTheDocument();

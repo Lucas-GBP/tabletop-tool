@@ -92,8 +92,9 @@ function AudioObjectEditor({
   onSave,
   onRefresh,
 }: EditorProps) {
-  const [draft, setDraft] = useState<AudioObjectInputDto>(() =>
-    inputFromObject(object),
+  const initialDraftRef = useRef(inputFromObject(object));
+  const [draft, setDraft] = useState<AudioObjectInputDto>(
+    initialDraftRef.current,
   );
   const [activeRegion, setActiveRegion] = useState<"playback" | "loop">(
     "playback",
@@ -113,6 +114,15 @@ function AudioObjectEditor({
   const selectedFile = files.find(
     (file) => file.relativePath === draft.assetPath,
   );
+  const dirty =
+    JSON.stringify(draft) !== JSON.stringify(initialDraftRef.current);
+
+  function leaveEditor() {
+    if (dirty && !window.confirm("Descartar as alterações deste objeto?")) {
+      return;
+    }
+    onBack();
+  }
 
   useEffect(() => {
     if (!selectedFile) return;
@@ -134,6 +144,12 @@ function AudioObjectEditor({
               ? fitAudioObjectToDuration(current, durationUs)
               : current,
           );
+          if (initialDraftRef.current.assetPath === selectedFile.relativePath) {
+            initialDraftRef.current = fitAudioObjectToDuration(
+              initialDraftRef.current,
+              durationUs,
+            );
+          }
           setPlayheadUs((current) => clamp(current, 0, durationUs));
           setWaveformError("");
         }
@@ -314,11 +330,22 @@ function AudioObjectEditor({
   return (
     <main className={styles.shell}>
       <header className={styles.header}>
-        <Button onClick={onBack}>← Biblioteca</Button>
+        <Button tone="subtle" onClick={leaveEditor}>
+          ← Biblioteca
+        </Button>
         <div>
           <p>Objeto de áudio</p>
           <h1>{object.name}</h1>
         </div>
+        <Button
+          className={styles["header-save"]}
+          tone="primary"
+          type="submit"
+          form="audio-object-form"
+          disabled={busy || !dirty}
+        >
+          {busy ? "Salvando…" : "Salvar"}
+        </Button>
       </header>
       <WorkspaceFeedback
         error={error || waveformError || previewError}
@@ -326,6 +353,7 @@ function AudioObjectEditor({
       />
 
       <form
+        id="audio-object-form"
         className={styles.workspace}
         onSubmit={(event) => {
           event.preventDefault();
@@ -350,28 +378,56 @@ function AudioObjectEditor({
             </Button>
           </div>
           {selectedFile ? (
-            <WaveformEditor
-              peaks={peaks}
-              durationUs={editorDurationUs}
-              playback={playback}
-              loop={loop}
-              activeRegion={activeRegion}
-              playheadUs={playheadUs}
-              onChange={updateRegion}
-              onSeek={seekPreview}
-            />
+            peaks.length > 0 ? (
+              <WaveformEditor
+                peaks={peaks}
+                durationUs={editorDurationUs}
+                playback={playback}
+                loop={loop}
+                activeRegion={activeRegion}
+                playheadUs={playheadUs}
+                onChange={updateRegion}
+                onSeek={seekPreview}
+              />
+            ) : (
+              <p className={styles["waveform-loading"]}>
+                Carregando forma de onda…
+              </p>
+            )
           ) : (
             <EmptyState title="Arquivo não encontrado">
               Escolha outro arquivo para continuar editando este objeto.
             </EmptyState>
           )}
           <div className={styles.preview}>
-            <Button disabled={!selectedFile} onClick={() => void playPreview()}>
+            <Button
+              tone="primary"
+              disabled={!selectedFile || previewState === "Tocando"}
+              onClick={() => void playPreview()}
+            >
               ▶ Tocar
             </Button>
-            <Button onClick={() => control("pause")}>Pausar</Button>
-            <Button onClick={() => control("resume")}>Continuar</Button>
-            <Button onClick={() => control("stop")}>Parar</Button>
+            <Button
+              size="compact"
+              disabled={previewState !== "Tocando"}
+              onClick={() => control("pause")}
+            >
+              Pausar
+            </Button>
+            <Button
+              size="compact"
+              disabled={previewState !== "Pausado"}
+              onClick={() => control("resume")}
+            >
+              Continuar
+            </Button>
+            <Button
+              size="compact"
+              disabled={previewState === "Parado"}
+              onClick={() => control("stop")}
+            >
+              Parar
+            </Button>
             <span>{previewState}</span>
           </div>
         </Panel>
@@ -411,6 +467,7 @@ function AudioObjectEditor({
             value={toSeconds(draft.startTimeUs)}
             step={0.01}
             min={0}
+            max={toSeconds(editorDurationUs)}
             onChange={(value) => {
               const startTimeUs = toMicroseconds(value);
               setPlayheadUs((current) =>
@@ -424,6 +481,7 @@ function AudioObjectEditor({
             value={toSeconds(draft.endTimeUs)}
             step={0.01}
             min={0}
+            max={toSeconds(editorDurationUs)}
             onChange={(value) => {
               const endTimeUs = toMicroseconds(value);
               setPlayheadUs((current) =>
@@ -437,6 +495,7 @@ function AudioObjectEditor({
             value={toSeconds(draft.fadeInDurationUs)}
             step={0.05}
             min={0}
+            max={toSeconds(draft.endTimeUs - draft.startTimeUs)}
             onChange={(value) =>
               updatePlayback({ fadeInDurationUs: toMicroseconds(value) })
             }
@@ -446,6 +505,7 @@ function AudioObjectEditor({
             value={toSeconds(draft.fadeOutDurationUs)}
             step={0.05}
             min={0}
+            max={toSeconds(draft.endTimeUs - draft.startTimeUs)}
             onChange={(value) =>
               updatePlayback({ fadeOutDurationUs: toMicroseconds(value) })
             }
@@ -483,6 +543,7 @@ function AudioObjectEditor({
                 value={toSeconds(loop.startUs)}
                 step={0.01}
                 min={0}
+                max={toSeconds(draft.endTimeUs)}
                 onChange={(value) =>
                   updatePlayback({ startLoopTimeUs: toMicroseconds(value) })
                 }
@@ -492,6 +553,7 @@ function AudioObjectEditor({
                 value={toSeconds(loop.endUs)}
                 step={0.01}
                 min={0}
+                max={toSeconds(draft.endTimeUs)}
                 onChange={(value) =>
                   updatePlayback({ endLoopTimeUs: toMicroseconds(value) })
                 }
@@ -510,15 +572,13 @@ function AudioObjectEditor({
               />
             </>
           )}
-          <Button type="submit" disabled={busy}>
-            Salvar objeto
-          </Button>
         </Panel>
       </form>
       {selectingAsset ? (
         <AudioAssetPicker
           assets={files}
           title="Trocar arquivo do objeto"
+          currentAssetPath={draft.assetPath}
           busy={busy}
           onRefresh={onRefresh}
           onClose={() => setSelectingAsset(false)}
@@ -539,6 +599,7 @@ function NumberField({
   value: number;
   onChange: (value: number) => void;
   min?: number;
+  max?: number;
   step?: number;
 }) {
   return (
@@ -594,7 +655,8 @@ async function loadPeaks(relativePath: string) {
   }
 }
 
-const toSeconds = (value: number) => value / 1_000_000;
+const toSeconds = (value: number) =>
+  Math.round((value / 1_000_000) * 100) / 100;
 const toMicroseconds = (value: number) => Math.round(value * 1_000_000);
 
 function fitRegion(region: TimeRegion, bounds: TimeRegion): TimeRegion {

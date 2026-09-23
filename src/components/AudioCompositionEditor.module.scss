@@ -28,6 +28,13 @@
   gap: var(--space-small);
 }
 
+.field {
+  display: grid;
+  gap: 0.25rem;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
 .intervals,
 .actions,
 .layer-actions {

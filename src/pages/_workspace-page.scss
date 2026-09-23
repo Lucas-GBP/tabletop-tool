@@ -1,0 +1,42 @@
+@mixin shell($padding) {
+  min-height: 100vh;
+  padding: $padding;
+}
+
+@mixin loading {
+  display: grid;
+  place-items: center;
+  color: var(--color-text-muted);
+}
+
+@mixin container($max-width) {
+  width: 100%;
+  max-width: $max-width;
+  margin-inline: auto;
+}
+
+@mixin header($margin-bottom, $reset-span: false, $letter-spacing: null) {
+  margin-bottom: $margin-bottom;
+  display: flex;
+  gap: var(--space-large);
+  align-items: flex-start;
+
+  p,
+  h1 {
+    margin: 0;
+  }
+
+  @if $reset-span {
+    span {
+      margin: 0;
+    }
+  }
+
+  p {
+    color: var(--color-accent);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: $letter-spacing;
+    text-transform: uppercase;
+  }
+}

@@ -14,9 +14,15 @@ export function WorkspaceFeedback({ error, notice }: WorkspaceFeedbackProps) {
           {error}
         </FeedbackMessage>
       )}
-      <FeedbackMessage role="status" tone="success" className={styles.feedback}>
-        {notice}
-      </FeedbackMessage>
+      {notice ? (
+        <FeedbackMessage
+          role="status"
+          tone="success"
+          className={styles.feedback}
+        >
+          {notice}
+        </FeedbackMessage>
+      ) : null}
     </>
   );
 }

@@ -17,6 +17,7 @@ interface AudioCompositionEditorProps {
   disabled: boolean;
   onSave: (input: AudioCompositionInputDto) => Promise<boolean>;
   onDelete?: () => Promise<boolean>;
+  onCancel?: () => void;
 }
 
 interface LayerDraft {
@@ -37,6 +38,7 @@ export function AudioCompositionEditor({
   disabled,
   onSave,
   onDelete,
+  onCancel,
 }: AudioCompositionEditorProps) {
   const [name, setName] = useState(composition?.name ?? "");
   const [layers, setLayers] = useState<LayerDraft[]>(() =>
@@ -67,79 +69,85 @@ export function AudioCompositionEditor({
         });
       }}
     >
-      <Input
-        aria-label={
-          composition
-            ? `Nome da composição ${composition.name}`
-            : "Nome da nova composição"
-        }
-        value={name}
-        placeholder="Nome da composição"
-        disabled={disabled}
-        required
-        onChange={(event) => setName(event.currentTarget.value)}
-      />
+      <label className={styles.field}>
+        Nome
+        <Input
+          value={name}
+          placeholder="Nome da composição"
+          disabled={disabled}
+          required
+          onChange={(event) => setName(event.currentTarget.value)}
+        />
+      </label>
 
       <ol className={styles.layers}>
         {layers.map((layer, index) => (
           <li key={layer.key}>
             <div className={styles.row}>
-              <Input
-                aria-label={`Nome da camada ${index + 1}`}
-                value={layer.name}
-                placeholder="Nome da camada"
-                disabled={disabled}
-                required
-                onChange={(event) =>
-                  updateLayer(setLayers, index, {
-                    name: event.currentTarget.value,
-                  })
-                }
-              />
-              <Select
-                aria-label={`Fonte da camada ${layer.name || index + 1}`}
-                value={layer.sourceValue}
-                disabled={disabled}
-                onChange={(event) =>
-                  updateLayer(setLayers, index, {
-                    sourceValue: event.currentTarget.value,
-                  })
-                }
-              >
-                {sources.map((source) => (
-                  <option key={source.value} value={source.value}>
-                    {source.label}
-                  </option>
-                ))}
-              </Select>
-              <Select
-                aria-label={`Execução da camada ${layer.name || index + 1}`}
-                value={layer.execution}
-                disabled={disabled}
-                onChange={(event) =>
-                  updateLayer(setLayers, index, {
-                    execution: event.currentTarget
-                      .value as LayerDraft["execution"],
-                  })
-                }
-              >
-                <option value="continuous">Contínua</option>
-                <option value="randomInterval">Intervalo aleatório</option>
-              </Select>
-              <Select
-                aria-label={`Ao desativar ${layer.name || index + 1}`}
-                value={layer.disableBehavior}
-                disabled={disabled}
-                onChange={(event) =>
-                  updateLayer(setLayers, index, {
-                    disableBehavior: event.currentTarget
-                      .value as LayerDraft["disableBehavior"],
-                  })
-                }
-              >
-                <option value="stop">Parar</option>
-                <option value="finish">Finalizar naturalmente</option>
-              </Select>
+              <label className={styles.field}>
+                Camada
+                <Input
+                  value={layer.name}
+                  placeholder="Nome da camada"
+                  disabled={disabled}
+                  required
+                  onChange={(event) =>
+                    updateLayer(setLayers, index, {
+                      name: event.currentTarget.value,
+                    })
+                  }
+                />
+              </label>
+              <label className={styles.field}>
+                Fonte
+                <Select
+                  value={layer.sourceValue}
+                  disabled={disabled}
+                  onChange={(event) =>
+                    updateLayer(setLayers, index, {
+                      sourceValue: event.currentTarget.value,
+                    })
+                  }
+                >
+                  {sources.map((source) => (
+                    <option key={source.value} value={source.value}>
+                      {source.label}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+              <label className={styles.field}>
+                Execução
+                <Select
+                  value={layer.execution}
+                  disabled={disabled}
+                  onChange={(event) =>
+                    updateLayer(setLayers, index, {
+                      execution: event.currentTarget
+                        .value as LayerDraft["execution"],
+                    })
+                  }
+                >
+                  <option value="continuous">Contínua</option>
+                  <option value="randomInterval">Intervalo aleatório</option>
+                </Select>
+              </label>
+              <label className={styles.field}>
+                Ao desativar
+                <Select
+                  value={layer.disableBehavior}
+                  disabled={disabled}
+                  onChange={(event) =>
+                    updateLayer(setLayers, index, {
+                      disableBehavior: event.currentTarget
+                        .value as LayerDraft["disableBehavior"],
+                    })
+                  }
+                >
+                  <option value="stop">Parar</option>
+                  <option value="finish">Finalizar naturalmente</option>
+                </Select>
+              </label>
             </div>
             {layer.execution === "randomInterval" && (
               <div className={styles.intervals}>
@@ -179,6 +187,7 @@ export function AudioCompositionEditor({
             )}
             <div className={styles["layer-actions"]}>
               <Button
+                size="compact"
                 disabled={disabled || index === 0}
                 onClick={() =>
                   setLayers((current) => move(current, index, index - 1))
@@ -187,6 +196,7 @@ export function AudioCompositionEditor({
                 ↑
               </Button>
               <Button
+                size="compact"
                 disabled={disabled || index === layers.length - 1}
                 onClick={() =>
                   setLayers((current) => move(current, index, index + 1))
@@ -195,6 +205,7 @@ export function AudioCompositionEditor({
                 ↓
               </Button>
               <Button
+                size="compact"
                 tone="danger"
                 disabled={disabled}
                 onClick={() =>
@@ -231,7 +242,11 @@ export function AudioCompositionEditor({
         >
           Adicionar camada
         </Button>
-        <Button type="submit" disabled={disabled || layers.length === 0}>
+        <Button
+          tone="primary"
+          type="submit"
+          disabled={disabled || layers.length === 0}
+        >
           {composition ? "Salvar composição" : "Criar composição"}
         </Button>
         {composition && onDelete && (
@@ -247,6 +262,11 @@ export function AudioCompositionEditor({
             Excluir composição
           </Button>
         )}
+        {onCancel ? (
+          <Button tone="subtle" disabled={disabled} onClick={onCancel}>
+            Cancelar
+          </Button>
+        ) : null}
       </div>
     </form>
   );

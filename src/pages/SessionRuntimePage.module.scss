@@ -1,6 +1,6 @@
 .shell {
   min-height: 100vh;
-  padding: 2.5rem clamp(1rem, 4vw, 4rem) 4rem;
+  padding: var(--space-medium) clamp(1rem, 3vw, 2rem) 2rem;
   background:
     radial-gradient(
       circle at 70% 15%,
@@ -10,23 +10,12 @@
     var(--color-background);
 }
 
-.notice {
-  max-width: 1400px;
-  margin: 0 auto var(--space-medium);
-  padding: 0.75rem var(--space-medium);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-control);
-  color: var(--color-text-muted);
-  background: var(--color-surface-soft);
-  font-size: 0.85rem;
-}
-
 .workspace {
   max-width: 1400px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(240px, 0.7fr) minmax(0, 2fr);
-  gap: 1.25rem;
+  grid-template-columns: minmax(210px, 0.55fr) minmax(0, 2fr);
+  gap: var(--space-medium);
   align-items: start;
 }
 

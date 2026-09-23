@@ -102,7 +102,3 @@ export function useSceneAudioConfiguration(scene: SceneDto) {
     },
   };
 }
-
-export type SceneAudioConfiguration = ReturnType<
-  typeof useSceneAudioConfiguration
->;

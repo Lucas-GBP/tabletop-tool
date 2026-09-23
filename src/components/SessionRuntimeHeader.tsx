@@ -21,13 +21,12 @@ export function SessionRuntimeHeader({
       </div>
       <div className={styles.content}>
         <div>
-          <p className={styles.eyebrow}>Executando sessão</p>
           <h1>{session.name}</h1>
           <p className={styles.subtitle}>
-            Controle a cena e o nível ativos sem alterar a preparação salva.
+            Alterações durante a mesa são temporárias.
           </p>
         </div>
-        <Button className={styles.end} onClick={onEnd}>
+        <Button className={styles.end} tone="subtle" onClick={onEnd}>
           Encerrar sessão
         </Button>
       </div>

@@ -1,40 +1,21 @@
+@use "workspace-page";
+
 .shell,
 .loading {
-  min-height: 100vh;
-  padding: 2.5rem clamp(1rem, 4vw, 4rem) 4rem;
+  @include workspace-page.shell(2.5rem clamp(1rem, 4vw, 4rem) 4rem);
 }
 
 .loading {
-  display: grid;
-  place-items: center;
-  color: var(--color-text-muted);
+  @include workspace-page.loading;
 }
 
 .header,
 .panel {
-  width: 100%;
-  max-width: 900px;
-  margin-inline: auto;
+  @include workspace-page.container(900px);
 }
 
 .header {
-  margin-bottom: var(--space-large);
-  display: flex;
-  gap: var(--space-large);
-  align-items: flex-start;
-
-  p,
-  h1,
-  span {
-    margin: 0;
-  }
-
-  p {
-    color: var(--color-accent);
-    font-size: 0.75rem;
-    font-weight: 800;
-    text-transform: uppercase;
-  }
+  @include workspace-page.header(var(--space-large), true);
 
   span,
   .description {

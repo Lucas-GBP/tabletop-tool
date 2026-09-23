@@ -1,22 +1,25 @@
 .overlay {
-  position: fixed;
-  z-index: 20;
-  inset: 0;
+  width: 100vw;
+  max-width: none;
+  height: 100vh;
+  max-height: none;
+  margin: 0;
   padding: clamp(1rem, 4vw, 4rem);
-  display: grid;
-  place-items: center;
-}
-
-.backdrop {
-  position: absolute;
-  inset: 0;
   border: 0;
-  background: rgb(10 7 13 / 72%);
-  cursor: default;
+  background: transparent;
+  place-items: center;
+  overflow: hidden;
+
+  &[open] {
+    display: grid;
+  }
+
+  &::backdrop {
+    background: rgb(10 7 13 / 72%);
+  }
 }
 
 .dialog {
-  position: relative;
   width: min(52rem, 100%);
   max-height: min(46rem, calc(100vh - 2rem));
   padding: clamp(1rem, 3vw, 2rem);
@@ -81,15 +84,31 @@
   text-align: left;
 
   &:hover,
-  &:focus-visible {
+  &:focus-visible,
+  &[aria-current="true"] {
     border-color: var(--color-accent);
     background: var(--color-surface-active);
     outline: none;
   }
 
+  strong {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-small);
+  }
+
   small {
     color: var(--color-text-muted);
   }
+}
+
+.current {
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+  font-size: 0.75rem;
 }
 
 @media (width <= 600px) {

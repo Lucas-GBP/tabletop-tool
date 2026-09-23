@@ -18,9 +18,6 @@ export function SceneSequence({
   return (
     <Panel as="section" className={styles.panel}>
       <SectionHeading eyebrow="Roteiro" title="Cenas da sessão" />
-      <p className={styles.description}>
-        Trocar de cena encerra o runtime da cena atual e inicia outro.
-      </p>
       <ol className={styles.list}>
         {scenes.map((runtimeScene, index) => {
           const active = runtimeScene.sceneId === currentSceneId;
@@ -38,7 +35,7 @@ export function SceneSequence({
                     {sceneNames.get(runtimeScene.sceneId) ??
                       "Cena indisponível"}
                   </strong>
-                  <small>{active ? "Em execução" : "Preparada"}</small>
+                  <small>{active ? "Ativa" : "Preparada"}</small>
                 </span>
               </button>
             </li>

@@ -29,7 +29,7 @@ interface DragState {
   moved: boolean;
 }
 
-const HANDLE_HIT_RADIUS_PX = 10;
+const HANDLE_HIT_RADIUS_PX = 12;
 const MOVE_BAR_HEIGHT_PX = 30;
 const DRAG_THRESHOLD_PX = 3;
 const VIEWBOX_WIDTH = 1000;
@@ -45,7 +45,6 @@ export function WaveformEditor({
   onChange,
   onSeek,
 }: WaveformEditorProps) {
-  const svgRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef<DragState | null>(null);
   const [hoverMode, setHoverMode] = useState<DragMode>("create");
   const active = activeRegion === "loop" ? loop : playback;
@@ -90,13 +89,12 @@ export function WaveformEditor({
   return (
     <div className={styles.editor}>
       <svg
-        ref={svgRef}
         className={styles.waveform}
         data-interaction={hoverMode}
         viewBox={`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`}
         preserveAspectRatio="none"
-        role="application"
-        aria-label="Editor visual da forma de onda"
+        role="img"
+        aria-label="Forma de onda com regiões de reprodução e loop"
         onPointerDown={(event) => {
           if (!active) return;
           event.preventDefault();
@@ -204,6 +202,21 @@ export function WaveformEditor({
           </g>
         )}
       </svg>
+      <label className={styles.seek}>
+        <span>Agulha</span>
+        <input
+          type="range"
+          min={playback.startUs}
+          max={Math.max(playback.startUs, (loop?.endUs ?? playback.endUs) - 1)}
+          step={Math.max(1, Math.round(safeDurationUs / 1000))}
+          value={clamp(
+            playheadUs ?? playback.startUs,
+            playback.startUs,
+            Math.max(playback.startUs, (loop?.endUs ?? playback.endUs) - 1),
+          )}
+          onChange={(event) => onSeek(event.currentTarget.valueAsNumber)}
+        />
+      </label>
       <div className={styles.legend}>
         <span>Arraste para selecionar · faixa superior para mover</span>
         <output>

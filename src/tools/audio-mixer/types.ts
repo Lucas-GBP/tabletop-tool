@@ -1,10 +1,8 @@
 import type {
   AudioCompositionDto,
   AudioAssetDto,
-  AudioLibraryDto,
   AudioListDto,
   AudioObjectDto,
-  CompositionLayerDto,
   SceneAudioConfigurationDto,
   SceneLevelAudioConfigurationDto,
 } from "@/api";
@@ -61,13 +59,6 @@ export interface SceneAudioRuntimeSnapshot {
   readonly cues: readonly AudioCueReference[];
   readonly compositions: readonly CompositionRuntimeInfo[];
 }
-
-export type RuntimeAudioObject = AudioObjectDto;
-export type RuntimeAudioList = AudioListDto;
-export type RuntimeAudioFile = AudioAssetDto;
-export type RuntimeComposition = AudioCompositionDto;
-export type RuntimeCompositionLayer = CompositionLayerDto;
-export type RuntimeAudioLibrary = AudioLibraryDto;
 
 export interface TimerDriver {
   set(callback: () => void, delayMs: number): number;

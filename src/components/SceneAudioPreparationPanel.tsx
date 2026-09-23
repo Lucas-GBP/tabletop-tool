@@ -43,6 +43,7 @@ export function SceneAudioPreparationPanel({
   }
 
   const effectiveSceneDraft = sceneDraft ?? audio.scene;
+  const sceneDirty = !sameSceneConfiguration(effectiveSceneDraft, audio.scene);
   const savedCompositions = audio.library.compositions.filter((composition) =>
     audio.scene?.audioCompositionIds.includes(composition.id),
   );
@@ -112,15 +113,19 @@ export function SceneAudioPreparationPanel({
             />
           </div>
           <Button
-            disabled={audio.busy || sceneDraft === null}
+            tone="primary"
+            disabled={audio.busy || !sceneDirty}
             onClick={() =>
               void audio.saveScene(effectiveSceneDraft).then((saved) => {
                 if (saved) setSceneDraft(null);
               })
             }
           >
-            Salvar recursos da cena
+            {audio.busy ? "Salvando…" : "Salvar recursos da cena"}
           </Button>
+          {sceneDirty ? (
+            <span className={styles.dirty}>Alterações não salvas</span>
+          ) : null}
 
           {sceneDraft !== null &&
           !sameIds(
@@ -139,13 +144,18 @@ export function SceneAudioPreparationPanel({
               {[...scene.levels]
                 .sort((left, right) => left.position - right.position)
                 .map((level) => {
-                  const draft = levelDrafts.find(
+                  const savedLevel = audio.levels.find(
                     (configuration) => configuration.sceneLevelId === level.id,
-                  ) ??
-                    audio.levels.find(
+                  ) ?? { sceneLevelId: level.id, disabledLayerIds: [] };
+                  const draft =
+                    levelDrafts.find(
                       (configuration) =>
                         configuration.sceneLevelId === level.id,
-                    ) ?? { sceneLevelId: level.id, disabledLayerIds: [] };
+                    ) ?? savedLevel;
+                  const levelDirty = !sameIds(
+                    draft.disabledLayerIds,
+                    savedLevel.disabledLayerIds,
+                  );
                   return (
                     <section key={level.id} className={styles.level}>
                       <h4>{level.name}</h4>
@@ -178,11 +188,27 @@ export function SceneAudioPreparationPanel({
                         </label>
                       ))}
                       <Button
-                        disabled={audio.busy}
-                        onClick={() => void audio.saveLevel(draft)}
+                        tone="primary"
+                        disabled={audio.busy || !levelDirty}
+                        onClick={() =>
+                          void audio.saveLevel(draft).then((saved) => {
+                            if (!saved) return;
+                            setLevelDrafts((current) =>
+                              current.filter(
+                                (configuration) =>
+                                  configuration.sceneLevelId !== level.id,
+                              ),
+                            );
+                          })
+                        }
                       >
-                        Salvar nível
+                        {audio.busy ? "Salvando…" : "Salvar nível"}
                       </Button>
+                      {levelDirty ? (
+                        <span className={styles.dirty}>
+                          Alterações não salvas
+                        </span>
+                      ) : null}
                     </section>
                   );
                 })}
@@ -196,6 +222,17 @@ export function SceneAudioPreparationPanel({
 
 function sameIds(left: readonly string[], right: readonly string[]) {
   return left.length === right.length && left.every((id) => right.includes(id));
+}
+
+function sameSceneConfiguration(
+  left: SceneAudioConfigurationDto,
+  right: SceneAudioConfigurationDto,
+) {
+  return (
+    sameIds(left.audioObjectIds, right.audioObjectIds) &&
+    sameIds(left.audioListIds, right.audioListIds) &&
+    sameIds(left.audioCompositionIds, right.audioCompositionIds)
+  );
 }
 
 function ResourceGroup({

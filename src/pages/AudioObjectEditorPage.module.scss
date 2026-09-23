@@ -1,39 +1,25 @@
+@use "workspace-page";
+
 .shell,
 .loading {
-  min-height: 100vh;
-  padding: 2.5rem clamp(1rem, 4vw, 4rem) 4rem;
+  @include workspace-page.shell(1.5rem clamp(1rem, 4vw, 4rem) 3rem);
 }
 
 .loading {
-  display: grid;
-  place-items: center;
-  color: var(--color-text-muted);
+  @include workspace-page.loading;
 }
 
 .header,
 .workspace {
-  width: 100%;
-  max-width: 1400px;
-  margin-inline: auto;
+  @include workspace-page.container(1400px);
 }
 
 .header {
-  margin-bottom: var(--space-large);
-  display: flex;
-  gap: var(--space-large);
-  align-items: flex-start;
+  @include workspace-page.header(var(--space-large));
+}
 
-  p,
-  h1 {
-    margin: 0;
-  }
-
-  p {
-    color: var(--color-accent);
-    font-size: 0.75rem;
-    font-weight: 800;
-    text-transform: uppercase;
-  }
+.header-save {
+  margin-left: auto;
 }
 
 .workspace {
@@ -45,7 +31,18 @@
 
 .waveform-panel,
 .settings {
-  padding: clamp(1.25rem, 3vw, 2rem);
+  padding: var(--space-large);
+}
+
+.waveform-loading {
+  min-height: 14rem;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-soft);
 }
 
 .asset-control {
@@ -92,7 +89,7 @@
     display: grid;
     gap: 0.3rem;
     color: var(--color-text-muted);
-    font-size: 0.8rem;
+    font-size: 0.85rem;
   }
 
   select {
@@ -114,5 +111,9 @@
 @media (width <= 900px) {
   .workspace {
     grid-template-columns: 1fr;
+  }
+
+  .header {
+    flex-wrap: wrap;
   }
 }

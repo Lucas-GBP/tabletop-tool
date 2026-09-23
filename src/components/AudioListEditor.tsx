@@ -9,6 +9,7 @@ interface AudioListEditorProps {
   disabled: boolean;
   onSave: (input: AudioListInputDto) => Promise<boolean>;
   onDelete?: () => Promise<boolean>;
+  onCancel?: () => void;
 }
 
 interface EntryDraft {
@@ -22,6 +23,7 @@ export function AudioListEditor({
   disabled,
   onSave,
   onDelete,
+  onCancel,
 }: AudioListEditorProps) {
   const [name, setName] = useState(list?.name ?? "");
   const [selectionMode, setSelectionMode] = useState(
@@ -34,6 +36,7 @@ export function AudioListEditor({
           .map(({ audioObjectId, weight }) => ({ audioObjectId, weight }))
       : [],
   );
+  const [selectedObjectId, setSelectedObjectId] = useState("");
 
   const available = objects.filter(
     (object) => !entries.some((entry) => entry.audioObjectId === object.id),
@@ -53,28 +56,32 @@ export function AudioListEditor({
       }}
     >
       <div className={styles.header}>
-        <Input
-          aria-label={
-            list ? `Nome da lista ${list.name}` : "Nome da nova lista"
-          }
-          value={name}
-          placeholder="Nome da lista"
-          disabled={disabled}
-          required
-          onChange={(event) => setName(event.currentTarget.value)}
-        />
-        <Select
-          aria-label={`Seleção de ${list?.name ?? "nova lista"}`}
-          value={selectionMode}
-          disabled={disabled}
-          onChange={(event) =>
-            setSelectionMode(event.currentTarget.value as typeof selectionMode)
-          }
-        >
-          <option value="sequential">Sequencial</option>
-          <option value="random">Aleatória</option>
-          <option value="weightedRandom">Aleatória por peso</option>
-        </Select>
+        <label>
+          Nome
+          <Input
+            value={name}
+            placeholder="Nome da lista"
+            disabled={disabled}
+            required
+            onChange={(event) => setName(event.currentTarget.value)}
+          />
+        </label>
+        <label>
+          Ordem
+          <Select
+            value={selectionMode}
+            disabled={disabled}
+            onChange={(event) =>
+              setSelectionMode(
+                event.currentTarget.value as typeof selectionMode,
+              )
+            }
+          >
+            <option value="sequential">Sequencial</option>
+            <option value="random">Aleatória</option>
+            <option value="weightedRandom">Aleatória por peso</option>
+          </Select>
+        </label>
       </div>
 
       <ol className={styles.entries}>
@@ -105,6 +112,7 @@ export function AudioListEditor({
                 }}
               />
               <Button
+                size="compact"
                 aria-label={`Mover ${object?.name ?? "objeto"} para cima`}
                 disabled={disabled || index === 0}
                 onClick={() =>
@@ -114,6 +122,7 @@ export function AudioListEditor({
                 ↑
               </Button>
               <Button
+                size="compact"
                 aria-label={`Mover ${object?.name ?? "objeto"} para baixo`}
                 disabled={disabled || index === entries.length - 1}
                 onClick={() =>
@@ -123,6 +132,7 @@ export function AudioListEditor({
                 ↓
               </Button>
               <Button
+                size="compact"
                 tone="danger"
                 disabled={disabled}
                 onClick={() =>
@@ -139,21 +149,45 @@ export function AudioListEditor({
       </ol>
 
       {available.length > 0 && (
-        <Button
-          disabled={disabled}
-          onClick={() =>
-            setEntries((current) => [
-              ...current,
-              { audioObjectId: available[0]!.id, weight: 1 },
-            ])
-          }
-        >
-          Adicionar {available[0]!.name}
-        </Button>
+        <div className={styles.add}>
+          <label>
+            Objeto
+            <Select
+              value={selectedObjectId}
+              disabled={disabled}
+              onChange={(event) =>
+                setSelectedObjectId(event.currentTarget.value)
+              }
+            >
+              <option value="">Selecione um objeto</option>
+              {available.map((object) => (
+                <option key={object.id} value={object.id}>
+                  {object.name}
+                </option>
+              ))}
+            </Select>
+          </label>
+          <Button
+            disabled={disabled || !selectedObjectId}
+            onClick={() => {
+              setEntries((current) => [
+                ...current,
+                { audioObjectId: selectedObjectId, weight: 1 },
+              ]);
+              setSelectedObjectId("");
+            }}
+          >
+            Adicionar
+          </Button>
+        </div>
       )}
 
       <footer className={styles.actions}>
-        <Button type="submit" disabled={disabled || entries.length === 0}>
+        <Button
+          tone="primary"
+          type="submit"
+          disabled={disabled || entries.length === 0}
+        >
           {list ? "Salvar lista" : "Criar lista"}
         </Button>
         {list && onDelete && (
@@ -168,6 +202,11 @@ export function AudioListEditor({
             Excluir lista
           </Button>
         )}
+        {onCancel ? (
+          <Button tone="subtle" disabled={disabled} onClick={onCancel}>
+            Cancelar
+          </Button>
+        ) : null}
       </footer>
     </form>
   );

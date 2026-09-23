@@ -8,15 +8,25 @@
 }
 
 .header,
-.actions {
+.actions,
+.add {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-small);
 }
 
-.header input {
+.header label,
+.add label {
   min-width: 12rem;
   flex: 1;
+  display: grid;
+  gap: 0.25rem;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.add {
+  align-items: end;
 }
 
 .entries {

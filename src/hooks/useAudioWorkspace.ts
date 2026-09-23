@@ -67,19 +67,16 @@ export function useAudioWorkspace() {
     }
   }
 
+  const save = (success: string, action: Mutation) =>
+    mutate(success, action).then(Boolean);
+
   return {
     library,
     loading,
     busy,
     error,
     notice,
-    reload: load,
-    clearFeedback() {
-      setError("");
-      setNotice("");
-    },
-    rescanFiles: () =>
-      mutate("Diretório verificado.", api.listAudioLibrary).then(Boolean),
+    rescanFiles: () => save("Diretório verificado.", api.listAudioLibrary),
     createAudioObject: async (input: AudioObjectInputDto) => {
       const previous = new Set(library.objects.map((object) => object.id));
       const updated = await mutate("Objeto de áudio criado.", () =>
@@ -88,42 +85,24 @@ export function useAudioWorkspace() {
       return updated?.objects.find((object) => !previous.has(object.id))?.id;
     },
     updateAudioObject: (id: string, input: AudioObjectInputDto) =>
-      mutate("Objeto de áudio salvo.", () =>
-        api.updateAudioObject(id, input),
-      ).then(Boolean),
+      save("Objeto de áudio salvo.", () => api.updateAudioObject(id, input)),
     deleteAudioObject: (id: string) =>
-      mutate("Objeto de áudio excluído.", () => api.deleteAudioObject(id)).then(
-        Boolean,
-      ),
+      save("Objeto de áudio excluído.", () => api.deleteAudioObject(id)),
     createAudioList: (input: AudioListInputDto) =>
-      mutate("Lista de áudio criada.", () => api.createAudioList(input)).then(
-        Boolean,
-      ),
+      save("Lista de áudio criada.", () => api.createAudioList(input)),
     updateAudioList: (id: string, input: AudioListInputDto) =>
-      mutate("Lista de áudio salva.", () =>
-        api.updateAudioList(id, input),
-      ).then(Boolean),
+      save("Lista de áudio salva.", () => api.updateAudioList(id, input)),
     deleteAudioList: (id: string) =>
-      mutate("Lista de áudio excluída.", () => api.deleteAudioList(id)).then(
-        Boolean,
-      ),
+      save("Lista de áudio excluída.", () => api.deleteAudioList(id)),
     createAudioComposition: (input: AudioCompositionInputDto) =>
-      mutate("Composição criada.", () =>
-        api.createAudioComposition(input),
-      ).then(Boolean),
+      save("Composição criada.", () => api.createAudioComposition(input)),
     updateAudioComposition: (id: string, input: AudioCompositionInputDto) =>
-      mutate("Composição salva.", () =>
-        api.updateAudioComposition(id, input),
-      ).then(Boolean),
+      save("Composição salva.", () => api.updateAudioComposition(id, input)),
     deleteAudioComposition: (id: string) =>
-      mutate("Composição excluída.", () => api.deleteAudioComposition(id)).then(
-        Boolean,
-      ),
+      save("Composição excluída.", () => api.deleteAudioComposition(id)),
     updateMasterVolume: (masterVolumeDb: number) =>
-      mutate("Volume geral salvo.", () =>
+      save("Volume geral salvo.", () =>
         api.updateAudioMixerSettings(masterVolumeDb),
-      ).then(Boolean),
+      ),
   };
 }
-
-export type AudioWorkspace = ReturnType<typeof useAudioWorkspace>;

@@ -35,7 +35,7 @@ export function useSessionAudioRuntime(
   const [playbacks, setPlaybacks] = useState<readonly PlaybackInfo[]>([]);
   const [error, setError] = useState<RuntimeError | null>(null);
   const [diagnostics, setDiagnostics] = useState<RuntimeError[]>([]);
-  const [started, setStarted] = useState(false);
+  const [masterVolumeDb, setMasterVolumeDb] = useState(0);
   const mixerRef = useRef<AudioMixer | null>(null);
   const sceneRuntimeRef = useRef<SceneAudioRuntime | null>(null);
   const startedRef = useRef(false);
@@ -95,6 +95,7 @@ export function useSessionAudioRuntime(
             levelConfigurations.map((item) => [item.sceneLevelId, item]),
           ),
         });
+        setMasterVolumeDb(library.settings.masterVolumeDb);
         setError(null);
       })
       .catch((cause: unknown) => {
@@ -245,7 +246,6 @@ export function useSessionAudioRuntime(
       await mixer.activate();
       if (!startedRef.current) {
         startedRef.current = true;
-        setStarted(true);
         sceneRuntime.start(currentLevelId);
       }
       setSnapshot(sceneRuntime.snapshot);
@@ -283,9 +283,17 @@ export function useSessionAudioRuntime(
     playbacks,
     error,
     diagnostics,
-    started,
+    masterVolumeDb,
     activate,
     playCue,
+    changeMasterVolume: (value: number) => {
+      setMasterVolumeDb(value);
+      return execute(
+        "change_runtime_master_volume",
+        session.id,
+        (_sceneRuntime, mixer) => mixer.setMasterVolumeDb(value),
+      );
+    },
     setLayerOverride: (layerId: string, enabled: boolean | null) =>
       execute("set_audio_layer_override", layerId, (sceneRuntime) =>
         sceneRuntime.setLayerOverride(layerId, enabled),

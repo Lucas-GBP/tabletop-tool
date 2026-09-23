@@ -3,12 +3,14 @@ import { classNames } from "@/lib";
 import styles from "./Button.module.scss";
 
 type ButtonProps = ComponentProps<"button"> & {
-  tone?: "default" | "danger";
+  tone?: "default" | "primary" | "subtle" | "danger";
+  size?: "default" | "compact";
 };
 
 export function Button({
   className,
   tone = "default",
+  size = "default",
   type = "button",
   ...props
 }: ButtonProps) {
@@ -20,6 +22,7 @@ export function Button({
         styles.control,
         styles.button,
         styles[tone],
+        styles[size],
         className,
       )}
     />

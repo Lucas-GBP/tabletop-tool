@@ -55,6 +55,9 @@ export function useCoreWorkspace() {
     }
   }
 
+  const save = (success: string, action: Mutation) =>
+    mutate(success, action).then(Boolean);
+
   return {
     snapshot,
     sceneNames,
@@ -80,51 +83,35 @@ export function useCoreWorkspace() {
       )?.id;
     },
     createSession: (campaignId: string, name: string, sceneId: string) =>
-      mutate("Sessão criada.", () =>
+      save("Sessão criada.", () =>
         api.createSession(campaignId, name, sceneId),
-      ).then(Boolean),
+      ),
     createSceneLevel: (sceneId: string, name: string) =>
-      mutate("Nível adicionado.", () =>
-        api.createSceneLevel(sceneId, name),
-      ).then(Boolean),
+      save("Nível adicionado.", () => api.createSceneLevel(sceneId, name)),
     renameCampaign: (campaignId: string, name: string) =>
-      mutate("Campanha renomeada.", () =>
-        api.renameCampaign(campaignId, name),
-      ).then(Boolean),
+      save("Campanha renomeada.", () => api.renameCampaign(campaignId, name)),
     renameSession: (sessionId: string, name: string) =>
-      mutate("Sessão renomeada.", () =>
-        api.renameSession(sessionId, name),
-      ).then(Boolean),
+      save("Sessão renomeada.", () => api.renameSession(sessionId, name)),
     renameScene: (sceneId: string, name: string) =>
-      mutate("Cena renomeada.", () => api.renameScene(sceneId, name)).then(
-        Boolean,
-      ),
+      save("Cena renomeada.", () => api.renameScene(sceneId, name)),
     renameSceneLevel: (levelId: string, name: string) =>
-      mutate("Nível renomeado.", () =>
-        api.renameSceneLevel(levelId, name),
-      ).then(Boolean),
+      save("Nível renomeado.", () => api.renameSceneLevel(levelId, name)),
     associateScene: (sessionId: string, sceneId: string) =>
-      mutate("Cena adicionada à sessão.", () =>
+      save("Cena adicionada à sessão.", () =>
         api.associateScene(sessionId, sceneId),
-      ).then(Boolean),
+      ),
     deleteCampaign: (campaignId: string) =>
-      mutate("Campanha excluída.", () => api.deleteCampaign(campaignId)).then(
-        Boolean,
-      ),
+      save("Campanha excluída.", () => api.deleteCampaign(campaignId)),
     deleteSession: (sessionId: string) =>
-      mutate("Sessão excluída.", () => api.deleteSession(sessionId)).then(
-        Boolean,
-      ),
+      save("Sessão excluída.", () => api.deleteSession(sessionId)),
     deleteScene: (sceneId: string) =>
-      mutate("Cena excluída.", () => api.deleteScene(sceneId)).then(Boolean),
+      save("Cena excluída.", () => api.deleteScene(sceneId)),
     deleteSceneLevel: (levelId: string) =>
-      mutate("Nível excluído.", () => api.deleteSceneLevel(levelId)).then(
-        Boolean,
-      ),
+      save("Nível excluído.", () => api.deleteSceneLevel(levelId)),
     removeSceneFromSession: (sessionId: string, sceneId: string) =>
-      mutate("Cena removida da sessão.", () =>
+      save("Cena removida da sessão.", () =>
         api.removeSceneFromSession(sessionId, sceneId),
-      ).then(Boolean),
+      ),
   };
 }
 

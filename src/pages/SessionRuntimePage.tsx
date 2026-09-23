@@ -63,10 +63,6 @@ export function SessionRuntimePage({
           onEnd();
         }}
       />
-      <p className={styles.notice} role="note">
-        Este é o modo de execução. Scene e SceneLevel ativos são temporários e
-        não alteram a preparação salva.
-      </p>
       <RuntimeFeedback error={error} diagnostics={diagnostics} />
       <RuntimeFeedback error={audio.error} diagnostics={audio.diagnostics} />
       {snapshot && currentScene && (

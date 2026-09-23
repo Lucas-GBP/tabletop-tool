@@ -1,45 +1,28 @@
+@use "workspace-page";
+
 .shell,
 .loading {
-  min-height: 100vh;
-  padding: 2.5rem clamp(1rem, 4vw, 4rem) 4rem;
+  @include workspace-page.shell(1.5rem clamp(1rem, 4vw, 4rem) 3rem);
 }
 
 .loading {
-  display: grid;
-  place-items: center;
-  color: var(--color-text-muted);
+  @include workspace-page.loading;
 }
 
 .header,
-.grid,
-.panel {
-  width: 100%;
-  max-width: 1400px;
-  margin-inline: auto;
+.tabs,
+.search,
+.panel,
+.settings {
+  @include workspace-page.container(1400px);
 }
 
 .header {
-  margin-bottom: var(--space-large);
-  display: flex;
-  gap: var(--space-large);
-  align-items: flex-start;
-
-  p,
-  h1,
-  span {
-    margin: 0;
-  }
-
-  p {
-    color: var(--color-accent);
-    font-size: 0.75rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
+  @include workspace-page.header(var(--space-medium), true, 0.08em);
 
   h1 {
     font-family: var(--font-family-display);
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
   }
 
   span {
@@ -47,20 +30,33 @@
   }
 }
 
-.grid {
-  margin-bottom: var(--space-large);
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-large);
+.tabs {
+  margin-block: var(--space-medium);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-small);
+}
+
+.search {
+  margin-bottom: var(--space-medium);
+  display: block;
 }
 
 .panel {
-  margin-bottom: var(--space-large);
-  padding: clamp(1.25rem, 3vw, 2rem);
+  margin-bottom: var(--space-medium);
+  padding: var(--space-large);
+}
+
+.section-header {
+  margin-bottom: var(--space-medium);
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: var(--space-medium);
 }
 
 .resources {
-  margin: var(--space-medium) 0 0;
+  margin: 0;
   padding: 0;
   display: grid;
   gap: var(--space-small);
@@ -87,8 +83,20 @@
 .volume,
 .source-controls {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-small);
   align-items: end;
+}
+
+.settings {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
+  gap: var(--space-medium);
+  align-items: start;
+
+  .panel {
+    margin-bottom: 0;
+  }
 }
 
 .directory {
@@ -103,29 +111,25 @@
   color: var(--color-text-muted);
 }
 
-.editors {
-  display: grid;
-  gap: var(--space-medium);
-}
-
 .definition-with-warning {
   display: grid;
-  gap: var(--space-small);
+  gap: 0.2rem;
 }
 
 .volume label {
   display: grid;
   gap: 0.25rem;
   color: var(--color-text-muted);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
 }
 
 @media (width <= 800px) {
-  .grid {
+  .settings {
     grid-template-columns: 1fr;
   }
 
   .header,
+  .section-header,
   .resources li {
     align-items: stretch;
     flex-direction: column;

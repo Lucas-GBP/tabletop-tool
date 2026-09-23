@@ -30,11 +30,14 @@ export function CampaignListPage({
         sceneCount={workspace.snapshot.scenes.length}
       />
       <WorkspaceFeedback error={workspace.error} notice={workspace.notice} />
-      <div className={styles.tools}>
-        <Button onClick={onOpenAudioLibrary}>Abrir Audio Mixer</Button>
-        <Button onClick={onOpenSettings}>Configurações</Button>
-        <span>Biblioteca global de arquivos, cues e composições.</span>
-      </div>
+      <nav className={styles.tools} aria-label="Ferramentas globais">
+        <Button tone="primary" onClick={onOpenAudioLibrary}>
+          Audio Mixer
+        </Button>
+        <Button tone="subtle" onClick={onOpenSettings}>
+          Configurações
+        </Button>
+      </nav>
       <div className={styles.home}>
         <CampaignHome
           campaigns={workspace.snapshot.campaigns}

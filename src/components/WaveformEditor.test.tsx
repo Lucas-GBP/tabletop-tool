@@ -22,7 +22,9 @@ function renderEditor(
       {...overrides}
     />,
   );
-  const editor = screen.getByRole("application");
+  const editor = screen.getByRole("img", {
+    name: "Forma de onda com regiões de reprodução e loop",
+  });
   vi.spyOn(editor, "getBoundingClientRect").mockReturnValue({
     x: 0,
     y: 0,
