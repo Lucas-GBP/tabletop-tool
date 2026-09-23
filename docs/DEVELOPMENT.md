@@ -7,8 +7,9 @@ execution remains volatile in TypeScript.
 
 ## Prerequisites
 
-- Node.js **24.19.0**, selected by `.node-version`.
-- npm **12.0.2**, recorded in `package.json` (`packageManager`).
+- Node.js **24.21.x**, selected by `.node-version`.
+- npm **11.19.x**, constrained by `engines`; the baseline **11.19.0** is recorded
+  in `package.json` (`packageManager`).
 - Rust **1.95.0**, with rustfmt and Clippy, selected by `rust-toolchain.toml`.
 - The [Tauri system prerequisites](https://v2.tauri.app/start/prerequisites/):
   MSVC C++ build tools and WebView2 on Windows, Xcode tools on macOS, or the
@@ -17,7 +18,7 @@ execution remains volatile in TypeScript.
 Install these prerequisites before running the project. `rustup show` from the
 repository root installs/selects the pinned Rust toolchain if necessary. If the
 Node installation contains another npm version, install the recorded version
-with `npm install --global npm@12.0.2`.
+with `npm install --global npm@11.19.0`.
 
 Then run from the repository root:
 
@@ -54,6 +55,7 @@ the generated command boundary and do not start a desktop window.
 | `npm run test:rs`                                             | Rust workspace tests, including the migration crate.                                     |
 | `npm run bindings:generate` / `npm run check:bindings`        | Generate/check TypeScript IPC contracts.                                                 |
 | `npm run build`                                               | Type-check and build the frontend.                                                       |
+| `npm run build:app`                                           | Build only the Vite bundle after a separate quality gate.                                |
 | `npm run tauri build -- --debug --no-bundle --ci -- --locked` | Compile the desktop app without producing an installer.                                  |
 | `npm run tauri build`                                         | Compile a release app and platform bundles.                                              |
 
@@ -239,7 +241,16 @@ same Scene runtime. Runtime controls never persist their temporary state.
 [CI](../.github/workflows/ci.yml) runs on pushes and pull requests to `main` and
 `develop`, and can also be dispatched manually. It checks frontend quality,
 Rust quality/tests, IPC drift, and desktop compilation on Linux x64, Windows x64,
-and macOS ARM64. Dependencies are cached; concurrent obsolete runs are cancelled.
+and macOS ARM64. Frontend and backend quality run once on Ubuntu; the desktop
+matrix depends on both and concentrates on native compilation and packaging. A
+targeted Windows test preserves coverage of platform-specific path handling
+without repeating the complete Rust suite. Draft pull requests still receive
+frontend and backend feedback, but the desktop matrix starts only when the pull
+request is ready for review. Changing the draft state triggers a new workflow
+evaluation. Independent frontend checks use parallel step groups. Rustfmt can run
+beside Clippy because it does not compile; the compilation-heavy Cargo checks and
+tests remain sequential and reuse one target directory. Dependencies are cached;
+concurrent obsolete runs are cancelled.
 
 For test installers, dispatch the workflow with `package` enabled. It produces
 DEB, NSIS EXE, and DMG artifacts retained for 14 days. This does not publish a

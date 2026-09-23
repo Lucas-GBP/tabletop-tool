@@ -14,7 +14,7 @@ As instruções locais para agentes ficam em `AGENTS.md` e `.agents/`, quando pr
 
 ## Executar localmente
 
-Pré-requisitos: Node.js 24.19.0, npm 12.0.2, Rust 1.95.0 e as dependências de sistema do Tauri. As versões estão registradas em `.node-version`, `package.json` e `rust-toolchain.toml`; consulte o [guia de desenvolvimento](docs/DEVELOPMENT.md).
+Pré-requisitos: Node.js 24.21.x, npm 11.19.x, Rust 1.95.0 e as dependências de sistema do Tauri. As versões estão registradas em `.node-version`, `package.json` e `rust-toolchain.toml`; consulte o [guia de desenvolvimento](docs/DEVELOPMENT.md).
 
 Na raiz do repositório:
 

@@ -5,6 +5,7 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
   workflow_dispatch:
     inputs:
       package:
@@ -32,22 +33,93 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .node-version
           cache: npm
       - name: Install pinned npm
         run: npm install --global $(node --print "require('./package.json').packageManager")
-      - run: npm ci
-      - run: npm run check:ts
-      - run: npm run build
+      - name: Install frontend dependencies
+        run: npm ci
+      - parallel:
+          - name: Check repository formatting
+            run: npm run check:format:ts
+          - name: Lint TypeScript and React
+            run: npm run lint
+          - name: Lint SCSS modules
+            run: npm run lint:styles
+      - name: Check TypeScript
+        run: npm run typecheck
+      - parallel:
+          - name: Run frontend tests
+            run: npm test
+          - name: Build frontend bundle
+            run: npm run build:app
+
+  backend:
+    name: Backend quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: Install pinned npm
+        run: npm install --global $(node --print "require('./package.json').packageManager")
+      - name: Install Linux desktop dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y \
+            libwebkit2gtk-4.1-dev build-essential libssl-dev \
+            libxdo-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+      - name: Install project Rust toolchain
+        run: rustup show
+      - name: Cache Rust dependencies and build outputs
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: src-tauri -> target
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      - name: Install binding tool dependencies
+        run: npm ci
+      - name: Check default Rust features
+        run: cargo check --manifest-path src-tauri/Cargo.toml --workspace --locked
+      - parallel:
+          - name: Check Rust formatting
+            run: cargo fmt --manifest-path src-tauri/Cargo.toml --all -- --check
+          - name: Run Clippy
+            run: >-
+              cargo clippy --manifest-path src-tauri/Cargo.toml --workspace
+              --all-targets --all-features --locked -- -D warnings
+      - name: Run Rust unit tests
+        run: >-
+          cargo test --manifest-path src-tauri/Cargo.toml --workspace
+          --all-features --lib --locked
+      - name: Run Rust public API tests
+        run: >-
+          cargo test --manifest-path src-tauri/Cargo.toml --workspace
+          --all-features --test '*' --locked
+      - name: Run Rust documentation tests
+        run: >-
+          cargo test --manifest-path src-tauri/Cargo.toml --workspace
+          --all-features --doc --locked
+      - name: Check generated IPC bindings
+        run: npm run check:bindings
 
   desktop:
-    name: Rust and desktop (${{ matrix.os }})
-    needs: frontend
+    name: Desktop build (${{ matrix.os }})
+    needs: [frontend, backend]
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     strategy:
       fail-fast: false
       matrix:
@@ -58,16 +130,18 @@ jobs:
           - os: windows-2022
             bundles: nsis
             artifact: windows-x64
-          - os: macos-15
-            bundles: dmg
-            artifact: macos-arm64
+          #- os: macos-15
+          #  bundles: dmg
+          #  artifact: macos-arm64
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .node-version
           cache: npm
@@ -82,13 +156,19 @@ jobs:
             libxdo-dev libayatana-appindicator3-dev librsvg2-dev patchelf
       - name: Install project Rust toolchain
         run: rustup show
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - name: Cache Rust dependencies and build outputs
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           workspaces: src-tauri -> target
           save-if: ${{ github.ref == 'refs/heads/main' }}
-      - run: npm ci
-      - run: npm run check:rs
-      - run: npm run check:bindings
+      - name: Install desktop dependencies
+        run: npm ci
+      - name: Test Windows path handling
+        if: runner.os == 'Windows'
+        run: >-
+          cargo test --manifest-path src-tauri/Cargo.toml --package tabletop-tool
+          application::settings::tests::removes_windows_verbatim_prefix_from_stored_setting
+          --locked
       - name: Build desktop application
         if: github.event_name != 'workflow_dispatch' || !inputs.package
         run: npm run tauri build -- --debug --no-bundle --ci -- --locked

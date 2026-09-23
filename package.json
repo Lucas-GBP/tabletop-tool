@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run typecheck && vite build",
+    "build": "npm run typecheck && npm run build:app",
+    "build:app": "vite build",
     "preview": "vite preview",
     "tauri": "tauri",
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
@@ -63,8 +64,8 @@
     "vitest": "5.0.1"
   },
   "engines": {
-    "node": ">=24.19.0 <25",
-    "npm": ">=12 <13"
+    "node": "24.21.x",
+    "npm": "11.19.x"
   },
-  "packageManager": "npm@12.0.2"
+  "packageManager": "npm@11.19.0"
 }
