@@ -7,6 +7,7 @@ import type {
   AudioObjectInputDto,
 } from "@/api";
 import { applicationErrorMessage } from "@/lib";
+import { useNotifications } from "./useNotifications";
 
 const emptyLibrary: AudioLibraryDto = {
   assetDirectory: null,
@@ -22,17 +23,21 @@ type Mutation = () => Promise<AudioLibraryDto>;
 export function useAudioWorkspace() {
   const [library, setLibrary] = useState(emptyLibrary);
   const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
+  const notify = useNotifications();
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError("");
+    setLoadError("");
     try {
       setLibrary(await api.listAudioLibrary());
+      setLoaded(true);
     } catch (cause) {
-      setError(applicationErrorMessage(cause));
+      setLoaded(false);
+      setLoadError(applicationErrorMessage(cause));
     } finally {
       setLoading(false);
     }
@@ -46,7 +51,6 @@ export function useAudioWorkspace() {
   async function mutate(success: string, action: Mutation) {
     setBusy(true);
     setError("");
-    setNotice("");
     try {
       const updated = await action();
       setLibrary((current) => ({
@@ -57,7 +61,7 @@ export function useAudioWorkspace() {
             ? current.files
             : updated.files,
       }));
-      setNotice(success);
+      notify(success);
       return updated;
     } catch (cause) {
       setError(applicationErrorMessage(cause));
@@ -73,9 +77,11 @@ export function useAudioWorkspace() {
   return {
     library,
     loading,
+    loaded,
+    loadError,
+    reload: load,
     busy,
     error,
-    notice,
     rescanFiles: () => save("Diretório verificado.", api.listAudioLibrary),
     createAudioObject: async (input: AudioObjectInputDto) => {
       const previous = new Set(library.objects.map((object) => object.id));

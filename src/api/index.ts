@@ -28,8 +28,23 @@ export class ApplicationTimeoutError extends Error {
   }
 }
 
-async function unwrap<T>(result: Promise<CommandResult<T>>): Promise<T> {
-  const response = await withTimeout(result);
+async function unwrapQuery<T>(result: Promise<CommandResult<T>>): Promise<T> {
+  return unwrapResult(await withTimeout(result));
+}
+
+async function unwrapMutation<T>(
+  result: Promise<CommandResult<T>>,
+): Promise<T> {
+  return unwrapResult(await result);
+}
+
+async function unwrapLongQuery<T>(
+  result: Promise<CommandResult<T>>,
+): Promise<T> {
+  return unwrapResult(await result);
+}
+
+function unwrapResult<T>(response: CommandResult<T>): T {
   if (response.status === "error") {
     throw new ApplicationError(response.error);
   }
@@ -54,69 +69,78 @@ async function withTimeout<T>(operation: Promise<T>): Promise<T> {
 
 // Keep generated IPC details at this boundary, outside visual components.
 export const api = {
-  listCore: () => unwrap(commands.listCore()),
-  createScene: (name: string) => unwrap(commands.createScene(name)),
-  createCampaign: (name: string) => unwrap(commands.createCampaign(name)),
+  listCore: () => unwrapQuery(commands.listCore()),
+  createScene: (name: string) => unwrapMutation(commands.createScene(name)),
+  createCampaign: (name: string) =>
+    unwrapMutation(commands.createCampaign(name)),
   createSession: (campaignId: string, name: string, initialSceneId: string) =>
-    unwrap(commands.createSession(campaignId, name, initialSceneId)),
+    unwrapMutation(commands.createSession(campaignId, name, initialSceneId)),
   createSceneLevel: (sceneId: string, name: string) =>
-    unwrap(commands.createSceneLevel(sceneId, name)),
+    unwrapMutation(commands.createSceneLevel(sceneId, name)),
   renameCampaign: (campaignId: string, name: string) =>
-    unwrap(commands.renameCampaign(campaignId, name)),
+    unwrapMutation(commands.renameCampaign(campaignId, name)),
   renameSession: (sessionId: string, name: string) =>
-    unwrap(commands.renameSession(sessionId, name)),
+    unwrapMutation(commands.renameSession(sessionId, name)),
   renameScene: (sceneId: string, name: string) =>
-    unwrap(commands.renameScene(sceneId, name)),
+    unwrapMutation(commands.renameScene(sceneId, name)),
   renameSceneLevel: (levelId: string, name: string) =>
-    unwrap(commands.renameSceneLevel(levelId, name)),
+    unwrapMutation(commands.renameSceneLevel(levelId, name)),
+  moveSession: (sessionId: string, position: number) =>
+    unwrapMutation(commands.moveSession(sessionId, position)),
+  moveScene: (sessionId: string, sceneId: string, position: number) =>
+    unwrapMutation(commands.moveScene(sessionId, sceneId, position)),
+  moveSceneLevel: (levelId: string, position: number) =>
+    unwrapMutation(commands.moveSceneLevel(levelId, position)),
   associateScene: (sessionId: string, sceneId: string) =>
-    unwrap(commands.associateScene(sessionId, sceneId)),
+    unwrapMutation(commands.associateScene(sessionId, sceneId)),
   deleteCampaign: (campaignId: string) =>
-    unwrap(commands.deleteCampaign(campaignId)),
+    unwrapMutation(commands.deleteCampaign(campaignId)),
   deleteSession: (sessionId: string) =>
-    unwrap(commands.deleteSession(sessionId)),
-  deleteScene: (sceneId: string) => unwrap(commands.deleteScene(sceneId)),
+    unwrapMutation(commands.deleteSession(sessionId)),
+  deleteScene: (sceneId: string) =>
+    unwrapMutation(commands.deleteScene(sceneId)),
   deleteSceneLevel: (levelId: string) =>
-    unwrap(commands.deleteSceneLevel(levelId)),
+    unwrapMutation(commands.deleteSceneLevel(levelId)),
   removeSceneFromSession: (sessionId: string, sceneId: string) =>
-    unwrap(commands.removeSceneFromSession(sessionId, sceneId)),
-  listAudioLibrary: () => unwrap(commands.listAudioLibrary()),
-  getAppSettings: () => unwrap(commands.getAppSettings()),
+    unwrapMutation(commands.removeSceneFromSession(sessionId, sceneId)),
+  listAudioLibrary: () => unwrapLongQuery(commands.listAudioLibrary()),
+  getAppSettings: () => unwrapQuery(commands.getAppSettings()),
   configureAssetDirectory: (directory: string) =>
-    unwrap(commands.configureAssetDirectory(directory)),
+    unwrapMutation(commands.configureAssetDirectory(directory)),
   resolveAssetPath: (relativePath: string) =>
-    unwrap(commands.resolveAssetPath(relativePath)),
+    unwrapQuery(commands.resolveAssetPath(relativePath)),
   createAudioObject: (input: AudioObjectInputDto) =>
-    unwrap(commands.createAudioObject(input)),
+    unwrapMutation(commands.createAudioObject(input)),
   updateAudioObject: (audioObjectId: string, input: AudioObjectInputDto) =>
-    unwrap(commands.updateAudioObject(audioObjectId, input)),
+    unwrapMutation(commands.updateAudioObject(audioObjectId, input)),
   deleteAudioObject: (audioObjectId: string) =>
-    unwrap(commands.deleteAudioObject(audioObjectId)),
+    unwrapMutation(commands.deleteAudioObject(audioObjectId)),
   createAudioList: (input: AudioListInputDto) =>
-    unwrap(commands.createAudioList(input)),
+    unwrapMutation(commands.createAudioList(input)),
   updateAudioList: (audioListId: string, input: AudioListInputDto) =>
-    unwrap(commands.updateAudioList(audioListId, input)),
+    unwrapMutation(commands.updateAudioList(audioListId, input)),
   deleteAudioList: (audioListId: string) =>
-    unwrap(commands.deleteAudioList(audioListId)),
+    unwrapMutation(commands.deleteAudioList(audioListId)),
   createAudioComposition: (input: AudioCompositionInputDto) =>
-    unwrap(commands.createAudioComposition(input)),
+    unwrapMutation(commands.createAudioComposition(input)),
   updateAudioComposition: (
     audioCompositionId: string,
     input: AudioCompositionInputDto,
-  ) => unwrap(commands.updateAudioComposition(audioCompositionId, input)),
+  ) =>
+    unwrapMutation(commands.updateAudioComposition(audioCompositionId, input)),
   deleteAudioComposition: (audioCompositionId: string) =>
-    unwrap(commands.deleteAudioComposition(audioCompositionId)),
+    unwrapMutation(commands.deleteAudioComposition(audioCompositionId)),
   updateAudioMixerSettings: (masterVolumeDb: number) =>
-    unwrap(commands.updateAudioMixerSettings({ masterVolumeDb })),
+    unwrapMutation(commands.updateAudioMixerSettings({ masterVolumeDb })),
   getSceneAudioConfiguration: (sceneId: string) =>
-    unwrap(commands.getSceneAudioConfiguration(sceneId)),
+    unwrapQuery(commands.getSceneAudioConfiguration(sceneId)),
   updateSceneAudioConfiguration: (
     sceneId: string,
     audioObjectIds: string[],
     audioListIds: string[],
     audioCompositionIds: string[],
   ) =>
-    unwrap(
+    unwrapMutation(
       commands.updateSceneAudioConfiguration(
         sceneId,
         audioObjectIds,
@@ -125,12 +149,12 @@ export const api = {
       ),
     ),
   getSceneLevelAudioConfiguration: (sceneLevelId: string) =>
-    unwrap(commands.getSceneLevelAudioConfiguration(sceneLevelId)),
+    unwrapQuery(commands.getSceneLevelAudioConfiguration(sceneLevelId)),
   updateSceneLevelAudioConfiguration: (
     sceneLevelId: string,
     disabledLayerIds: string[],
   ) =>
-    unwrap(
+    unwrapMutation(
       commands.updateSceneLevelAudioConfiguration(
         sceneLevelId,
         disabledLayerIds,

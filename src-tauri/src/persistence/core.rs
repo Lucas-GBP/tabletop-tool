@@ -337,6 +337,15 @@ async fn update_session_positions(
     transaction: &DatabaseTransaction,
     definitions: &[Session],
 ) -> Result<(), RepositoryError> {
+    for (index, definition) in definitions.iter().enumerate() {
+        session::ActiveModel {
+            id: Set(definition.id().into_uuid()),
+            position: Set(temporary_position(index, definitions.len())?),
+            ..Default::default()
+        }
+        .update(transaction)
+        .await?;
+    }
     for definition in definitions {
         session::ActiveModel {
             id: Set(definition.id().into_uuid()),
@@ -349,10 +358,29 @@ async fn update_session_positions(
     Ok(())
 }
 
+pub async fn replace_session_positions(
+    connection: &DatabaseConnection,
+    definitions: &[Session],
+) -> Result<(), RepositoryError> {
+    let transaction = connection.begin().await?;
+    update_session_positions(&transaction, definitions).await?;
+    transaction.commit().await?;
+    Ok(())
+}
+
 async fn update_level_positions(
     transaction: &DatabaseTransaction,
     definitions: &[SceneLevel],
 ) -> Result<(), RepositoryError> {
+    for (index, definition) in definitions.iter().enumerate() {
+        scene_level::ActiveModel {
+            id: Set(definition.id().into_uuid()),
+            position: Set(temporary_position(index, definitions.len())?),
+            ..Default::default()
+        }
+        .update(transaction)
+        .await?;
+    }
     for definition in definitions {
         scene_level::ActiveModel {
             id: Set(definition.id().into_uuid()),
@@ -365,10 +393,29 @@ async fn update_level_positions(
     Ok(())
 }
 
+pub async fn replace_level_positions(
+    connection: &DatabaseConnection,
+    definitions: &[SceneLevel],
+) -> Result<(), RepositoryError> {
+    let transaction = connection.begin().await?;
+    update_level_positions(&transaction, definitions).await?;
+    transaction.commit().await?;
+    Ok(())
+}
+
 async fn update_association_positions(
     transaction: &DatabaseTransaction,
     definitions: &[SessionScene],
 ) -> Result<(), RepositoryError> {
+    for (index, definition) in definitions.iter().enumerate() {
+        session_scene::ActiveModel {
+            id: Set(definition.id().into_uuid()),
+            position: Set(temporary_position(index, definitions.len())?),
+            ..Default::default()
+        }
+        .update(transaction)
+        .await?;
+    }
     for definition in definitions {
         session_scene::ActiveModel {
             id: Set(definition.id().into_uuid()),
@@ -378,6 +425,16 @@ async fn update_association_positions(
         .update(transaction)
         .await?;
     }
+    Ok(())
+}
+
+pub async fn replace_association_positions(
+    connection: &DatabaseConnection,
+    definitions: &[SessionScene],
+) -> Result<(), RepositoryError> {
+    let transaction = connection.begin().await?;
+    update_association_positions(&transaction, definitions).await?;
+    transaction.commit().await?;
     Ok(())
 }
 
@@ -442,4 +499,13 @@ fn stored_position(value: i32, entity: &'static str) -> Result<usize, Repository
 
 fn stored_position_from_usize(value: usize) -> Result<i32, RepositoryError> {
     i32::try_from(value).map_err(|_| RepositoryError::PositionOverflow)
+}
+
+fn temporary_position(index: usize, count: usize) -> Result<i32, RepositoryError> {
+    stored_position_from_usize(
+        count
+            .checked_add(1)
+            .and_then(|offset| offset.checked_add(index))
+            .ok_or(RepositoryError::PositionOverflow)?,
+    )
 }

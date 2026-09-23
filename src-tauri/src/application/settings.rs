@@ -50,12 +50,23 @@ pub async fn configure_asset_directory(
     state: &AppState,
     directory: &Path,
 ) -> Result<AppSettings, SettingsApplicationError> {
+    let stored_path = normalize_asset_directory(directory)?;
+    save_asset_directory(state, &stored_path).await
+}
+
+pub fn normalize_asset_directory(directory: &Path) -> Result<String, SettingsApplicationError> {
     if !directory.is_dir() {
         return Err(SettingsApplicationError::InvalidAssetDirectory);
     }
     let canonical = fs::canonicalize(directory)?;
-    let stored_path = storage_path(&canonical);
-    Ok(settings::update_asset_directory(state.connection(), &stored_path).await?)
+    Ok(storage_path(&canonical))
+}
+
+pub async fn save_asset_directory(
+    state: &AppState,
+    directory: &str,
+) -> Result<AppSettings, SettingsApplicationError> {
+    Ok(settings::update_asset_directory(state.connection(), directory).await?)
 }
 
 fn storage_path(path: &Path) -> String {

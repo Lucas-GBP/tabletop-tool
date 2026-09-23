@@ -16,7 +16,13 @@ interface CampaignWorkspaceProps {
   onCreateSession: (name: string, sceneId: string) => Promise<boolean>;
   onRenameSession: (sessionId: string, name: string) => Promise<boolean>;
   onDeleteSession: (sessionId: string) => Promise<boolean>;
+  onMoveSession: (sessionId: string, position: number) => Promise<boolean>;
   onAssociateScene: (sessionId: string, sceneId: string) => Promise<boolean>;
+  onMoveScene: (
+    sessionId: string,
+    sceneId: string,
+    position: number,
+  ) => Promise<boolean>;
   onRemoveScene: (sessionId: string, sceneId: string) => Promise<boolean>;
 }
 
@@ -31,7 +37,9 @@ export function CampaignWorkspace({
   onCreateSession,
   onRenameSession,
   onDeleteSession,
+  onMoveSession,
   onAssociateScene,
+  onMoveScene,
   onRemoveScene,
 }: CampaignWorkspaceProps) {
   return (
@@ -42,7 +50,7 @@ export function CampaignWorkspace({
       </p>
 
       <div className={styles.list}>
-        {campaign.sessions.map((session) => (
+        {campaign.sessions.map((session, sessionIndex) => (
           <SessionCard
             key={session.id}
             session={session}
@@ -50,12 +58,18 @@ export function CampaignWorkspace({
             sceneNames={sceneNames}
             disabled={disabled}
             canDelete={campaign.sessions.length > 1}
+            canMoveUp={sessionIndex > 0}
+            canMoveDown={sessionIndex < campaign.sessions.length - 1}
             onManageScenes={onManageScenes}
             onOpenScene={onOpenScene}
             onStart={() => onStartSession(session.id)}
             onRename={(name) => onRenameSession(session.id, name)}
             onDelete={() => onDeleteSession(session.id)}
+            onMove={(position) => onMoveSession(session.id, position)}
             onAssociate={(sceneId) => onAssociateScene(session.id, sceneId)}
+            onMoveScene={(sceneId, position) =>
+              onMoveScene(session.id, sceneId, position)
+            }
             onRemoveScene={(sceneId) => onRemoveScene(session.id, sceneId)}
           />
         ))}

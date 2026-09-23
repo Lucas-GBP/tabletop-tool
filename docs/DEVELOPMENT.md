@@ -174,7 +174,15 @@ or removes reusable Scene associations. Opening or creating a Scene enters its
 dedicated preparation screen, where the user renames or deletes the Scene and
 creates, renames, or deletes SceneLevels. Scene Tool configuration is presented
 there as well. Rust trims and rejects empty names before any persistent mutation
-and returns structured IPC errors.
+and returns structured IPC errors. Sessions, Scene associations, and SceneLevels
+can be reordered with persistent positions kept dense by the domain and database
+boundaries.
+
+Short metadata reads have a frontend timeout and a persistent retry surface when
+their initial load fails. Mutations wait for the definitive Tauri response so a
+write cannot finish after the interface has reported a timeout. Asset discovery
+is also exempt from the short read timeout because it may traverse a large local
+directory.
 
 Each Session displays its ordered `SessionScene` sequence and an always-visible
 “Adicionar cena” area. Referenced Scenes link to the same global Scene
@@ -202,7 +210,11 @@ recursively discovers WAV, MP3, OGG, FLAC, M4A, AAC, and WebM files as transient
 metadata. There is no persistent AudioFile entity. Files stay in their original
 location and are never renamed or deleted by the application.
 The backend grants only the configured asset root to Tauri's asset protocol and
-restores that narrow grant from SQLite when the application starts.
+restores that narrow grant from SQLite when the application starts. Changing the
+root authorizes the validated replacement before persistence, revokes the former
+root after the write, and compensates the scope or stored setting when a step
+fails. Recursive discovery and media probing run on a blocking worker; an
+unreadable subtree fails the scan with its path in the technical error details.
 Audio tables use the `tool_audio_*` prefix so databases from prototypes with
 legacy `audio_*` tables can be upgraded without overwriting their data.
 

@@ -73,9 +73,11 @@ describe("SceneAudioPreparationPanel", () => {
       },
       levels: [{ sceneLevelId: "level-1", disabledLayerIds: [] }],
       loading: false,
+      loaded: true,
+      loadError: "",
+      reload: vi.fn(),
       busy: false,
       error: "",
-      notice: "",
       saveScene,
       saveLevel: vi.fn(),
     });

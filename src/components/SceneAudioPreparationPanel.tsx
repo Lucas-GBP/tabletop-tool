@@ -7,6 +7,7 @@ import type {
 import { useSceneAudioConfiguration } from "@/hooks/useSceneAudioConfiguration";
 import { sceneAudioMissing } from "@/lib";
 import { AssetWarning } from "./AssetWarning";
+import { LoadFailure } from "./LoadFailure";
 import { Button, EmptyState, Panel, SectionHeading } from "./primitives";
 import { WorkspaceFeedback } from "./WorkspaceFeedback";
 import styles from "./SceneAudioPreparationPanel.module.scss";
@@ -37,7 +38,10 @@ export function SceneAudioPreparationPanel({
     return (
       <Panel as="section" className={styles.panel}>
         <SectionHeading eyebrow="Audio Mixer" title="Áudio da cena" />
-        <WorkspaceFeedback error={audio.error} notice={audio.notice} />
+        <LoadFailure
+          message={audio.loadError}
+          onRetry={() => void audio.reload()}
+        />
       </Panel>
     );
   }
@@ -61,7 +65,7 @@ export function SceneAudioPreparationPanel({
   return (
     <Panel as="section" className={styles.panel}>
       <SectionHeading eyebrow="Audio Mixer" title="Áudio da cena" />
-      <WorkspaceFeedback error={audio.error} notice={audio.notice} />
+      <WorkspaceFeedback error={audio.error} />
       {sceneAudioMissing(audio.library, effectiveSceneDraft) ? (
         <AssetWarning>
           Esta cena usa um arquivo que não foi encontrado

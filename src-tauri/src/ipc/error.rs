@@ -32,6 +32,18 @@ pub(super) fn parse_id(value: &str, operation: &str) -> Result<Uuid, AppErrorDto
 }
 
 #[allow(clippy::result_large_err)]
+pub(super) fn parse_position(value: i32, operation: &str) -> Result<usize, AppErrorDto> {
+    usize::try_from(value).map_err(|_| AppErrorDto {
+        code: "CORE_INVALID_POSITION".to_owned(),
+        message: "A posição selecionada não é válida.".to_owned(),
+        operation: operation.to_owned(),
+        entity_id: None,
+        details: None,
+        recoverable: true,
+    })
+}
+
+#[allow(clippy::result_large_err)]
 pub(super) fn parse_audio_id(value: &str, operation: &str) -> Result<Uuid, AppErrorDto> {
     Uuid::parse_str(value).map_err(|_| AppErrorDto {
         code: "AUDIO_INVALID_ID".to_owned(),
@@ -193,18 +205,6 @@ pub(super) fn audio_application_error(
             "FILESYSTEM_ERROR",
             "Não foi possível acessar o diretório de áudio configurado.",
             false,
-            None,
-        ),
-        AudioApplicationError::UnsupportedFormat => (
-            "AUDIO_UNSUPPORTED_FORMAT",
-            "Use um arquivo WAV, MP3, OGG, FLAC, M4A, AAC ou WebM.",
-            true,
-            None,
-        ),
-        AudioApplicationError::InvalidAudioFile => (
-            "AUDIO_INVALID_FILE",
-            "Não foi possível ler este arquivo de áudio.",
-            true,
             None,
         ),
         AudioApplicationError::MissingAudioFile(id) => (

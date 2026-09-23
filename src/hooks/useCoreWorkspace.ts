@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "@/api";
 import type { CoreSnapshotDto } from "@/api";
 import { coreErrorMessage } from "@/lib";
+import { useNotifications } from "./useNotifications";
 
 const emptySnapshot: CoreSnapshotDto = { campaigns: [], scenes: [] };
 
@@ -10,28 +11,30 @@ type Mutation = () => Promise<CoreSnapshotDto>;
 export function useCoreWorkspace() {
   const [snapshot, setSnapshot] = useState(emptySnapshot);
   const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
+  const notify = useNotifications();
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setLoadError("");
+    try {
+      setSnapshot(await api.listCore());
+      setLoaded(true);
+    } catch (cause) {
+      setLoaded(false);
+      setLoadError(coreErrorMessage(cause));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    let active = true;
-    void api
-      .listCore()
-      .then((data) => {
-        if (active) setSnapshot(data);
-      })
-      .catch((cause: unknown) => {
-        if (active) setError(coreErrorMessage(cause));
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
+    const timer = window.setTimeout(() => void load(), 0);
+    return () => window.clearTimeout(timer);
+  }, [load]);
 
   const sceneNames = useMemo(
     () => new Map(snapshot.scenes.map((scene) => [scene.id, scene.name])),
@@ -41,11 +44,10 @@ export function useCoreWorkspace() {
   async function mutate(success: string, action: Mutation) {
     setBusy(true);
     setError("");
-    setNotice("");
     try {
       const updated = await action();
       setSnapshot(updated);
-      setNotice(success);
+      notify(success);
       return updated;
     } catch (cause) {
       setError(coreErrorMessage(cause));
@@ -62,9 +64,11 @@ export function useCoreWorkspace() {
     snapshot,
     sceneNames,
     loading,
+    loaded,
+    loadError,
+    reload: load,
     busy,
     error,
-    notice,
     createScene: async (name: string) => {
       const previousIds = new Set(snapshot.scenes.map((scene) => scene.id));
       const updated = await mutate("Cena criada.", () => api.createScene(name));
@@ -96,6 +100,14 @@ export function useCoreWorkspace() {
       save("Cena renomeada.", () => api.renameScene(sceneId, name)),
     renameSceneLevel: (levelId: string, name: string) =>
       save("Nível renomeado.", () => api.renameSceneLevel(levelId, name)),
+    moveSession: (sessionId: string, position: number) =>
+      save("Sessão reordenada.", () => api.moveSession(sessionId, position)),
+    moveScene: (sessionId: string, sceneId: string, position: number) =>
+      save("Cena reordenada.", () =>
+        api.moveScene(sessionId, sceneId, position),
+      ),
+    moveSceneLevel: (levelId: string, position: number) =>
+      save("Nível reordenado.", () => api.moveSceneLevel(levelId, position)),
     associateScene: (sessionId: string, sceneId: string) =>
       save("Cena adicionada à sessão.", () =>
         api.associateScene(sessionId, sceneId),

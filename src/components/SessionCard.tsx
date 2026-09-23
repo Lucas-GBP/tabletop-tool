@@ -10,12 +10,16 @@ interface SessionCardProps {
   sceneNames: Map<string, string>;
   disabled: boolean;
   canDelete: boolean;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
   onManageScenes: () => void;
   onOpenScene: (sceneId: string) => void;
   onStart: () => void;
   onRename: (name: string) => Promise<boolean>;
   onDelete: () => Promise<boolean>;
+  onMove: (position: number) => Promise<boolean>;
   onAssociate: (sceneId: string) => Promise<boolean>;
+  onMoveScene: (sceneId: string, position: number) => Promise<boolean>;
   onRemoveScene: (sceneId: string) => Promise<boolean>;
 }
 
@@ -25,12 +29,16 @@ export function SessionCard({
   sceneNames,
   disabled,
   canDelete,
+  canMoveUp,
+  canMoveDown,
   onManageScenes,
   onOpenScene,
   onStart,
   onRename,
   onDelete,
+  onMove,
   onAssociate,
+  onMoveScene,
   onRemoveScene,
 }: SessionCardProps) {
   const availableScenes = scenes.filter(
@@ -54,6 +62,22 @@ export function SessionCard({
         </div>
         <div className={styles.actions}>
           <span>{sceneCountLabel}</span>
+          <Button
+            size="compact"
+            disabled={disabled || !canMoveUp}
+            aria-label={`Mover sessão ${session.name} para cima`}
+            onClick={() => void onMove(session.position - 1)}
+          >
+            ↑
+          </Button>
+          <Button
+            size="compact"
+            disabled={disabled || !canMoveDown}
+            aria-label={`Mover sessão ${session.name} para baixo`}
+            onClick={() => void onMove(session.position + 1)}
+          >
+            ↓
+          </Button>
           <Button
             className={styles.start}
             aria-label={`Iniciar sessão ${session.name}`}
@@ -96,7 +120,7 @@ export function SessionCard({
           <span>Ordem de execução</span>
         </div>
         <ol className={styles["scene-list"]} aria-label="Sequência de cenas">
-          {session.scenes.map((link) => {
+          {session.scenes.map((link, sceneIndex) => {
             const sceneName = sceneNames.get(link.sceneId);
             return (
               <li key={link.id}>
@@ -106,6 +130,28 @@ export function SessionCard({
                 </span>
                 {sceneName && (
                   <div className={styles["scene-actions"]}>
+                    <Button
+                      size="compact"
+                      disabled={disabled || sceneIndex === 0}
+                      aria-label={`Mover cena ${sceneName} para cima`}
+                      onClick={() =>
+                        void onMoveScene(link.sceneId, link.position - 1)
+                      }
+                    >
+                      ↑
+                    </Button>
+                    <Button
+                      size="compact"
+                      disabled={
+                        disabled || sceneIndex === session.scenes.length - 1
+                      }
+                      aria-label={`Mover cena ${sceneName} para baixo`}
+                      onClick={() =>
+                        void onMoveScene(link.sceneId, link.position + 1)
+                      }
+                    >
+                      ↓
+                    </Button>
                     <Button
                       className={styles["edit-scene"]}
                       disabled={disabled}

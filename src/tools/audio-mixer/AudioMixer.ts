@@ -22,17 +22,14 @@ interface AudioMixerOptions {
   loaderFactory?: (context: AudioContext) => AudioBufferLoader;
 }
 
-type MixerListener = () => void;
-
 export class AudioMixer {
-  #definitions: AudioDefinitions;
+  readonly #definitions: AudioDefinitions;
   readonly #resolveFilePath: (assetPath: string) => Promise<string>;
   readonly #contextFactory: () => AudioContext;
   readonly #selector: AudioListSelector;
   readonly #loaderFactory:
     ((context: AudioContext) => AudioBufferLoader) | undefined;
   readonly #playbacks = new Map<string, PlaybackInstance>();
-  readonly #listeners = new Set<MixerListener>();
   #context: AudioContext | null = null;
   #masterGain: GainNode | null = null;
   #loader: AudioBufferLoader | null = null;
@@ -67,20 +64,10 @@ export class AudioMixer {
     return this.#playbacks.has(id);
   }
 
-  subscribe(listener: MixerListener) {
-    this.#listeners.add(listener);
-    return () => this.#listeners.delete(listener);
-  }
-
-  setDefinitions(definitions: AudioDefinitions) {
-    this.#definitions = definitions;
-  }
-
   async activate() {
     this.#ensureActive("activate_audio");
     const context = this.#getContext();
     if (context.state === "suspended") await context.resume();
-    this.#notify();
   }
 
   async play(cue: AudioCueReference) {
@@ -113,12 +100,10 @@ export class AudioMixer {
         ),
         onFinished: (finishedId) => {
           this.#playbacks.delete(finishedId);
-          this.#notify();
         },
       });
       this.#playbacks.set(id, playback);
       playback.start();
-      this.#notify();
       return id;
     } catch (cause) {
       throw normalizeRuntimeError(cause, {
@@ -133,42 +118,34 @@ export class AudioMixer {
 
   pause(id: string) {
     this.#playback(id, "pause_playback").pause();
-    this.#notify();
   }
 
   resume(id: string) {
     this.#playback(id, "resume_playback").resume();
-    this.#notify();
   }
 
   seek(id: string, positionUs: number) {
     this.#playback(id, "seek_playback").seek(positionUs);
-    this.#notify();
   }
 
   stop(id: string) {
     this.#playback(id, "stop_playback").stop();
-    this.#notify();
   }
 
   finish(id: string) {
     this.#playback(id, "finish_playback").finish();
-    this.#notify();
   }
 
   pauseAll() {
     for (const playback of this.#playbacks.values()) playback.pause();
-    this.#notify();
   }
 
   resumeAll() {
     for (const playback of this.#playbacks.values()) playback.resume();
-    this.#notify();
   }
 
   stopAll() {
     for (const playback of [...this.#playbacks.values()]) playback.stop();
-    this.#notify();
   }
 
   setMasterVolumeDb(value: number) {
@@ -187,7 +164,6 @@ export class AudioMixer {
         this.#context.currentTime,
       );
     }
-    this.#notify();
   }
 
   resetListCursors(listIds?: Iterable<string>) {
@@ -202,7 +178,6 @@ export class AudioMixer {
     this.#loader?.clear();
     this.#masterGain?.disconnect();
     if (this.#context) void this.#context.close();
-    this.#listeners.clear();
   }
 
   #resolveCue(cue: AudioCueReference) {
@@ -269,10 +244,6 @@ export class AudioMixer {
         recoverable: false,
       });
     }
-  }
-
-  #notify() {
-    for (const listener of this.#listeners) listener();
   }
 
   #ensureActive(operation: string) {

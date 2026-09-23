@@ -7,6 +7,8 @@ export { AudioListEditor } from "./AudioListEditor";
 export { CampaignHome } from "./CampaignHome";
 export { CampaignWorkspace } from "./CampaignWorkspace";
 export { CampaignWorkspaceHeader } from "./CampaignWorkspaceHeader";
+export { LoadFailure } from "./LoadFailure";
+export { NotificationHost } from "./NotificationHost";
 export { SceneLibrary } from "./SceneLibrary";
 export { ScenePreparationHeader } from "./ScenePreparationHeader";
 export { SceneAudioPreparationPanel } from "./SceneAudioPreparationPanel";

@@ -44,6 +44,11 @@
   font-size: 0.75rem;
 }
 
+.order {
+  display: flex;
+  gap: 0.25rem;
+}
+
 .form {
   margin-top: var(--space-medium);
   display: flex;

@@ -12,6 +12,7 @@ import {
   Button,
   EmptyState,
   Input,
+  LoadFailure,
   Panel,
   SectionHeading,
   WorkspaceFeedback,
@@ -84,6 +85,17 @@ export function AudioLibraryPage({
   if (audio.loading) {
     return (
       <main className={styles.loading}>Abrindo a biblioteca de áudio…</main>
+    );
+  }
+
+  if (!audio.loaded) {
+    return (
+      <main className={styles.shell}>
+        <LoadFailure
+          message={audio.loadError}
+          onRetry={() => void audio.reload()}
+        />
+      </main>
     );
   }
 
@@ -198,7 +210,7 @@ export function AudioLibraryPage({
         </div>
       </header>
 
-      <WorkspaceFeedback error={audio.error} notice={audio.notice} />
+      <WorkspaceFeedback error={audio.error} />
 
       <nav className={styles.tabs} aria-label="Seções da biblioteca de áudio">
         {sections.map((item) => (

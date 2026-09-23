@@ -29,23 +29,51 @@ pub(crate) async fn configure_asset_directory(
     state: State<'_, AppState>,
     directory: String,
 ) -> Result<AppSettingsDto, AppErrorDto> {
-    let settings =
-        application::settings::configure_asset_directory(&state, &PathBuf::from(directory))
-            .await
-            .map_err(|error| settings_error("configure_asset_directory", error))?;
-    if let Some(directory) = &settings.asset_directory {
-        app.asset_protocol_scope()
-            .allow_directory(directory, true)
-            .map_err(|error| AppErrorDto {
-                code: "ASSET_SCOPE_ERROR".to_owned(),
-                message: "Não foi possível liberar o acesso à pasta de assets.".to_owned(),
-                operation: "configure_asset_directory".to_owned(),
-                entity_id: None,
-                details: Some(error.to_string()),
-                recoverable: true,
-            })?;
+    let previous = application::settings::get(&state)
+        .await
+        .map_err(|error| settings_error("configure_asset_directory", error))?
+        .asset_directory;
+    let directory = application::settings::normalize_asset_directory(&PathBuf::from(directory))
+        .map_err(|error| settings_error("configure_asset_directory", error))?;
+    let scope = app.asset_protocol_scope();
+    let changed = previous.as_deref() != Some(directory.as_str());
+
+    scope
+        .allow_directory(&directory, true)
+        .map_err(|error| scope_error("liberar", error))?;
+
+    let settings = match application::settings::save_asset_directory(&state, &directory).await {
+        Ok(settings) => settings,
+        Err(error) => {
+            if changed {
+                let _ = scope.forbid_directory(&directory, true);
+            }
+            return Err(settings_error("configure_asset_directory", error));
+        }
+    };
+
+    if let Some(previous) = previous.filter(|_| changed) {
+        if let Err(error) = scope.forbid_directory(&previous, true) {
+            let rollback = application::settings::save_asset_directory(&state, &previous).await;
+            let _ = scope.forbid_directory(&directory, true);
+            if let Err(rollback_error) = rollback {
+                return Err(settings_error("rollback_asset_directory", rollback_error));
+            }
+            return Err(scope_error("revogar", error));
+        }
     }
     Ok(settings_dto(settings))
+}
+
+fn scope_error(action: &str, error: tauri::Error) -> AppErrorDto {
+    AppErrorDto {
+        code: "ASSET_SCOPE_ERROR".to_owned(),
+        message: format!("Não foi possível {action} o acesso à pasta de assets."),
+        operation: "configure_asset_directory".to_owned(),
+        entity_id: None,
+        details: Some(error.to_string()),
+        recoverable: true,
+    }
 }
 
 fn settings_dto(settings: crate::persistence::settings::AppSettings) -> AppSettingsDto {

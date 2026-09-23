@@ -3,23 +3,28 @@ import { open } from "@tauri-apps/plugin-dialog";
 import type { AppSettingsDto } from "@/api";
 import { api } from "@/api";
 import { applicationErrorMessage } from "@/lib";
+import { useNotifications } from "./useNotifications";
 
 const emptySettings: AppSettingsDto = { assetDirectory: null };
 
 export function useAppSettings() {
   const [settings, setSettings] = useState(emptySettings);
   const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
+  const notify = useNotifications();
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError("");
+    setLoadError("");
     try {
       setSettings(await api.getAppSettings());
+      setLoaded(true);
     } catch (cause) {
-      setError(applicationErrorMessage(cause));
+      setLoaded(false);
+      setLoadError(applicationErrorMessage(cause));
     } finally {
       setLoading(false);
     }
@@ -35,10 +40,9 @@ export function useAppSettings() {
     if (typeof directory !== "string") return false;
     setBusy(true);
     setError("");
-    setNotice("");
     try {
       setSettings(await api.configureAssetDirectory(directory));
-      setNotice("Pasta de assets atualizada.");
+      notify("Pasta de assets atualizada.");
       return true;
     } catch (cause) {
       setError(applicationErrorMessage(cause));
@@ -48,5 +52,14 @@ export function useAppSettings() {
     }
   }
 
-  return { settings, loading, busy, error, notice, chooseAssetDirectory };
+  return {
+    settings,
+    loading,
+    loaded,
+    loadError,
+    reload: load,
+    busy,
+    error,
+    chooseAssetDirectory,
+  };
 }

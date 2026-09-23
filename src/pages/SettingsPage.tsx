@@ -1,6 +1,7 @@
 import {
   Button,
   EmptyState,
+  LoadFailure,
   Panel,
   SectionHeading,
   WorkspaceFeedback,
@@ -17,6 +18,16 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
   if (app.loading) {
     return <main className={styles.loading}>Abrindo configurações…</main>;
   }
+  if (!app.loaded) {
+    return (
+      <main className={styles.shell}>
+        <LoadFailure
+          message={app.loadError}
+          onRetry={() => void app.reload()}
+        />
+      </main>
+    );
+  }
   return (
     <main className={styles.shell}>
       <header className={styles.header}>
@@ -27,7 +38,7 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
           <span>Preferências gerais do seu espaço de preparação.</span>
         </div>
       </header>
-      <WorkspaceFeedback error={app.error} notice={app.notice} />
+      <WorkspaceFeedback error={app.error} />
       <Panel as="section" className={styles.panel}>
         <SectionHeading eyebrow="Biblioteca" title="Pasta de assets" />
         <p className={styles.description}>

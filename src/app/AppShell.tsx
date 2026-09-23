@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { LoadFailure } from "@/components";
 import { useCoreWorkspace } from "@/hooks";
 import {
   AudioLibraryPage,
@@ -18,6 +19,17 @@ export function AppShell() {
 
   if (workspace.loading) {
     return <main className={styles.loading}>Abrindo seu espaço de jogo…</main>;
+  }
+
+  if (!workspace.loaded) {
+    return (
+      <main className={styles.loading}>
+        <LoadFailure
+          message={workspace.loadError}
+          onRetry={() => void workspace.reload()}
+        />
+      </main>
+    );
   }
 
   const campaignList = (

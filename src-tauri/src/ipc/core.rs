@@ -1,4 +1,4 @@
-use super::error::{application_error, parse_id, AppErrorDto};
+use super::error::{application_error, parse_id, parse_position, AppErrorDto};
 use crate::{
     application::{self, AppState},
     persistence::core::CoreDefinitions,
@@ -175,6 +175,53 @@ pub(crate) async fn rename_scene_level(
         .await
         .map(snapshot_dto)
         .map_err(|error| application_error("rename_scene_level", error))
+}
+
+#[tauri::command]
+#[specta::specta]
+pub(crate) async fn move_session(
+    state: State<'_, AppState>,
+    session_id: String,
+    position: i32,
+) -> Result<CoreSnapshotDto, AppErrorDto> {
+    let session_id = parse_id(&session_id, "move_session")?.into();
+    let position = parse_position(position, "move_session")?;
+    application::core::move_session(state.connection(), session_id, position)
+        .await
+        .map(snapshot_dto)
+        .map_err(|error| application_error("move_session", error))
+}
+
+#[tauri::command]
+#[specta::specta]
+pub(crate) async fn move_scene(
+    state: State<'_, AppState>,
+    session_id: String,
+    scene_id: String,
+    position: i32,
+) -> Result<CoreSnapshotDto, AppErrorDto> {
+    let session_id = parse_id(&session_id, "move_scene")?.into();
+    let scene_id = parse_id(&scene_id, "move_scene")?.into();
+    let position = parse_position(position, "move_scene")?;
+    application::core::move_scene(state.connection(), session_id, scene_id, position)
+        .await
+        .map(snapshot_dto)
+        .map_err(|error| application_error("move_scene", error))
+}
+
+#[tauri::command]
+#[specta::specta]
+pub(crate) async fn move_scene_level(
+    state: State<'_, AppState>,
+    level_id: String,
+    position: i32,
+) -> Result<CoreSnapshotDto, AppErrorDto> {
+    let level_id = parse_id(&level_id, "move_scene_level")?.into();
+    let position = parse_position(position, "move_scene_level")?;
+    application::core::move_scene_level(state.connection(), level_id, position)
+        .await
+        .map(snapshot_dto)
+        .map_err(|error| application_error("move_scene_level", error))
 }
 
 #[tauri::command]

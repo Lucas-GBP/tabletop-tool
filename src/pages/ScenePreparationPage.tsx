@@ -41,7 +41,7 @@ export function ScenePreparationPage({
         onRename={(name) => workspace.renameScene(scene.id, name)}
         onDelete={() => workspace.deleteScene(scene.id)}
       />
-      <WorkspaceFeedback error={workspace.error} notice={workspace.notice} />
+      <WorkspaceFeedback error={workspace.error} />
       <div className={styles.workspace}>
         <SceneStructurePanel
           scene={scene}
@@ -49,6 +49,7 @@ export function ScenePreparationPage({
           onCreateLevel={(name) => workspace.createSceneLevel(scene.id, name)}
           onRenameLevel={workspace.renameSceneLevel}
           onDeleteLevel={workspace.deleteSceneLevel}
+          onMoveLevel={workspace.moveSceneLevel}
         />
         <SceneAudioPreparationPanel scene={scene} />
       </div>

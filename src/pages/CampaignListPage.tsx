@@ -29,7 +29,7 @@ export function CampaignListPage({
         campaignCount={workspace.snapshot.campaigns.length}
         sceneCount={workspace.snapshot.scenes.length}
       />
-      <WorkspaceFeedback error={workspace.error} notice={workspace.notice} />
+      <WorkspaceFeedback error={workspace.error} />
       <nav className={styles.tools} aria-label="Ferramentas globais">
         <Button tone="primary" onClick={onOpenAudioLibrary}>
           Audio Mixer

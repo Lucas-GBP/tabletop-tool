@@ -1,0 +1,19 @@
+.failure {
+  display: grid;
+  gap: var(--space-medium);
+  width: min(34rem, calc(100% - 2 * var(--space-large)));
+  margin: var(--space-large) auto;
+  padding: var(--space-large);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-panel);
+}
+
+.failure h2 {
+  margin: 0;
+}
+
+.failure button {
+  justify-self: start;
+}

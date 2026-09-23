@@ -7,6 +7,7 @@ import type {
 } from "@/api";
 import { api } from "@/api";
 import { applicationErrorMessage } from "@/lib";
+import { useNotifications } from "./useNotifications";
 
 interface SceneAudioState {
   library: AudioLibraryDto | null;
@@ -21,13 +22,15 @@ export function useSceneAudioConfiguration(scene: SceneDto) {
     levels: [],
   });
   const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
+  const notify = useNotifications();
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError("");
+    setLoadError("");
     try {
       const [library, sceneConfiguration, ...levels] = await Promise.all([
         api.listAudioLibrary(),
@@ -37,8 +40,10 @@ export function useSceneAudioConfiguration(scene: SceneDto) {
         ),
       ]);
       setState({ library, scene: sceneConfiguration, levels });
+      setLoaded(true);
     } catch (cause) {
-      setError(applicationErrorMessage(cause));
+      setLoaded(false);
+      setLoadError(applicationErrorMessage(cause));
     } finally {
       setLoading(false);
     }
@@ -52,10 +57,9 @@ export function useSceneAudioConfiguration(scene: SceneDto) {
   async function run<T>(success: string, action: () => Promise<T>) {
     setBusy(true);
     setError("");
-    setNotice("");
     try {
       const result = await action();
-      setNotice(success);
+      notify(success);
       return result;
     } catch (cause) {
       setError(applicationErrorMessage(cause));
@@ -68,9 +72,11 @@ export function useSceneAudioConfiguration(scene: SceneDto) {
   return {
     ...state,
     loading,
+    loaded,
+    loadError,
+    reload: load,
     busy,
     error,
-    notice,
     async saveScene(configuration: SceneAudioConfigurationDto) {
       const updated = await run("Áudio da cena salvo.", () =>
         api.updateSceneAudioConfiguration(

@@ -1,6 +1,6 @@
 use crate::{
     application::AppState,
-    assets::AudioAsset,
+    assets,
     audio::{
         AudioComposition, AudioCompositionId, AudioList, AudioListId, AudioListSelectionMode,
         AudioMixerSettings, AudioObject, AudioObjectDefinition, AudioObjectId,
@@ -14,25 +14,16 @@ use crate::{
 use sea_orm::DatabaseConnection;
 use std::{
     error::Error,
-    ffi::OsStr,
-    fmt, fs, io,
+    fmt, io,
     path::{Component, Path, PathBuf},
 };
-use symphonia::core::{
-    codecs::CODEC_TYPE_NULL, formats::FormatOptions, io::MediaSourceStream, meta::MetadataOptions,
-    probe::Hint,
-};
 use uuid::Uuid;
-
-const SUPPORTED_EXTENSIONS: &[&str] = &["wav", "mp3", "ogg", "flac", "m4a", "aac", "webm"];
 
 #[derive(Debug)]
 pub enum AudioApplicationError {
     Validation(AudioValidationError),
     Repository(AudioRepositoryError),
     FileSystem(io::Error),
-    UnsupportedFormat,
-    InvalidAudioFile,
     MissingAudioFile(String),
     InvalidAssetDirectory,
     InvalidReference(&'static str),
@@ -44,9 +35,9 @@ impl fmt::Display for AudioApplicationError {
         match self {
             Self::Validation(error) => error.fmt(formatter),
             Self::Repository(error) => error.fmt(formatter),
-            Self::FileSystem(_) => formatter.write_str("audio filesystem operation failed"),
-            Self::UnsupportedFormat => formatter.write_str("unsupported audio format"),
-            Self::InvalidAudioFile => formatter.write_str("audio file could not be probed"),
+            Self::FileSystem(error) => {
+                write!(formatter, "audio filesystem operation failed: {error}")
+            }
             Self::MissingAudioFile(id) => write!(formatter, "audio file {id} is unavailable"),
             Self::InvalidAssetDirectory => {
                 formatter.write_str("asset directory does not exist or is not a directory")
@@ -101,7 +92,10 @@ pub async fn list(state: &AppState) -> Result<AudioLibrary, AudioApplicationErro
         .asset_directory;
     library.files = match library.asset_directory.as_deref() {
         Some(directory) if Path::new(directory).is_dir() => {
-            scan_audio_directory(Path::new(directory))?
+            let root = PathBuf::from(directory);
+            tokio::task::spawn_blocking(move || assets::scan_audio_directory(&root))
+                .await
+                .map_err(|error| io::Error::other(format!("asset scan task failed: {error}")))??
         }
         _ => Vec::new(),
     };
@@ -112,116 +106,6 @@ async fn load_cached(
     connection: &DatabaseConnection,
 ) -> Result<AudioLibrary, AudioApplicationError> {
     Ok(audio::load_library(connection).await?)
-}
-
-fn scan_audio_directory(root: &Path) -> Result<Vec<AudioAsset>, AudioApplicationError> {
-    let mut paths = Vec::new();
-    collect_audio_paths(root, &mut paths)?;
-    paths.sort();
-
-    let mut files = Vec::new();
-    for path in paths {
-        let Some(extension) = path
-            .extension()
-            .and_then(OsStr::to_str)
-            .map(str::to_ascii_lowercase)
-            .filter(|value| SUPPORTED_EXTENSIONS.contains(&value.as_str()))
-        else {
-            continue;
-        };
-        let Ok((duration_us, media_type)) = probe_audio(&path, &extension) else {
-            continue;
-        };
-        let metadata = fs::metadata(&path)?;
-        let Ok(size_bytes) = i64::try_from(metadata.len()) else {
-            continue;
-        };
-        let Some(original_file_name) = path.file_name().and_then(OsStr::to_str).map(str::to_owned)
-        else {
-            continue;
-        };
-        let name = path
-            .file_stem()
-            .and_then(OsStr::to_str)
-            .unwrap_or(&original_file_name)
-            .to_owned();
-        let Ok(relative) = path.strip_prefix(root) else {
-            continue;
-        };
-        let relative_path = relative.to_string_lossy().replace('\\', "/");
-        files.push(AudioAsset {
-            name,
-            original_file_name,
-            relative_path,
-            media_type: media_type.to_owned(),
-            duration_us,
-            size_bytes,
-        });
-    }
-    Ok(files)
-}
-
-fn collect_audio_paths(directory: &Path, paths: &mut Vec<PathBuf>) -> Result<(), io::Error> {
-    for entry in fs::read_dir(directory)? {
-        let entry = entry?;
-        let file_type = entry.file_type()?;
-        let path = entry.path();
-        if file_type.is_dir() {
-            collect_audio_paths(&path, paths)?;
-        } else if file_type.is_file() {
-            paths.push(path);
-        }
-    }
-    Ok(())
-}
-
-fn probe_audio(
-    source_path: &Path,
-    extension: &str,
-) -> Result<(i64, &'static str), AudioApplicationError> {
-    let source = fs::File::open(source_path)?;
-    let stream = MediaSourceStream::new(Box::new(source), Default::default());
-    let mut hint = Hint::new();
-    hint.with_extension(extension);
-    let probed = symphonia::default::get_probe()
-        .format(
-            &hint,
-            stream,
-            &FormatOptions::default(),
-            &MetadataOptions::default(),
-        )
-        .map_err(|_| AudioApplicationError::InvalidAudioFile)?;
-    let track = probed
-        .format
-        .default_track()
-        .filter(|track| track.codec_params.codec != CODEC_TYPE_NULL)
-        .ok_or(AudioApplicationError::InvalidAudioFile)?;
-    let time_base = track
-        .codec_params
-        .time_base
-        .ok_or(AudioApplicationError::InvalidAudioFile)?;
-    let frames = track
-        .codec_params
-        .n_frames
-        .ok_or(AudioApplicationError::InvalidAudioFile)?;
-    let time = time_base.calc_time(frames);
-    let micros = u128::from(time.seconds)
-        .checked_mul(1_000_000)
-        .and_then(|whole| whole.checked_add((time.frac * 1_000_000.0).round() as u128))
-        .and_then(|value| i64::try_from(value).ok())
-        .filter(|value| *value > 0)
-        .ok_or(AudioApplicationError::InvalidAudioFile)?;
-    let media_type = match extension {
-        "wav" => "audio/wav",
-        "mp3" => "audio/mpeg",
-        "ogg" => "audio/ogg",
-        "flac" => "audio/flac",
-        "m4a" => "audio/mp4",
-        "aac" => "audio/aac",
-        "webm" => "audio/webm",
-        _ => return Err(AudioApplicationError::UnsupportedFormat),
-    };
-    Ok((micros, media_type))
 }
 
 pub async fn resolve_asset_path(

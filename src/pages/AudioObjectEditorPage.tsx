@@ -8,6 +8,7 @@ import {
   Button,
   EmptyState,
   Input,
+  LoadFailure,
   Panel,
   SectionHeading,
   WaveformEditor,
@@ -42,6 +43,17 @@ export function AudioObjectEditorPage({
     return <main className={styles.loading}>Abrindo o editor de áudio…</main>;
   }
 
+  if (!audio.loaded) {
+    return (
+      <main className={styles.shell}>
+        <LoadFailure
+          message={audio.loadError}
+          onRetry={() => void audio.reload()}
+        />
+      </main>
+    );
+  }
+
   if (!object) {
     return (
       <main className={styles.shell}>
@@ -60,7 +72,6 @@ export function AudioObjectEditorPage({
       files={audio.library.files}
       busy={audio.busy}
       error={audio.error}
-      notice={audio.notice}
       onBack={onBack}
       onSave={async (input) => {
         const saved = await audio.updateAudioObject(object.id, input);
@@ -76,7 +87,6 @@ interface EditorProps {
   files: readonly AudioAssetDto[];
   busy: boolean;
   error: string;
-  notice: string;
   onBack: () => void;
   onSave: (input: AudioObjectInputDto) => Promise<void>;
   onRefresh: () => void;
@@ -87,7 +97,6 @@ function AudioObjectEditor({
   files,
   busy,
   error,
-  notice,
   onBack,
   onSave,
   onRefresh,
@@ -347,10 +356,7 @@ function AudioObjectEditor({
           {busy ? "Salvando…" : "Salvar"}
         </Button>
       </header>
-      <WorkspaceFeedback
-        error={error || waveformError || previewError}
-        notice={notice}
-      />
+      <WorkspaceFeedback error={error || waveformError || previewError} />
 
       <form
         id="audio-object-form"

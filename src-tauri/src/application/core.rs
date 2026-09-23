@@ -172,6 +172,52 @@ pub async fn rename_scene_level(
     list(connection).await
 }
 
+pub async fn move_session(
+    connection: &DatabaseConnection,
+    session_id: SessionId,
+    position: usize,
+) -> Result<CoreDefinitions, ApplicationError> {
+    let mut definitions = list(connection).await?;
+    let campaign = find_campaign_for_session_mut(&mut definitions, session_id)?;
+    campaign.move_session(session_id, position)?;
+    persistence::core::replace_session_positions(connection, campaign.sessions()).await?;
+    list(connection).await
+}
+
+pub async fn move_scene(
+    connection: &DatabaseConnection,
+    session_id: SessionId,
+    scene_id: SceneId,
+    position: usize,
+) -> Result<CoreDefinitions, ApplicationError> {
+    let mut definitions = list(connection).await?;
+    let campaign = find_campaign_for_session_mut(&mut definitions, session_id)?;
+    campaign.move_scene(session_id, scene_id, position)?;
+    let session = campaign
+        .sessions()
+        .iter()
+        .find(|session| session.id() == session_id)
+        .expect("moved scene remains in its session");
+    persistence::core::replace_association_positions(connection, session.scenes()).await?;
+    list(connection).await
+}
+
+pub async fn move_scene_level(
+    connection: &DatabaseConnection,
+    level_id: SceneLevelId,
+    position: usize,
+) -> Result<CoreDefinitions, ApplicationError> {
+    let mut definitions = list(connection).await?;
+    let scene = definitions
+        .scenes
+        .iter_mut()
+        .find(|scene| scene.levels().iter().any(|level| level.id() == level_id))
+        .ok_or(RepositoryError::NotFound("scene level"))?;
+    scene.move_level(level_id, position)?;
+    persistence::core::replace_level_positions(connection, scene.levels()).await?;
+    list(connection).await
+}
+
 pub async fn associate_scene(
     connection: &DatabaseConnection,
     session_id: SessionId,
@@ -445,6 +491,63 @@ mod tests {
         let without_campaign = delete_campaign(&connection, campaign_id).await.unwrap();
         assert!(without_campaign.campaigns.is_empty());
         assert_eq!(without_campaign.scenes.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn ordering_round_trips_through_domain_and_sqlite() {
+        let connection = database().await;
+        let created = create_campaign(&connection, "Sombras").await.unwrap();
+        let campaign_id = created.campaigns[0].id();
+        let first_session_id = created.campaigns[0].sessions()[0].id();
+        let first_scene_id = created.scenes[0].id();
+        let second_scene = create_scene(&connection, "Ruínas").await.unwrap();
+        let second_scene_id = second_scene
+            .scenes
+            .iter()
+            .find(|scene| scene.name() == "Ruínas")
+            .unwrap()
+            .id();
+        associate_scene(&connection, first_session_id, second_scene_id)
+            .await
+            .unwrap();
+        let second_session = create_session(&connection, campaign_id, "Sessão 2", second_scene_id)
+            .await
+            .unwrap();
+        let second_session_id = second_session.campaigns[0].sessions()[1].id();
+        let second_level = create_scene_level(&connection, first_scene_id, "Subsolo")
+            .await
+            .unwrap();
+        let second_level_id = second_level
+            .scenes
+            .iter()
+            .find(|scene| scene.id() == first_scene_id)
+            .unwrap()
+            .levels()[1]
+            .id();
+
+        move_session(&connection, second_session_id, 0)
+            .await
+            .unwrap();
+        move_scene(&connection, first_session_id, second_scene_id, 0)
+            .await
+            .unwrap();
+        let reordered = move_scene_level(&connection, second_level_id, 0)
+            .await
+            .unwrap();
+
+        assert_eq!(reordered.campaigns[0].sessions()[0].id(), second_session_id);
+        let first_session = reordered.campaigns[0]
+            .sessions()
+            .iter()
+            .find(|session| session.id() == first_session_id)
+            .unwrap();
+        assert_eq!(first_session.scenes()[0].scene_id(), second_scene_id);
+        let scene = reordered
+            .scenes
+            .iter()
+            .find(|scene| scene.id() == first_scene_id)
+            .unwrap();
+        assert_eq!(scene.levels()[0].id(), second_level_id);
     }
 
     #[tokio::test]
