@@ -1,5 +1,6 @@
+import type { ReactNode } from "react";
 import type { SceneDto } from "@/api";
-import { Button, EmptyState, Panel, SectionHeading } from "./primitives";
+import { Button, Panel, SectionHeading } from "./primitives";
 import styles from "./ActiveScenePanel.module.scss";
 
 interface ActiveScenePanelProps {
@@ -10,6 +11,7 @@ interface ActiveScenePanelProps {
   onSelectLevel: (levelId: string) => void;
   onPreviousScene: () => void;
   onNextScene: () => void;
+  tools: ReactNode;
 }
 
 export function ActiveScenePanel({
@@ -20,6 +22,7 @@ export function ActiveScenePanel({
   onSelectLevel,
   onPreviousScene,
   onNextScene,
+  tools,
 }: ActiveScenePanelProps) {
   return (
     <Panel as="section" className={styles.panel}>
@@ -54,10 +57,7 @@ export function ActiveScenePanel({
 
       <section className={styles.tools} aria-labelledby="scene-tools-heading">
         <h3 id="scene-tools-heading">Ferramentas da cena</h3>
-        <EmptyState title="Nenhuma ferramenta configurada">
-          Quando Audio Mixer, encontros e outras ferramentas forem configurados,
-          seus controles de execução aparecerão aqui.
-        </EmptyState>
+        {tools}
       </section>
 
       <footer className={styles.navigation}>

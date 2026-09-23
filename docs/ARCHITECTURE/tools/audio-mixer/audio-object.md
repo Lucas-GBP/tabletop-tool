@@ -5,8 +5,8 @@
 An Audio Object is the smallest directly playable persistent concept in the
 Audio Mixer domain.
 
-It references exactly one [Audio File](./audio-file.md) and defines how a
-specific region of that file should behave when reproduced.
+It stores exactly one relative [audio asset reference](./audio-file.md) and
+defines how a specific region of that file should behave when reproduced.
 
 An Audio Object is a reusable playback definition. It is **not** an active
 playback instance and does not store transient runtime state such as the
@@ -19,7 +19,7 @@ Conceptually, an Audio Object contains:
 
 ```text
 Audio Object
-├── audio_file
+├── asset_path
 ├── volume_db
 │
 ├── playback_region
@@ -35,11 +35,12 @@ Audio Object
 └── loop_crossfade_duration_us [optional]
 ```
 
-### Audio File
+### Asset path
 
-Every Audio Object references exactly one [Audio File](./audio-file.md).
+Every Audio Object stores one normalized path relative to the configured asset
+root. The path is persistent; the discovered file metadata is transient.
 
-Multiple Audio Objects may reference the same Audio File while selecting
+Multiple Audio Objects may store the same asset path while selecting
 different playback regions or applying different playback behavior.
 
 For example, a single source file may be reused as an intro, a looping section,
@@ -79,11 +80,11 @@ persistent representation.
 
 ## Playback Region
 
-The playback region defines the portion of the Audio File that belongs to the
+The playback region defines the portion of the resolved asset file that belongs to the
 Audio Object:
 
 ```text
-Audio File
+Asset file
 0 ------------------------------------------------ duration
 
 Audio Object
@@ -244,17 +245,17 @@ The runtime model is specified in [Playback Instance](./playback-instance.md).
 
 An Audio Object:
 
-- references exactly one [Audio File](./audio-file.md);
+- stores exactly one relative [audio asset reference](./audio-file.md);
 - may appear in multiple [Audio Lists](./audio-list.md);
 - may be used by multiple [Audio Compositions](./audio-composition.md);
-- may be targeted directly by an [Audio Trigger](./audio-trigger.md).
+- may be exposed directly as an [Audio Cue](./audio-cue.md) in a Scene.
 
 ## Invariants
 
 At the conceptual level:
 
 ```text
-0 <= start_time < end_time <= audio_file.duration
+0 <= start_time < end_time <= discovered_asset.duration
 ```
 
 If a loop region exists:
@@ -290,11 +291,10 @@ persistent Audio Object model.
 
 ## Related Components
 
-- [Audio File](./audio-file.md)
+- [Audio Asset Reference](./audio-file.md)
 - [Playback Instance](./playback-instance.md)
 - [Audio List](./audio-list.md)
 - [Audio Composition](./audio-composition.md)
-- [Audio Trigger](./audio-trigger.md)
 - [Audio Cue](./audio-cue.md)
 
 ## Open Questions

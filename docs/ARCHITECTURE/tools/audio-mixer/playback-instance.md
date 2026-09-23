@@ -339,7 +339,7 @@ as the observable Playback Instance semantics remain equivalent.
 ## Related Components
 
 - [Audio Object](./audio-object.md)
-- [Audio File](./audio-file.md)
+- [Audio Asset Reference](./audio-file.md)
 - [Audio List](./audio-list.md)
 - [Audio Composition](./audio-composition.md)
 

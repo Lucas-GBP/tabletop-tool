@@ -2,10 +2,11 @@ import type { CampaignDto, SceneDto, SessionDto } from "@/api";
 import {
   ActiveScenePanel,
   RuntimeFeedback,
+  SceneAudioRuntimePanel,
   SceneSequence,
   SessionRuntimeHeader,
 } from "@/components";
-import { useSessionRuntime } from "@/hooks";
+import { useSessionAudioRuntime, useSessionRuntime } from "@/hooks";
 import { RuntimeError } from "@/runtime";
 import styles from "./SessionRuntimePage.module.scss";
 
@@ -24,6 +25,12 @@ export function SessionRuntimePage({
 }: SessionRuntimePageProps) {
   const runtime = useSessionRuntime(session, scenes);
   const { snapshot } = runtime;
+  const audio = useSessionAudioRuntime(
+    session,
+    scenes,
+    snapshot?.currentScene.sceneId,
+    snapshot?.sceneRuntime.currentLevelId,
+  );
   const sceneNames = new Map(scenes.map((scene) => [scene.id, scene.name]));
   const currentScene = snapshot
     ? scenes.find((scene) => scene.id === snapshot.currentScene.sceneId)
@@ -61,6 +68,7 @@ export function SessionRuntimePage({
         não alteram a preparação salva.
       </p>
       <RuntimeFeedback error={error} diagnostics={diagnostics} />
+      <RuntimeFeedback error={audio.error} diagnostics={audio.diagnostics} />
       {snapshot && currentScene && (
         <div className={styles.workspace}>
           <SceneSequence
@@ -81,6 +89,7 @@ export function SessionRuntimePage({
             onNextScene={() =>
               nextScene && runtime.switchScene(nextScene.sceneId)
             }
+            tools={<SceneAudioRuntimePanel audio={audio} />}
           />
         </div>
       )}

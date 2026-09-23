@@ -1,5 +1,10 @@
 import { commands } from "./bindings";
-import type { AppErrorDto } from "./bindings";
+import type {
+  AppErrorDto,
+  AudioCompositionInputDto,
+  AudioListInputDto,
+  AudioObjectInputDto,
+} from "./bindings";
 
 type CommandResult<T> =
   { status: "ok"; data: T } | { status: "error"; error: AppErrorDto };
@@ -75,13 +80,91 @@ export const api = {
     unwrap(commands.deleteSceneLevel(levelId)),
   removeSceneFromSession: (sessionId: string, sceneId: string) =>
     unwrap(commands.removeSceneFromSession(sessionId, sceneId)),
+  listAudioLibrary: () => unwrap(commands.listAudioLibrary()),
+  getAppSettings: () => unwrap(commands.getAppSettings()),
+  configureAssetDirectory: (directory: string) =>
+    unwrap(commands.configureAssetDirectory(directory)),
+  resolveAssetPath: (relativePath: string) =>
+    unwrap(commands.resolveAssetPath(relativePath)),
+  createAudioObject: (input: AudioObjectInputDto) =>
+    unwrap(commands.createAudioObject(input)),
+  updateAudioObject: (audioObjectId: string, input: AudioObjectInputDto) =>
+    unwrap(commands.updateAudioObject(audioObjectId, input)),
+  deleteAudioObject: (audioObjectId: string) =>
+    unwrap(commands.deleteAudioObject(audioObjectId)),
+  createAudioList: (input: AudioListInputDto) =>
+    unwrap(commands.createAudioList(input)),
+  updateAudioList: (audioListId: string, input: AudioListInputDto) =>
+    unwrap(commands.updateAudioList(audioListId, input)),
+  deleteAudioList: (audioListId: string) =>
+    unwrap(commands.deleteAudioList(audioListId)),
+  createAudioComposition: (input: AudioCompositionInputDto) =>
+    unwrap(commands.createAudioComposition(input)),
+  updateAudioComposition: (
+    audioCompositionId: string,
+    input: AudioCompositionInputDto,
+  ) => unwrap(commands.updateAudioComposition(audioCompositionId, input)),
+  deleteAudioComposition: (audioCompositionId: string) =>
+    unwrap(commands.deleteAudioComposition(audioCompositionId)),
+  updateAudioMixerSettings: (masterVolumeDb: number) =>
+    unwrap(commands.updateAudioMixerSettings({ masterVolumeDb })),
+  getSceneAudioConfiguration: (sceneId: string) =>
+    unwrap(commands.getSceneAudioConfiguration(sceneId)),
+  updateSceneAudioConfiguration: (
+    sceneId: string,
+    audioObjectIds: string[],
+    audioListIds: string[],
+    audioCompositionIds: string[],
+  ) =>
+    unwrap(
+      commands.updateSceneAudioConfiguration(
+        sceneId,
+        audioObjectIds,
+        audioListIds,
+        audioCompositionIds,
+      ),
+    ),
+  getSceneLevelAudioConfiguration: (sceneLevelId: string) =>
+    unwrap(commands.getSceneLevelAudioConfiguration(sceneLevelId)),
+  updateSceneLevelAudioConfiguration: (
+    sceneLevelId: string,
+    disabledLayerIds: string[],
+  ) =>
+    unwrap(
+      commands.updateSceneLevelAudioConfiguration(
+        sceneLevelId,
+        disabledLayerIds,
+      ),
+    ),
 };
 
 export type {
   AppErrorDto,
+  AppSettingsDto,
+  AudioAssetDto,
+  AudioCompositionDto,
+  AudioCompositionInputDto,
+  AudioLibraryDto,
+  AudioListDto,
+  AudioListEntryDto,
+  AudioListEntryInputDto,
+  AudioListInputDto,
+  AudioListSelectionModeDto,
+  AudioMixerSettingsDto,
+  AudioObjectDto,
+  AudioObjectInputDto,
   CampaignDto,
+  CompositionLayerDto,
+  CompositionLayerInputDto,
+  CompositionLayerSourceDto,
+  CompositionLayerSourceInputDto,
   CoreSnapshotDto,
+  DisableBehaviorDto,
+  LayerExecutionDto,
+  LayerExecutionInputDto,
+  SceneAudioConfigurationDto,
   SceneDto,
+  SceneLevelAudioConfigurationDto,
   SceneLevelDto,
   SessionDto,
   SessionSceneDto,

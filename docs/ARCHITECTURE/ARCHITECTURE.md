@@ -162,9 +162,9 @@ Rust Application Layer
 ```
 
 All application data that is not itself a file is persisted in SQLite through
-SeaORM. Binary assets are stored in the local filesystem rather than as database
-blobs. SQLite stores the structured metadata and references required to locate
-and manage those files.
+SeaORM. Binary assets remain in a user-configured local filesystem root rather
+than as database blobs. SQLite stores that root once and persistent definitions
+store relative references; discovery metadata is transient.
 
 See [Persistence](./persistence/README.md) and [Frontend Architecture](./frontend/README.md).
 
@@ -204,7 +204,8 @@ are still to be designed.
 
 - **SeaORM + SQLite** persist all structured application data.
 - **Local filesystem** stores binary files such as audio, images, and videos.
-- SQLite stores file metadata and references, not the binary asset contents.
+- SQLite stores the configured asset root and relative references, not binary
+  contents or a mirror of every discovered file.
 
 The persistence model must preserve the architectural boundaries defined above.
 Tool-specific data should remain owned by its tool instead of accumulating as
@@ -223,8 +224,7 @@ See [Persistence](./persistence/README.md).
 - How should ruleset-specific extensions interact with generic tools?
 - Should reusable Scene state be separated from state produced during a specific
   Session or Campaign?
-- How should database records reference managed files without coupling domain concepts to filesystem paths?
-- What ownership and cleanup rules prevent orphaned database records or orphaned files?
+- What concrete use case would require more than one application asset root?
 
 ## Persistent Definition vs Runtime State
 

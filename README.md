@@ -2,7 +2,7 @@
 
 Aplicação desktop local para preparar e conduzir sessões de RPG, com Tauri 2, React, TypeScript e Vite. A tela inicial organiza Campaigns; dentro de cada Campaign, a interface separa o modo de preparação da mesa em andamento, permite preparar Sessions, criar Scenes e SceneLevels e reutilizar Scenes entre Sessions.
 
-A arquitetura documentada define requisitos obrigatórios para a implementação. O Core Domain está integrado ao backend Tauri, com entidades SeaORM, migração SQLite, IPC tipado e interface React. O Audio Mixer ainda não foi implementado. As marcações `[x]` em [Implementation Readiness](docs/ARCHITECTURE/IMPLEMENTATION_READINESS.md) indicam decisões fechadas, não funcionalidades entregues.
+A arquitetura documentada define requisitos obrigatórios para a implementação. O Core Domain e o Audio Mixer estão integrados ao backend Tauri e à interface React, com persistência SQLite, raiz geral de assets configurável, referências relativas, IPC tipado e runtime Web Audio. [Implementation Readiness](docs/ARCHITECTURE/IMPLEMENTATION_READINESS.md) reúne as decisões fechadas; o progresso fica em `.agents/`.
 
 Para orientar as próximas tarefas, leia:
 

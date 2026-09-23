@@ -1,4 +1,6 @@
+pub mod audio;
 pub mod core;
+pub mod settings;
 
 use sea_orm::DatabaseConnection;
 

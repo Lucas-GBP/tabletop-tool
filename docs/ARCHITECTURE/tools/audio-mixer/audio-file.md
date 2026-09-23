@@ -1,40 +1,76 @@
-# Audio File
+# Audio Asset Reference
 
 ## Purpose
 
-An Audio File represents an underlying audio resource that can be referenced by
-one or more Audio Objects.
+An audio asset is a file discovered beneath the application's configured asset
+root. It is transient catalog data, not a persistent domain entity and not a
+playable definition. It contains no volume, regions, loops, fades, identity, or
+runtime state.
 
-At the solution level, audio assets are stored in the local filesystem. The
-SQLite database stores the structured metadata and reference needed to manage the
-asset; the audio bytes themselves are not stored as a database BLOB.
+The file bytes remain in the user-managed filesystem. The application does not
+copy, rename, or delete them.
 
-The domain concept remains independent from the concrete filesystem path or Tauri
-filesystem API used by the persistence layer.
+## Discovery
 
-See [File Storage](../../persistence/file-storage.md).
+The user configures one asset root for the application in general settings.
+Audio Mixer scans it recursively for WAV, MP3, OGG, FLAC, M4A, AAC, and WebM
+files. Each scan derives:
 
-## Relationships
+- a display name and original filename;
+- the normalized relative path beneath the asset root;
+- media type, byte size, and duration.
 
-An Audio File may be referenced by zero or more
-[Audio Objects](./audio-object.md).
+This catalog exists only in the application response. SQLite does not contain an
+`AudioFile` table or mirror every file found on disk.
 
-Multiple Audio Objects may use the same Audio File while providing different
-domain-level behavior or configuration.
+## Persistent references
 
-## Architectural Boundary
+An [Audio Object](./audio-object.md) stores the asset's relative path. The
+absolute asset root is stored once in application settings:
 
-Audio File belongs to the Audio Mixer tool.
+```text
+asset root:      D:/TabletopAssets
+object path:     audio/weather/rain.ogg
+resolved file:   D:/TabletopAssets/audio/weather/rain.ogg
+```
 
-The Core Domain does not need to know that audio files exist.
+Moving or renaming the complete asset root therefore requires updating one
+setting. Persistent definitions remain portable as long as their internal
+relative paths stay the same.
 
-## Related Components
+## Selection workflow
+
+The same asset picker is used when creating an Audio Object and replacing its
+file. It supports search, parent-folder filtering, and explicit refresh. Choosing
+an asset while creating immediately persists an Audio Object with defaults and
+opens its editor.
+
+## Missing and changed files
+
+A stored relative path may stop resolving because the user moved, renamed, or
+deleted the file. The definition remains valid and keeps that path. Preparation
+screens derive an unavailable state from the current scan and show a warning on
+the affected object, lists, compositions, and Scenes.
+
+Playback and preview report a recoverable error for a missing file. During a
+running Session, that failure is isolated and does not stop the Scene runtime or
+unrelated audio. The user can restore the same relative path, update the asset
+root, or replace the object's file.
+
+Replacing the bytes at an existing relative path may change duration and other
+derived metadata. Any later edit is validated against the currently discovered
+duration. Runtime failure remains recoverable if external changes make a saved
+region impossible to play.
+
+## Architectural boundary
+
+General settings own the absolute asset root. Rust application code owns
+recursive discovery, probing, safe relative-path resolution, and persistent
+validation. The Core Domain does not know that audio files exist. TypeScript
+receives transient metadata and requests a resolved path only for waveform
+display or playback.
+
+## Related components
 
 - [Audio Object](./audio-object.md)
-
-## Open Questions
-
-- Can an Audio File exist before any Audio Object references it?
-- Which metadata belongs to the file itself?
-- How should file identity and deduplication work?
-- Should imported audio be copied into application-managed storage or referenced in place?
+- [File Storage](../../persistence/file-storage.md)

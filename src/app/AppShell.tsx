@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { useCoreWorkspace } from "@/hooks";
 import {
+  AudioLibraryPage,
+  AudioObjectEditorPage,
   CampaignListPage,
   CampaignPreparationPage,
   ScenePreparationPage,
+  SettingsPage,
   SessionRuntimePage,
 } from "@/pages";
 import type { AppRoute } from "./navigation";
@@ -26,10 +29,39 @@ export function AppShell() {
       onOpenScene={(sceneId) =>
         setRoute({ screen: "scene-preparation", sceneId })
       }
+      onOpenAudioLibrary={() => setRoute({ screen: "audio-library" })}
+      onOpenSettings={() => setRoute({ screen: "settings" })}
     />
   );
 
   if (route.screen === "campaign-list") return campaignList;
+
+  if (route.screen === "settings") {
+    return (
+      <SettingsPage onBack={() => setRoute({ screen: "campaign-list" })} />
+    );
+  }
+
+  if (route.screen === "audio-library") {
+    return (
+      <AudioLibraryPage
+        onBack={() => setRoute({ screen: "campaign-list" })}
+        onOpenSettings={() => setRoute({ screen: "settings" })}
+        onEditObject={(audioObjectId) =>
+          setRoute({ screen: "audio-object-editor", audioObjectId })
+        }
+      />
+    );
+  }
+
+  if (route.screen === "audio-object-editor") {
+    return (
+      <AudioObjectEditorPage
+        audioObjectId={route.audioObjectId}
+        onBack={() => setRoute({ screen: "audio-library" })}
+      />
+    );
+  }
 
   if (route.screen === "scene-preparation") {
     const scene = workspace.snapshot.scenes.find(

@@ -23,6 +23,12 @@ vi.mock("@/api", () => ({
     deleteScene: vi.fn(),
     deleteSceneLevel: vi.fn(),
     removeSceneFromSession: vi.fn(),
+    listAudioLibrary: vi.fn(),
+    getSceneAudioConfiguration: vi.fn(),
+    getSceneLevelAudioConfiguration: vi.fn(),
+    resolveAssetPath: vi.fn(),
+    getAppSettings: vi.fn(),
+    configureAssetDirectory: vi.fn(),
   },
   ApplicationError: class ApplicationError extends Error {},
   ApplicationTimeoutError: class ApplicationTimeoutError extends Error {},
@@ -39,6 +45,25 @@ async function openCampaign(user: ReturnType<typeof userEvent.setup>) {
 describe("Application navigation", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.mocked(api.listAudioLibrary).mockResolvedValue({
+      assetDirectory: null,
+      files: [],
+      objects: [],
+      lists: [],
+      compositions: [],
+      settings: { masterVolumeDb: 0 },
+    });
+    vi.mocked(api.getSceneAudioConfiguration).mockImplementation((sceneId) =>
+      Promise.resolve({
+        sceneId,
+        audioObjectIds: [],
+        audioListIds: [],
+        audioCompositionIds: [],
+      }),
+    );
+    vi.mocked(api.getSceneLevelAudioConfiguration).mockImplementation(
+      (sceneLevelId) => Promise.resolve({ sceneLevelId, disabledLayerIds: [] }),
+    );
   });
 
   it("runs a session separately from persistent preparation", async () => {

@@ -1,4 +1,5 @@
 import {
+  Button,
   CampaignHome,
   SceneLibrary,
   WorkspaceFeedback,
@@ -11,12 +12,16 @@ interface CampaignListPageProps {
   workspace: CoreWorkspace;
   onOpenCampaign: (campaignId: string) => void;
   onOpenScene: (sceneId: string) => void;
+  onOpenAudioLibrary: () => void;
+  onOpenSettings: () => void;
 }
 
 export function CampaignListPage({
   workspace,
   onOpenCampaign,
   onOpenScene,
+  onOpenAudioLibrary,
+  onOpenSettings,
 }: CampaignListPageProps) {
   return (
     <main className={styles.shell}>
@@ -25,6 +30,11 @@ export function CampaignListPage({
         sceneCount={workspace.snapshot.scenes.length}
       />
       <WorkspaceFeedback error={workspace.error} notice={workspace.notice} />
+      <div className={styles.tools}>
+        <Button onClick={onOpenAudioLibrary}>Abrir Audio Mixer</Button>
+        <Button onClick={onOpenSettings}>Configurações</Button>
+        <span>Biblioteca global de arquivos, cues e composições.</span>
+      </div>
       <div className={styles.home}>
         <CampaignHome
           campaigns={workspace.snapshot.campaigns}

@@ -1,0 +1,76 @@
+.panel {
+  margin-top: var(--space-medium);
+  display: grid;
+  gap: var(--space-large);
+
+  section {
+    padding-top: var(--space-medium);
+    border-top: 1px solid var(--color-border);
+  }
+
+  h4 {
+    margin: 0 0 var(--space-small);
+  }
+}
+
+.status {
+  color: var(--color-text-muted);
+}
+
+.master,
+.cues,
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-small);
+}
+
+.cue {
+  display: grid;
+  gap: 0.25rem;
+  align-content: start;
+}
+
+.actions button[aria-pressed="true"] {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+.composition {
+  display: grid;
+  gap: var(--space-small);
+}
+
+.layer,
+.playbacks li {
+  padding: var(--space-small);
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-medium);
+  align-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-soft);
+
+  small {
+    display: block;
+    color: var(--color-text-muted);
+  }
+}
+
+.playbacks {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-small);
+  list-style: none;
+}
+
+@media (width <= 720px) {
+  .layer,
+  .playbacks li {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

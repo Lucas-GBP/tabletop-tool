@@ -168,7 +168,7 @@ The composition instance may retain `PlaybackId`s when it needs to later pause, 
 
 The IDs do not keep playback instances alive.
 
-Periodic scheduling, enabled/disabled layers, and composition reconciliation remain responsibilities of the composition runtime, not the Mixer.
+RandomInterval scheduling, enabled/disabled layers, and composition reconciliation remain responsibilities of the composition runtime, not the Mixer.
 
 ## Global Audio Settings
 
@@ -346,7 +346,8 @@ Web Audio API
 
 Rust does not run a native audio engine in the initial architecture.
 
-Rust remains responsible for persistent audio definitions and imported-file management.
+Rust remains responsible for persistent audio definitions, scanning the configured
+asset root, returning transient metadata, and resolving relative paths safely.
 
 The TypeScript Mixer receives the information required to execute an `AudioCue` through the application/IPC boundary.
 

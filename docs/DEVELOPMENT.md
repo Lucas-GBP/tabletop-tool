@@ -1,8 +1,9 @@
 ﻿# Development Setup
 
-The project has a configured development baseline and an application-integrated
-Core Domain. Core definitions are persisted locally and managed through the React
-UI. Audio import, Scene execution, and Audio Mixer features are still pending.
+The project has a configured development baseline, an application-integrated
+Core Domain, and the first complete Audio Mixer implementation. Core and audio
+definitions are persisted locally and managed through the React UI; Session
+execution remains volatile in TypeScript.
 
 ## Prerequisites
 
@@ -69,8 +70,8 @@ the generated command boundary and do not start a desktop window.
 - `src/hooks/`: React orchestration for persistent workspace and volatile runtime.
 - `src/runtime/`: framework-independent, tool-agnostic `SessionRuntime` and
   `SceneRuntime` state.
-- `src/tools/`: future Scene Tool implementations, including each Tool's own
-  runtime code.
+- `src/tools/`: Scene Tool implementations. `audio-mixer` contains the Web Audio
+  runtime independently from React rendering.
 - `src/lib/`: framework-independent frontend helpers with a concise public index.
 - `src/api/index.ts`: application-facing API over generated bindings.
 - `src/api/bindings.ts`: generated Rust contract; do not edit manually.
@@ -125,8 +126,19 @@ the registered migrations.
 
 The initial migration creates Campaign, Session, Scene, SceneLevel, and
 SessionScene tables with foreign keys, uniqueness rules, and dense-position
-constraints. Persistence tests run the schema and Core operations against SQLite
-in memory, including repeatable migrations and duplicate-association rejection.
+constraints. Persistence tests run the schema and Core and Audio Mixer operations
+against SQLite in memory, including repeatable migrations, CRUD round trips,
+transaction rollback, ordering, foreign keys, and cascades.
+
+SeaORM Migrator owns database versioning. Applied migration modules are
+immutable, and each schema change receives a new migration. New migrations use
+SeaORM Migration/SeaQuery builders with migration-local `DeriveIden` enums;
+they do not import identifiers from current entities. Persistence code uses the
+typed SeaORM Entity API for normal queries and SeaQuery for complex expressions.
+Raw SQL is a localized, documented, and tested exception. The complete policy is
+documented in [Structured Data](./ARCHITECTURE/persistence/structured-data.md).
+The undistributed development baseline was reset so both existing migrations
+already follow this typed schema pattern.
 
 Rust keeps three concrete boundaries without a generic repository framework:
 
@@ -179,6 +191,36 @@ The runtime stores Core identities and transient execution state rather than
 mutable copies of IPC DTOs. Runtime failures use a structured `RuntimeError` and
 are isolated by the React orchestration hook. The Session remains open while the
 UI presents a user message and an in-memory technical diagnostic log.
+
+## Audio Mixer
+
+The Audio Mixer has its own persistent API and does not enlarge `CoreSnapshot`.
+Rust stores AudioObjects, AudioLists, AudioCompositions, Scene audio associations,
+SceneLevel layer overrides, and the master volume. General application settings
+store one absolute asset root. AudioObjects store relative paths, while Rust
+recursively discovers WAV, MP3, OGG, FLAC, M4A, AAC, and WebM files as transient
+metadata. There is no persistent AudioFile entity. Files stay in their original
+location and are never renamed or deleted by the application.
+The backend grants only the configured asset root to Tauri's asset protocol and
+restores that narrow grant from SQLite when the application starts.
+Audio tables use the `tool_audio_*` prefix so databases from prototypes with
+legacy `audio_*` tables can be upgraded without overwriting their data.
+
+The home screen opens general settings and the global audio library. A shared
+searchable, folder-filterable picker creates objects and replaces their files;
+creation persists defaults before opening the editor. The library provides CRUD
+for objects, lists, and compositions. The AudioObject editor decodes a waveform
+in the frontend, edits playback/loop regions as a local draft, and previews that
+draft through the same Web Audio runtime used during a Session. Saving sends one
+validated mutation to Rust. Missing paths produce warnings through affected
+definitions and Scenes without making Session runtime failures fatal.
+
+Scene preparation selects reusable cues and compositions. SceneLevel
+configuration stores only disabled composition-layer IDs. During a Session,
+`AudioMixer`, `PlaybackInstance`, `AudioCompositionInstance`, and
+`SceneAudioRuntime` own playback, schedules, overrides, fades, loops, and
+cleanup. Leaving a Scene disposes its audio; changing SceneLevel reconciles the
+same Scene runtime. Runtime controls never persist their temporary state.
 
 ## CI and Packaging
 

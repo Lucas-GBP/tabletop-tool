@@ -1,10 +1,8 @@
 import type { SceneDto } from "@/api";
 import {
-  EmptyState,
-  Panel,
+  SceneAudioPreparationPanel,
   ScenePreparationHeader,
   SceneStructurePanel,
-  SectionHeading,
   WorkspaceFeedback,
 } from "@/components";
 import type { CoreWorkspace } from "@/hooks";
@@ -52,12 +50,7 @@ export function ScenePreparationPage({
           onRenameLevel={workspace.renameSceneLevel}
           onDeleteLevel={workspace.deleteSceneLevel}
         />
-        <Panel as="section" className={styles.tools}>
-          <SectionHeading eyebrow="Configuração" title="Ferramentas" />
-          <EmptyState title="Nenhuma ferramenta configurada">
-            Áudio, encontros e outras ferramentas desta cena aparecerão aqui.
-          </EmptyState>
-        </Panel>
+        <SceneAudioPreparationPanel scene={scene} />
       </div>
     </main>
   );

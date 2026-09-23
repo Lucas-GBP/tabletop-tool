@@ -23,6 +23,9 @@ vi.mock("@/api", () => ({
     deleteScene: vi.fn(),
     deleteSceneLevel: vi.fn(),
     removeSceneFromSession: vi.fn(),
+    listAudioLibrary: vi.fn(),
+    getSceneAudioConfiguration: vi.fn(),
+    getSceneLevelAudioConfiguration: vi.fn(),
   },
   ApplicationError: class ApplicationError extends Error {},
   ApplicationTimeoutError: class ApplicationTimeoutError extends Error {},
@@ -56,6 +59,25 @@ async function openSceneFromLibrary(
 describe("Core workspace", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.mocked(api.listAudioLibrary).mockResolvedValue({
+      assetDirectory: null,
+      files: [],
+      objects: [],
+      lists: [],
+      compositions: [],
+      settings: { masterVolumeDb: 0 },
+    });
+    vi.mocked(api.getSceneAudioConfiguration).mockImplementation((sceneId) =>
+      Promise.resolve({
+        sceneId,
+        audioObjectIds: [],
+        audioListIds: [],
+        audioCompositionIds: [],
+      }),
+    );
+    vi.mocked(api.getSceneLevelAudioConfiguration).mockImplementation(
+      (sceneLevelId) => Promise.resolve({ sceneLevelId, disabledLayerIds: [] }),
+    );
   });
 
   afterEach(() => {
@@ -197,8 +219,10 @@ describe("Core workspace", () => {
     ).toBeVisible();
     expect(screen.getByText("Prepara\u00e7\u00e3o da cena")).toBeVisible();
     expect(screen.getByRole("button", { name: "← Início" })).toBeVisible();
-    expect(screen.getByRole("heading", { name: "Ferramentas" })).toBeVisible();
-    expect(screen.getByRole("status")).toHaveTextContent("Cena criada.");
+    expect(
+      screen.getByRole("heading", { name: "Áudio da cena" }),
+    ).toBeVisible();
+    expect(screen.getByText("Cena criada.")).toBeVisible();
   });
 
   it("adds another reusable scene to a session sequence", async () => {

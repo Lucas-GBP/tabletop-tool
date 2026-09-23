@@ -1,0 +1,133 @@
+.shell,
+.loading {
+  min-height: 100vh;
+  padding: 2.5rem clamp(1rem, 4vw, 4rem) 4rem;
+}
+
+.loading {
+  display: grid;
+  place-items: center;
+  color: var(--color-text-muted);
+}
+
+.header,
+.grid,
+.panel {
+  width: 100%;
+  max-width: 1400px;
+  margin-inline: auto;
+}
+
+.header {
+  margin-bottom: var(--space-large);
+  display: flex;
+  gap: var(--space-large);
+  align-items: flex-start;
+
+  p,
+  h1,
+  span {
+    margin: 0;
+  }
+
+  p {
+    color: var(--color-accent);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    font-family: var(--font-family-display);
+  }
+
+  span {
+    color: var(--color-text-muted);
+  }
+}
+
+.grid {
+  margin-bottom: var(--space-large);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-large);
+}
+
+.panel {
+  margin-bottom: var(--space-large);
+  padding: clamp(1.25rem, 3vw, 2rem);
+}
+
+.resources {
+  margin: var(--space-medium) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-small);
+  list-style: none;
+
+  li {
+    padding: var(--space-medium);
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-medium);
+    align-items: center;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: var(--color-surface-soft);
+  }
+
+  small {
+    display: block;
+    color: var(--color-text-muted);
+  }
+}
+
+.actions,
+.volume,
+.source-controls {
+  display: flex;
+  gap: var(--space-small);
+  align-items: end;
+}
+
+.directory {
+  margin-top: var(--space-small);
+  display: block;
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.summary {
+  margin: var(--space-medium) 0 0;
+  color: var(--color-text-muted);
+}
+
+.editors {
+  display: grid;
+  gap: var(--space-medium);
+}
+
+.definition-with-warning {
+  display: grid;
+  gap: var(--space-small);
+}
+
+.volume label {
+  display: grid;
+  gap: 0.25rem;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+@media (width <= 800px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .header,
+  .resources li {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
