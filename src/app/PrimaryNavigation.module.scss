@@ -1,0 +1,124 @@
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: var(--space-large) var(--space-medium);
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-surface), transparent 4%);
+}
+
+.brand {
+  padding: 0 var(--space-small) var(--space-large);
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  font-family: var(--font-family-display);
+
+  span {
+    width: 2rem;
+    height: 2rem;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-control);
+    color: var(--color-on-accent);
+    background: var(--color-accent);
+    font-family: var(--font-family);
+    font-size: 0.75rem;
+    font-weight: 800;
+  }
+}
+
+.navigation {
+  display: grid;
+  gap: var(--space-large);
+}
+
+.group {
+  display: grid;
+  gap: 0.25rem;
+
+  h2 {
+    margin: 0 0 0.2rem;
+    padding-inline: 0.75rem;
+    color: var(--color-text-muted);
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+}
+
+.item {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.55rem 0.75rem;
+  border: 0;
+  border-radius: var(--radius-control);
+  color: var(--color-text-muted);
+  background: transparent;
+  font: inherit;
+  font-weight: 650;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--color-text);
+    background: var(--color-surface-soft);
+  }
+}
+
+.active {
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+.settings {
+  margin-top: auto;
+}
+
+@media (width <= 900px) {
+  .sidebar {
+    position: sticky;
+    z-index: 10;
+    height: auto;
+    padding: var(--space-small) var(--space-medium);
+    flex-direction: row;
+    gap: var(--space-small);
+    align-items: center;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .brand {
+    padding: 0;
+
+    strong {
+      display: none;
+    }
+  }
+
+  .navigation {
+    display: flex;
+    gap: var(--space-small);
+  }
+
+  .group {
+    display: flex;
+    gap: 0.2rem;
+
+    h2 {
+      display: none;
+    }
+  }
+
+  .item {
+    width: auto;
+    white-space: nowrap;
+  }
+
+  .settings {
+    margin: 0 0 0 auto;
+  }
+}

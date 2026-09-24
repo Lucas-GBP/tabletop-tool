@@ -1,5 +1,5 @@
 .panel {
-  margin-top: var(--space-medium);
+  margin-top: var(--space-small);
   display: grid;
   gap: var(--space-large);
 
@@ -10,6 +10,21 @@
 
   h4 {
     margin: 0 0 var(--space-small);
+  }
+}
+
+.now-playing {
+  padding-top: var(--space-medium);
+  border-top: 1px solid var(--color-border);
+
+  summary {
+    color: var(--color-text);
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .playbacks {
+    margin-top: var(--space-small);
   }
 }
 

@@ -1,8 +1,7 @@
+import { useState } from "react";
 import type { CampaignDto, SceneDto } from "@/api";
-import { Button, Input, Panel, SectionHeading } from "./primitives";
-import { formValue } from "@/lib";
-import { SceneSelect } from "./SceneSelect";
-import { SessionCard } from "./SessionCard";
+import { SessionEditor } from "./SessionEditor";
+import { SessionList } from "./SessionList";
 import styles from "./CampaignWorkspace.module.scss";
 
 interface CampaignWorkspaceProps {
@@ -42,68 +41,45 @@ export function CampaignWorkspace({
   onMoveScene,
   onRemoveScene,
 }: CampaignWorkspaceProps) {
+  const [selectedSessionId, setSelectedSessionId] = useState(
+    campaign.sessions[0]?.id ?? "",
+  );
+  const selectedSession =
+    campaign.sessions.find((session) => session.id === selectedSessionId) ??
+    campaign.sessions[0];
+
+  if (!selectedSession) return null;
+
   return (
-    <Panel as="section" className={styles.panel}>
-      <SectionHeading eyebrow="Planejamento" title="Sessões" />
-      <p className={styles.description}>
-        Cada sessão organiza uma sequência de cenas reutilizáveis.
-      </p>
-
-      <div className={styles.list}>
-        {campaign.sessions.map((session, sessionIndex) => (
-          <SessionCard
-            key={session.id}
-            session={session}
-            scenes={scenes}
-            sceneNames={sceneNames}
-            disabled={disabled}
-            canDelete={campaign.sessions.length > 1}
-            canMoveUp={sessionIndex > 0}
-            canMoveDown={sessionIndex < campaign.sessions.length - 1}
-            onManageScenes={onManageScenes}
-            onOpenScene={onOpenScene}
-            onStart={() => onStartSession(session.id)}
-            onRename={(name) => onRenameSession(session.id, name)}
-            onDelete={() => onDeleteSession(session.id)}
-            onMove={(position) => onMoveSession(session.id, position)}
-            onAssociate={(sceneId) => onAssociateScene(session.id, sceneId)}
-            onMoveScene={(sceneId, position) =>
-              onMoveScene(session.id, sceneId, position)
-            }
-            onRemoveScene={(sceneId) => onRemoveScene(session.id, sceneId)}
-          />
-        ))}
-      </div>
-
-      <form
-        className={styles.form}
-        onSubmit={(event) => {
-          event.preventDefault();
-          const form = event.currentTarget;
-          const data = new FormData(form);
-          const name = formValue(data, "sessionName");
-          const sceneId = formValue(data, "sessionScene");
-          void onCreateSession(name, sceneId).then(
-            (created) => created && form.reset(),
-          );
-        }}
-      >
-        <Input
-          name="sessionName"
-          aria-label={`Nome da nova sessão de ${campaign.name}`}
-          placeholder="Nova sessão"
-          required
-        />
-        <SceneSelect
-          name="sessionScene"
-          label={`Cena inicial da nova sessão de ${campaign.name}`}
-          scenes={scenes}
-          placeholder="Cena inicial da sessão"
-        />
-        <Button type="submit" disabled={disabled}>
-          Adicionar sessão
-        </Button>
-      </form>
-    </Panel>
+    <div className={styles.workspace}>
+      <SessionList
+        campaignName={campaign.name}
+        sessions={campaign.sessions}
+        scenes={scenes}
+        selectedSessionId={selectedSession.id}
+        disabled={disabled}
+        onSelect={setSelectedSessionId}
+        onCreate={onCreateSession}
+        onMove={onMoveSession}
+      />
+      <SessionEditor
+        key={selectedSession.id}
+        session={selectedSession}
+        scenes={scenes}
+        sceneNames={sceneNames}
+        disabled={disabled}
+        canDelete={campaign.sessions.length > 1}
+        onManageScenes={onManageScenes}
+        onOpenScene={onOpenScene}
+        onStart={() => onStartSession(selectedSession.id)}
+        onRename={(name) => onRenameSession(selectedSession.id, name)}
+        onDelete={() => onDeleteSession(selectedSession.id)}
+        onAssociate={(sceneId) => onAssociateScene(selectedSession.id, sceneId)}
+        onMoveScene={(sceneId, position) =>
+          onMoveScene(selectedSession.id, sceneId, position)
+        }
+        onRemoveScene={(sceneId) => onRemoveScene(selectedSession.id, sceneId)}
+      />
+    </div>
   );
 }

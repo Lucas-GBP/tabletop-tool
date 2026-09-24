@@ -77,7 +77,7 @@ export function SceneAudioRuntimePanel({ audio }: SceneAudioRuntimePanelProps) {
           Parar tudo
         </Button>
         <label className={styles.volume}>
-          <span>Volume</span>
+          <span>Volume da sessão</span>
           <input
             type="range"
             min={-60}
@@ -94,7 +94,7 @@ export function SceneAudioRuntimePanel({ audio }: SceneAudioRuntimePanelProps) {
 
       {snapshot.cues.length > 0 && (
         <section>
-          <h4>Sons</h4>
+          <h4>Sons rápidos</h4>
           <div className={styles.cues}>
             {snapshot.cues.map((cue) => (
               <div key={`${cue.kind}:${cue.id}`} className={styles.cue}>
@@ -136,25 +136,23 @@ export function SceneAudioRuntimePanel({ audio }: SceneAudioRuntimePanelProps) {
               <div className={styles.actions}>
                 <Button
                   size="compact"
-                  aria-pressed={layer.runtimeOverride === null}
-                  onClick={() => audio.setLayerOverride(layer.id, null)}
+                  tone={layer.enabled ? "primary" : "default"}
+                  aria-pressed={layer.enabled}
+                  onClick={() =>
+                    audio.setLayerOverride(layer.id, !layer.enabled)
+                  }
                 >
-                  Padrão
+                  {layer.enabled ? "Ligada" : "Desligada"}
                 </Button>
-                <Button
-                  size="compact"
-                  aria-pressed={layer.runtimeOverride === true}
-                  onClick={() => audio.setLayerOverride(layer.id, true)}
-                >
-                  Ligar
-                </Button>
-                <Button
-                  size="compact"
-                  aria-pressed={layer.runtimeOverride === false}
-                  onClick={() => audio.setLayerOverride(layer.id, false)}
-                >
-                  Desligar
-                </Button>
+                {layer.runtimeOverride !== null ? (
+                  <Button
+                    size="compact"
+                    tone="subtle"
+                    onClick={() => audio.setLayerOverride(layer.id, null)}
+                  >
+                    Restaurar padrão
+                  </Button>
+                ) : null}
               </div>
             </div>
           ))}
@@ -162,8 +160,8 @@ export function SceneAudioRuntimePanel({ audio }: SceneAudioRuntimePanelProps) {
       ))}
 
       {audio.playbacks.length > 0 && (
-        <section>
-          <h4>Reproduções</h4>
+        <details className={styles["now-playing"]}>
+          <summary>Agora tocando ({audio.playbacks.length})</summary>
           <ul className={styles.playbacks}>
             {audio.playbacks.map((playback) => (
               <li key={playback.id}>
@@ -206,7 +204,7 @@ export function SceneAudioRuntimePanel({ audio }: SceneAudioRuntimePanelProps) {
               </li>
             ))}
           </ul>
-        </section>
+        </details>
       )}
     </div>
   );

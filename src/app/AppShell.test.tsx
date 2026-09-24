@@ -64,6 +64,30 @@ describe("Application navigation", () => {
     vi.mocked(api.getSceneLevelAudioConfiguration).mockImplementation(
       (sceneLevelId) => Promise.resolve({ sceneLevelId, disabledLayerIds: [] }),
     );
+    vi.mocked(api.getAppSettings).mockResolvedValue({ assetDirectory: null });
+  });
+
+  it("keeps independent areas available while the core is loading", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.listCore).mockReturnValue(
+      new Promise<CoreSnapshotDto>(() => undefined),
+    );
+    render(<App />);
+
+    expect(
+      await screen.findByText("Abrindo seu espaço de jogo…"),
+    ).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: "Configurações" }));
+    expect(
+      await screen.findByRole("heading", { name: "Configurações" }),
+    ).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: "Audio Mixer" }));
+    expect(
+      await screen.findByRole("heading", { name: "Audio Mixer" }),
+    ).toBeVisible();
+    expect(api.listAudioLibrary).toHaveBeenCalledOnce();
   });
 
   it("runs a session separately from persistent preparation", async () => {

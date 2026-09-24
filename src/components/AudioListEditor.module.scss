@@ -38,7 +38,7 @@
 
   li {
     display: grid;
-    grid-template-columns: minmax(8rem, 1fr) 5rem auto auto auto;
+    grid-template-columns: minmax(8rem, 1fr) 5rem auto auto;
     gap: var(--space-small);
     align-items: center;
   }

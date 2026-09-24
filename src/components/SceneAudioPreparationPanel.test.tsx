@@ -85,7 +85,12 @@ describe("SceneAudioPreparationPanel", () => {
 
   it("saves selected objects and compositions before exposing level controls", async () => {
     const user = userEvent.setup();
-    render(<SceneAudioPreparationPanel scene={scene} />);
+    render(
+      <SceneAudioPreparationPanel
+        scene={scene}
+        activeLevelId={scene.levels[0]!.id}
+      />,
+    );
 
     await user.click(screen.getByRole("checkbox", { name: "Rain" }));
     await user.click(screen.getByRole("checkbox", { name: "Storm" }));

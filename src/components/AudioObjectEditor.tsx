@@ -2,20 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import type { AudioAssetDto, AudioObjectDto, AudioObjectInputDto } from "@/api";
 import { api } from "@/api";
-import {
-  AssetWarning,
-  AudioAssetPicker,
-  Button,
-  EmptyState,
-  Input,
-  LoadFailure,
-  Panel,
-  SectionHeading,
-  WaveformEditor,
-  WorkspaceFeedback,
-} from "@/components";
-import type { TimeRegion } from "@/components";
-import { useAudioWorkspace } from "@/hooks";
+import { AssetWarning } from "./AssetWarning";
+import { AudioAssetPicker } from "./AudioAssetPicker";
+import { Button, EmptyState, Input, Panel, SectionHeading } from "./primitives";
+import { WaveformEditor } from "./WaveformEditor";
+import type { TimeRegion } from "./WaveformEditor";
+import { WorkspaceFeedback } from "./WorkspaceFeedback";
 import { applicationErrorMessage } from "@/lib";
 import {
   AudioMixer,
@@ -23,84 +15,27 @@ import {
   clamp,
   fitAudioObjectToDuration,
 } from "@/tools/audio-mixer";
-import styles from "./AudioObjectEditorPage.module.scss";
+import styles from "./AudioObjectEditor.module.scss";
 
-interface AudioObjectEditorPageProps {
-  audioObjectId: string;
-  onBack: () => void;
-}
-
-export function AudioObjectEditorPage({
-  audioObjectId,
-  onBack,
-}: AudioObjectEditorPageProps) {
-  const audio = useAudioWorkspace();
-  const object = audio.library.objects.find(
-    (candidate) => candidate.id === audioObjectId,
-  );
-
-  if (audio.loading) {
-    return <main className={styles.loading}>Abrindo o editor de áudio…</main>;
-  }
-
-  if (!audio.loaded) {
-    return (
-      <main className={styles.shell}>
-        <LoadFailure
-          message={audio.loadError}
-          onRetry={() => void audio.reload()}
-        />
-      </main>
-    );
-  }
-
-  if (!object) {
-    return (
-      <main className={styles.shell}>
-        <Button onClick={onBack}>← Biblioteca</Button>
-        <EmptyState title="Objeto não encontrado">
-          Escolha um arquivo na biblioteca para criar um objeto de áudio.
-        </EmptyState>
-      </main>
-    );
-  }
-
-  return (
-    <AudioObjectEditor
-      key={object.id}
-      object={object}
-      files={audio.library.files}
-      busy={audio.busy}
-      error={audio.error}
-      onBack={onBack}
-      onSave={async (input) => {
-        const saved = await audio.updateAudioObject(object.id, input);
-        if (saved) onBack();
-      }}
-      onRefresh={() => void audio.rescanFiles()}
-    />
-  );
-}
-
-interface EditorProps {
+export interface AudioObjectEditorProps {
   object: AudioObjectDto;
   files: readonly AudioAssetDto[];
   busy: boolean;
   error: string;
-  onBack: () => void;
+  onClose: () => void;
   onSave: (input: AudioObjectInputDto) => Promise<void>;
   onRefresh: () => void;
 }
 
-function AudioObjectEditor({
+export function AudioObjectEditor({
   object,
   files,
   busy,
   error,
-  onBack,
+  onClose,
   onSave,
   onRefresh,
-}: EditorProps) {
+}: AudioObjectEditorProps) {
   const initialDraftRef = useRef(inputFromObject(object));
   const [draft, setDraft] = useState<AudioObjectInputDto>(
     initialDraftRef.current,
@@ -130,7 +65,7 @@ function AudioObjectEditor({
     if (dirty && !window.confirm("Descartar as alterações deste objeto?")) {
       return;
     }
-    onBack();
+    onClose();
   }
 
   useEffect(() => {
@@ -337,10 +272,10 @@ function AudioObjectEditor({
   }
 
   return (
-    <main className={styles.shell}>
+    <section className={styles.editor}>
       <header className={styles.header}>
         <Button tone="subtle" onClick={leaveEditor}>
-          ← Biblioteca
+          Fechar editor
         </Button>
         <div>
           <p>Objeto de áudio</p>
@@ -591,7 +526,7 @@ function AudioObjectEditor({
           onSelect={changeAsset}
         />
       ) : null}
-    </main>
+    </section>
   );
 }
 

@@ -14,10 +14,12 @@ import styles from "./SceneAudioPreparationPanel.module.scss";
 
 interface SceneAudioPreparationPanelProps {
   scene: SceneDto;
+  activeLevelId: string;
 }
 
 export function SceneAudioPreparationPanel({
   scene,
+  activeLevelId,
 }: SceneAudioPreparationPanelProps) {
   const audio = useSceneAudioConfiguration(scene);
   const [sceneDraft, setSceneDraft] =
@@ -61,6 +63,18 @@ export function SceneAudioPreparationPanel({
     audio.library.objects.length > 0 ||
     audio.library.lists.length > 0 ||
     audio.library.compositions.length > 0;
+  const activeLevel = scene.levels.find((level) => level.id === activeLevelId);
+  const savedLevel = audio.levels.find(
+    (configuration) => configuration.sceneLevelId === activeLevelId,
+  ) ?? { sceneLevelId: activeLevelId, disabledLayerIds: [] };
+  const levelDraft =
+    levelDrafts.find(
+      (configuration) => configuration.sceneLevelId === activeLevelId,
+    ) ?? savedLevel;
+  const levelDirty = !sameIds(
+    levelDraft.disabledLayerIds,
+    savedLevel.disabledLayerIds,
+  );
 
   return (
     <Panel as="section" className={styles.panel}>
@@ -141,83 +155,64 @@ export function SceneAudioPreparationPanel({
             </p>
           ) : null}
 
-          {layers.length > 0 && (
+          {layers.length > 0 && activeLevel ? (
             <div className={styles.levels}>
-              <h3>Camadas por nível</h3>
-              <p>Desative somente o que não deve tocar em cada nível.</p>
-              {[...scene.levels]
-                .sort((left, right) => left.position - right.position)
-                .map((level) => {
-                  const savedLevel = audio.levels.find(
-                    (configuration) => configuration.sceneLevelId === level.id,
-                  ) ?? { sceneLevelId: level.id, disabledLayerIds: [] };
-                  const draft =
-                    levelDrafts.find(
-                      (configuration) =>
-                        configuration.sceneLevelId === level.id,
-                    ) ?? savedLevel;
-                  const levelDirty = !sameIds(
-                    draft.disabledLayerIds,
-                    savedLevel.disabledLayerIds,
-                  );
-                  return (
-                    <section key={level.id} className={styles.level}>
-                      <h4>{level.name}</h4>
-                      {layers.map((layer) => (
-                        <label key={layer.id}>
-                          <input
-                            type="checkbox"
-                            checked={!draft.disabledLayerIds.includes(layer.id)}
-                            disabled={audio.busy}
-                            onChange={(event) => {
-                              const disabledLayerIds = event.currentTarget
-                                .checked
-                                ? draft.disabledLayerIds.filter(
-                                    (id) => id !== layer.id,
-                                  )
-                                : [...draft.disabledLayerIds, layer.id];
-                              setLevelDrafts((current) => [
-                                ...current.filter(
-                                  (configuration) =>
-                                    configuration.sceneLevelId !== level.id,
-                                ),
-                                { sceneLevelId: level.id, disabledLayerIds },
-                              ]);
-                            }}
-                          />
-                          <span>
-                            {layer.name}
-                            <small>{layer.compositionName}</small>
-                          </span>
-                        </label>
-                      ))}
-                      <Button
-                        tone="primary"
-                        disabled={audio.busy || !levelDirty}
-                        onClick={() =>
-                          void audio.saveLevel(draft).then((saved) => {
-                            if (!saved) return;
-                            setLevelDrafts((current) =>
-                              current.filter(
-                                (configuration) =>
-                                  configuration.sceneLevelId !== level.id,
-                              ),
-                            );
-                          })
-                        }
-                      >
-                        {audio.busy ? "Salvando…" : "Salvar nível"}
-                      </Button>
-                      {levelDirty ? (
-                        <span className={styles.dirty}>
-                          Alterações não salvas
-                        </span>
-                      ) : null}
-                    </section>
-                  );
-                })}
+              <h3>Camadas em {activeLevel.name}</h3>
+              <p>Desative somente o que não deve tocar neste nível.</p>
+              <section className={styles.level}>
+                {layers.map((layer) => (
+                  <label key={layer.id}>
+                    <input
+                      type="checkbox"
+                      checked={!levelDraft.disabledLayerIds.includes(layer.id)}
+                      disabled={audio.busy}
+                      onChange={(event) => {
+                        const disabledLayerIds = event.currentTarget.checked
+                          ? levelDraft.disabledLayerIds.filter(
+                              (id) => id !== layer.id,
+                            )
+                          : [...levelDraft.disabledLayerIds, layer.id];
+                        setLevelDrafts((current) => [
+                          ...current.filter(
+                            (configuration) =>
+                              configuration.sceneLevelId !== activeLevel.id,
+                          ),
+                          {
+                            sceneLevelId: activeLevel.id,
+                            disabledLayerIds,
+                          },
+                        ]);
+                      }}
+                    />
+                    <span>
+                      {layer.name}
+                      <small>{layer.compositionName}</small>
+                    </span>
+                  </label>
+                ))}
+                <Button
+                  tone="primary"
+                  disabled={audio.busy || !levelDirty}
+                  onClick={() =>
+                    void audio.saveLevel(levelDraft).then((saved) => {
+                      if (!saved) return;
+                      setLevelDrafts((current) =>
+                        current.filter(
+                          (configuration) =>
+                            configuration.sceneLevelId !== activeLevel.id,
+                        ),
+                      );
+                    })
+                  }
+                >
+                  {audio.busy ? "Salvando…" : "Salvar nível"}
+                </Button>
+                {levelDirty ? (
+                  <span className={styles.dirty}>Alterações não salvas</span>
+                ) : null}
+              </section>
             </div>
-          )}
+          ) : null}
         </>
       )}
     </Panel>

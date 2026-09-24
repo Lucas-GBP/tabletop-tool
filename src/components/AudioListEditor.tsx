@@ -1,6 +1,8 @@
 import { useState } from "react";
 import type { AudioListDto, AudioListInputDto, AudioObjectDto } from "@/api";
+import { ActionMenu } from "./ActionMenu";
 import { Button, Input, Select } from "./primitives";
+import { ReorderControls } from "./ReorderControls";
 import styles from "./AudioListEditor.module.scss";
 
 interface AudioListEditorProps {
@@ -37,6 +39,7 @@ export function AudioListEditor({
       : [],
   );
   const [selectedObjectId, setSelectedObjectId] = useState("");
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   const available = objects.filter(
     (object) => !entries.some((entry) => entry.audioObjectId === object.id),
@@ -90,7 +93,19 @@ export function AudioListEditor({
             (candidate) => candidate.id === entry.audioObjectId,
           );
           return (
-            <li key={entry.audioObjectId}>
+            <li
+              key={entry.audioObjectId}
+              draggable={!disabled}
+              onDragStart={() => setDraggedIndex(index)}
+              onDragEnd={() => setDraggedIndex(null)}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={() => {
+                if (draggedIndex !== null && draggedIndex !== index) {
+                  setEntries((current) => move(current, draggedIndex, index));
+                }
+                setDraggedIndex(null);
+              }}
+            >
               <span>{object?.name ?? "Objeto indisponível"}</span>
               <Input
                 type="number"
@@ -111,26 +126,18 @@ export function AudioListEditor({
                   );
                 }}
               />
-              <Button
-                size="compact"
-                aria-label={`Mover ${object?.name ?? "objeto"} para cima`}
-                disabled={disabled || index === 0}
-                onClick={() =>
+              <ReorderControls
+                label={object?.name ?? "objeto"}
+                canMoveUp={index > 0}
+                canMoveDown={index < entries.length - 1}
+                disabled={disabled}
+                onMoveUp={() =>
                   setEntries((current) => move(current, index, index - 1))
                 }
-              >
-                ↑
-              </Button>
-              <Button
-                size="compact"
-                aria-label={`Mover ${object?.name ?? "objeto"} para baixo`}
-                disabled={disabled || index === entries.length - 1}
-                onClick={() =>
+                onMoveDown={() =>
                   setEntries((current) => move(current, index, index + 1))
                 }
-              >
-                ↓
-              </Button>
+              />
               <Button
                 size="compact"
                 tone="danger"
@@ -191,16 +198,18 @@ export function AudioListEditor({
           {list ? "Salvar lista" : "Criar lista"}
         </Button>
         {list && onDelete && (
-          <Button
-            tone="danger"
-            disabled={disabled}
-            onClick={() => {
-              if (!window.confirm(`Excluir a lista ${list.name}?`)) return;
-              void onDelete();
-            }}
-          >
-            Excluir lista
-          </Button>
+          <ActionMenu label={`Mais ações para ${list.name}`}>
+            <Button
+              tone="danger"
+              disabled={disabled}
+              onClick={() => {
+                if (!window.confirm(`Excluir a lista ${list.name}?`)) return;
+                void onDelete();
+              }}
+            >
+              Excluir lista
+            </Button>
+          </ActionMenu>
         )}
         {onCancel ? (
           <Button tone="subtle" disabled={disabled} onClick={onCancel}>

@@ -1,0 +1,36 @@
+.controls,
+.fallback {
+  display: flex;
+  align-items: center;
+}
+
+.controls {
+  gap: 0.15rem;
+}
+
+.handle {
+  color: var(--color-text-muted);
+  font-size: 1.1rem;
+  cursor: grab;
+}
+
+.fallback {
+  opacity: 0.28;
+  transition: opacity 120ms ease;
+
+  &:focus-within,
+  .controls:hover & {
+    opacity: 1;
+  }
+
+  button {
+    min-width: 1.8rem;
+    padding-inline: 0.35rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fallback {
+    transition: none;
+  }
+}

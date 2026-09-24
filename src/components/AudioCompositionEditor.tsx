@@ -7,6 +7,7 @@ import type {
   AudioObjectDto,
   CompositionLayerInputDto,
 } from "@/api";
+import { ActionMenu } from "./ActionMenu";
 import { Button, Input, Select } from "./primitives";
 import styles from "./AudioCompositionEditor.module.scss";
 
@@ -250,17 +251,21 @@ export function AudioCompositionEditor({
           {composition ? "Salvar composição" : "Criar composição"}
         </Button>
         {composition && onDelete && (
-          <Button
-            tone="danger"
-            disabled={disabled}
-            onClick={() => {
-              if (!window.confirm(`Excluir a composição ${composition.name}?`))
-                return;
-              void onDelete();
-            }}
-          >
-            Excluir composição
-          </Button>
+          <ActionMenu label={`Mais ações para ${composition.name}`}>
+            <Button
+              tone="danger"
+              disabled={disabled}
+              onClick={() => {
+                if (
+                  !window.confirm(`Excluir a composição ${composition.name}?`)
+                )
+                  return;
+                void onDelete();
+              }}
+            >
+              Excluir composição
+            </Button>
+          </ActionMenu>
         )}
         {onCancel ? (
           <Button tone="subtle" disabled={disabled} onClick={onCancel}>
