@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { AudioObjectDto } from "@/api";
+import { testId } from "@/test/ids";
 import { PlaybackInstance } from "./PlaybackInstance";
 import type { TimerDriver } from "./types";
 
@@ -101,7 +102,7 @@ function createFixture(definition: AudioObjectDto = audioObject()) {
   const timer = new FakeTimer(contextShape);
   const onFinished = vi.fn();
   const playback = new PlaybackInstance({
-    id: "playback-1",
+    id: testId.playback("playback-1"),
     context: context as unknown as AudioContext,
     output: { connect: vi.fn() } as unknown as AudioNode,
     buffer: { duration: 10 } as AudioBuffer,
@@ -233,7 +234,7 @@ function crossfadeObject() {
 
 function audioObject(overrides: Partial<AudioObjectDto> = {}): AudioObjectDto {
   return {
-    id: "audio-1",
+    id: testId.audioObject("audio-1"),
     name: "Rain",
     assetPath: "rain.wav",
     volumeDb: 0,

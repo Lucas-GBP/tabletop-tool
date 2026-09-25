@@ -12,6 +12,8 @@ import {
 import { AudioBufferLoader } from "./AudioBufferLoader";
 import { AudioListSelector } from "./AudioListSelector";
 import { PlaybackInstance } from "./PlaybackInstance";
+import { asPlaybackId } from "@/types";
+import type { AudioListId, PlaybackId } from "@/types";
 
 interface AudioMixerOptions {
   definitions: AudioDefinitions;
@@ -29,7 +31,7 @@ export class AudioMixer {
   readonly #selector: AudioListSelector;
   readonly #loaderFactory:
     ((context: AudioContext) => AudioBufferLoader) | undefined;
-  readonly #playbacks = new Map<string, PlaybackInstance>();
+  readonly #playbacks = new Map<PlaybackId, PlaybackInstance>();
   #context: AudioContext | null = null;
   #masterGain: GainNode | null = null;
   #loader: AudioBufferLoader | null = null;
@@ -60,7 +62,7 @@ export class AudioMixer {
     return [...this.#playbacks.values()].map((playback) => playback.info);
   }
 
-  hasPlayback(id: string) {
+  hasPlayback(id: PlaybackId) {
     return this.#playbacks.has(id);
   }
 
@@ -89,7 +91,7 @@ export class AudioMixer {
       }
       const lease = await this.#loader!.acquire(file);
       const buffer = lease.buffer;
-      const id = crypto.randomUUID();
+      const id = asPlaybackId(crypto.randomUUID());
       try {
         const decodedDurationUs = audioBufferDurationUs(buffer);
         assertAssetDuration(file, object.endTimeUs, decodedDurationUs);
@@ -123,23 +125,23 @@ export class AudioMixer {
     }
   }
 
-  pause(id: string) {
+  pause(id: PlaybackId) {
     this.#playback(id, "pause_playback").pause();
   }
 
-  resume(id: string) {
+  resume(id: PlaybackId) {
     this.#playback(id, "resume_playback").resume();
   }
 
-  seek(id: string, positionUs: number) {
+  seek(id: PlaybackId, positionUs: number) {
     this.#playback(id, "seek_playback").seek(positionUs);
   }
 
-  stop(id: string) {
+  stop(id: PlaybackId) {
     this.#playback(id, "stop_playback").stop();
   }
 
-  finish(id: string) {
+  finish(id: PlaybackId) {
     this.#playback(id, "finish_playback").finish();
   }
 
@@ -173,7 +175,7 @@ export class AudioMixer {
     }
   }
 
-  resetListCursors(listIds?: Iterable<string>) {
+  resetListCursors(listIds?: Iterable<AudioListId>) {
     this.#selector.reset(listIds);
   }
 
@@ -214,7 +216,7 @@ export class AudioMixer {
     });
   }
 
-  #playback(id: string, operation: string) {
+  #playback(id: PlaybackId, operation: string) {
     this.#ensureActive(operation);
     const playback = this.#playbacks.get(id);
     if (!playback) {

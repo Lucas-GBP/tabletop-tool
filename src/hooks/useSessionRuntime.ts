@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { SceneDto, SessionDto } from "@/api";
 import { normalizeRuntimeError, RuntimeError, SessionRuntime } from "@/runtime";
 import type { SessionRuntimeSnapshot } from "@/runtime";
+import type { SceneId, SceneLevelId } from "@/types";
 
 interface RuntimeInitialization {
   runtime: SessionRuntime | null;
@@ -103,11 +104,11 @@ export function useSessionRuntime(session: SessionDto, scenes: SceneDto[]) {
         report(cause, "dispose_session", session.id);
       }
     },
-    switchScene: (sceneId: string) =>
+    switchScene: (sceneId: SceneId) =>
       execute("switch_session_scene", sceneId, (activeRuntime) =>
         activeRuntime.switchScene(sceneId),
       ),
-    switchLevel: (levelId: string) =>
+    switchLevel: (levelId: SceneLevelId) =>
       execute("switch_scene_level", levelId, (activeRuntime) =>
         activeRuntime.switchLevel(levelId),
       ),

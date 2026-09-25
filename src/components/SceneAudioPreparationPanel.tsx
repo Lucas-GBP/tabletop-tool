@@ -4,6 +4,7 @@ import type {
   SceneDto,
   SceneLevelAudioConfigurationDto,
 } from "@/api";
+import type { SceneLevelId } from "@/types";
 import { useSceneAudioConfiguration } from "@/hooks/useSceneAudioConfiguration";
 import { sceneAudioMissing } from "@/lib";
 import { AssetWarning } from "./AssetWarning";
@@ -14,7 +15,7 @@ import styles from "./SceneAudioPreparationPanel.module.scss";
 
 interface SceneAudioPreparationPanelProps {
   scene: SceneDto;
-  activeLevelId: string;
+  activeLevelId: SceneLevelId;
 }
 
 export function SceneAudioPreparationPanel({
@@ -219,7 +220,10 @@ export function SceneAudioPreparationPanel({
   );
 }
 
-function sameIds(left: readonly string[], right: readonly string[]) {
+function sameIds<TId extends string>(
+  left: readonly TId[],
+  right: readonly TId[],
+) {
   return left.length === right.length && left.every((id) => right.includes(id));
 }
 
@@ -234,7 +238,7 @@ function sameSceneConfiguration(
   );
 }
 
-function ResourceGroup({
+function ResourceGroup<TId extends string>({
   title,
   items,
   selected,
@@ -242,10 +246,10 @@ function ResourceGroup({
   onChange,
 }: {
   title: string;
-  items: readonly { id: string; name: string }[];
-  selected: readonly string[];
+  items: readonly { id: TId; name: string }[];
+  selected: readonly TId[];
   disabled: boolean;
-  onChange: (ids: string[]) => void;
+  onChange: (ids: TId[]) => void;
 }) {
   if (items.length === 0) return null;
   return (

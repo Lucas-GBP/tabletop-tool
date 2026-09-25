@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { testId } from "@/test/ids";
 import { RuntimeError } from "./RuntimeError";
 import { SessionRuntime } from "./SessionRuntime";
 import type {
@@ -7,15 +8,26 @@ import type {
 } from "./SessionRuntime";
 
 const scenes: SceneRuntimeDefinition[] = [
-  { id: "scene-1", levelIds: ["level-1", "level-2"] },
-  { id: "scene-2", levelIds: ["level-3"] },
+  {
+    id: testId.scene("scene-1"),
+    levelIds: [testId.sceneLevel("level-1"), testId.sceneLevel("level-2")],
+  },
+  { id: testId.scene("scene-2"), levelIds: [testId.sceneLevel("level-3")] },
 ];
 
 const session: SessionRuntimeDefinition = {
-  id: "session-1",
+  id: testId.session("session-1"),
   scenes: [
-    { associationId: "association-1", sceneId: "scene-1", position: 0 },
-    { associationId: "association-2", sceneId: "scene-2", position: 1 },
+    {
+      associationId: testId.sessionScene("association-1"),
+      sceneId: testId.scene("scene-1"),
+      position: 0,
+    },
+    {
+      associationId: testId.sessionScene("association-2"),
+      sceneId: testId.scene("scene-2"),
+      position: 1,
+    },
   ],
 };
 
@@ -24,8 +36,8 @@ describe("SessionRuntime", () => {
     const runtime = new SessionRuntime(session, scenes);
     const sceneRuntime = runtime.activeSceneRuntime;
 
-    runtime.switchLevel("level-2");
-    runtime.switchScene("scene-1");
+    runtime.switchLevel(testId.sceneLevel("level-2"));
+    runtime.switchScene(testId.scene("scene-1"));
 
     expect(runtime.activeSceneRuntime).toBe(sceneRuntime);
     expect(sceneRuntime.disposed).toBe(false);
@@ -36,7 +48,7 @@ describe("SessionRuntime", () => {
     const runtime = new SessionRuntime(session, scenes);
     const previous = runtime.activeSceneRuntime;
 
-    runtime.switchScene("scene-2");
+    runtime.switchScene(testId.scene("scene-2"));
 
     expect(previous.disposed).toBe(true);
     expect(runtime.activeSceneRuntime).not.toBe(previous);
@@ -63,7 +75,7 @@ describe("SessionRuntime", () => {
   it("reports structured recoverable transition errors", () => {
     const runtime = new SessionRuntime(session, scenes);
 
-    expect(() => runtime.switchScene("missing-scene")).toThrow(
+    expect(() => runtime.switchScene(testId.scene("missing-scene"))).toThrow(
       expect.objectContaining<Partial<RuntimeError>>({
         code: "SCENE_NOT_IN_SESSION",
         operation: "switch_session_scene",
@@ -81,7 +93,7 @@ describe("SessionRuntime", () => {
     runtime.dispose();
 
     expect(active.disposed).toBe(true);
-    expect(() => runtime.switchLevel("level-2")).toThrow(
+    expect(() => runtime.switchLevel(testId.sceneLevel("level-2"))).toThrow(
       expect.objectContaining<Partial<RuntimeError>>({
         code: "SESSION_RUNTIME_DISPOSED",
         recoverable: false,

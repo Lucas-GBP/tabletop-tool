@@ -4,7 +4,18 @@ import type {
   AudioCompositionInputDto,
   AudioListInputDto,
   AudioObjectInputDto,
-} from "./bindings";
+  PublicIpc,
+} from "./types";
+import type {
+  AudioCompositionId,
+  AudioListId,
+  AudioObjectId,
+  CampaignId,
+  CompositionLayerId,
+  SceneId,
+  SceneLevelId,
+  SessionId,
+} from "@/types";
 
 type CommandResult<T> =
   { status: "ok"; data: T } | { status: "error"; error: AppErrorDto };
@@ -28,20 +39,26 @@ export class ApplicationTimeoutError extends Error {
   }
 }
 
-async function unwrapQuery<T>(result: Promise<CommandResult<T>>): Promise<T> {
-  return unwrapResult(await withTimeout(result));
+async function unwrapQuery<T>(
+  result: Promise<CommandResult<T>>,
+): Promise<PublicIpc<T>> {
+  return asPublicIpc(unwrapResult(await withTimeout(result)));
 }
 
 async function unwrapMutation<T>(
   result: Promise<CommandResult<T>>,
-): Promise<T> {
-  return unwrapResult(await result);
+): Promise<PublicIpc<T>> {
+  return asPublicIpc(unwrapResult(await result));
 }
 
 async function unwrapLongQuery<T>(
   result: Promise<CommandResult<T>>,
-): Promise<T> {
-  return unwrapResult(await result);
+): Promise<PublicIpc<T>> {
+  return asPublicIpc(unwrapResult(await result));
+}
+
+function asPublicIpc<T>(value: T): PublicIpc<T> {
+  return value as PublicIpc<T>;
 }
 
 function unwrapResult<T>(response: CommandResult<T>): T {
@@ -73,35 +90,38 @@ export const api = {
   createScene: (name: string) => unwrapMutation(commands.createScene(name)),
   createCampaign: (name: string) =>
     unwrapMutation(commands.createCampaign(name)),
-  createSession: (campaignId: string, name: string, initialSceneId: string) =>
-    unwrapMutation(commands.createSession(campaignId, name, initialSceneId)),
-  createSceneLevel: (sceneId: string, name: string) =>
+  createSession: (
+    campaignId: CampaignId,
+    name: string,
+    initialSceneId: SceneId,
+  ) => unwrapMutation(commands.createSession(campaignId, name, initialSceneId)),
+  createSceneLevel: (sceneId: SceneId, name: string) =>
     unwrapMutation(commands.createSceneLevel(sceneId, name)),
-  renameCampaign: (campaignId: string, name: string) =>
+  renameCampaign: (campaignId: CampaignId, name: string) =>
     unwrapMutation(commands.renameCampaign(campaignId, name)),
-  renameSession: (sessionId: string, name: string) =>
+  renameSession: (sessionId: SessionId, name: string) =>
     unwrapMutation(commands.renameSession(sessionId, name)),
-  renameScene: (sceneId: string, name: string) =>
+  renameScene: (sceneId: SceneId, name: string) =>
     unwrapMutation(commands.renameScene(sceneId, name)),
-  renameSceneLevel: (levelId: string, name: string) =>
+  renameSceneLevel: (levelId: SceneLevelId, name: string) =>
     unwrapMutation(commands.renameSceneLevel(levelId, name)),
-  moveSession: (sessionId: string, position: number) =>
+  moveSession: (sessionId: SessionId, position: number) =>
     unwrapMutation(commands.moveSession(sessionId, position)),
-  moveScene: (sessionId: string, sceneId: string, position: number) =>
+  moveScene: (sessionId: SessionId, sceneId: SceneId, position: number) =>
     unwrapMutation(commands.moveScene(sessionId, sceneId, position)),
-  moveSceneLevel: (levelId: string, position: number) =>
+  moveSceneLevel: (levelId: SceneLevelId, position: number) =>
     unwrapMutation(commands.moveSceneLevel(levelId, position)),
-  associateScene: (sessionId: string, sceneId: string) =>
+  associateScene: (sessionId: SessionId, sceneId: SceneId) =>
     unwrapMutation(commands.associateScene(sessionId, sceneId)),
-  deleteCampaign: (campaignId: string) =>
+  deleteCampaign: (campaignId: CampaignId) =>
     unwrapMutation(commands.deleteCampaign(campaignId)),
-  deleteSession: (sessionId: string) =>
+  deleteSession: (sessionId: SessionId) =>
     unwrapMutation(commands.deleteSession(sessionId)),
-  deleteScene: (sceneId: string) =>
+  deleteScene: (sceneId: SceneId) =>
     unwrapMutation(commands.deleteScene(sceneId)),
-  deleteSceneLevel: (levelId: string) =>
+  deleteSceneLevel: (levelId: SceneLevelId) =>
     unwrapMutation(commands.deleteSceneLevel(levelId)),
-  removeSceneFromSession: (sessionId: string, sceneId: string) =>
+  removeSceneFromSession: (sessionId: SessionId, sceneId: SceneId) =>
     unwrapMutation(commands.removeSceneFromSession(sessionId, sceneId)),
   listAudioLibrary: () => unwrapLongQuery(commands.listAudioLibrary()),
   getAppSettings: () => unwrapQuery(commands.getAppSettings()),
@@ -111,34 +131,36 @@ export const api = {
     unwrapQuery(commands.resolveAssetPath(relativePath)),
   createAudioObject: (input: AudioObjectInputDto) =>
     unwrapMutation(commands.createAudioObject(input)),
-  updateAudioObject: (audioObjectId: string, input: AudioObjectInputDto) =>
-    unwrapMutation(commands.updateAudioObject(audioObjectId, input)),
-  deleteAudioObject: (audioObjectId: string) =>
+  updateAudioObject: (
+    audioObjectId: AudioObjectId,
+    input: AudioObjectInputDto,
+  ) => unwrapMutation(commands.updateAudioObject(audioObjectId, input)),
+  deleteAudioObject: (audioObjectId: AudioObjectId) =>
     unwrapMutation(commands.deleteAudioObject(audioObjectId)),
   createAudioList: (input: AudioListInputDto) =>
     unwrapMutation(commands.createAudioList(input)),
-  updateAudioList: (audioListId: string, input: AudioListInputDto) =>
+  updateAudioList: (audioListId: AudioListId, input: AudioListInputDto) =>
     unwrapMutation(commands.updateAudioList(audioListId, input)),
-  deleteAudioList: (audioListId: string) =>
+  deleteAudioList: (audioListId: AudioListId) =>
     unwrapMutation(commands.deleteAudioList(audioListId)),
   createAudioComposition: (input: AudioCompositionInputDto) =>
     unwrapMutation(commands.createAudioComposition(input)),
   updateAudioComposition: (
-    audioCompositionId: string,
+    audioCompositionId: AudioCompositionId,
     input: AudioCompositionInputDto,
   ) =>
     unwrapMutation(commands.updateAudioComposition(audioCompositionId, input)),
-  deleteAudioComposition: (audioCompositionId: string) =>
+  deleteAudioComposition: (audioCompositionId: AudioCompositionId) =>
     unwrapMutation(commands.deleteAudioComposition(audioCompositionId)),
   updateAudioMixerSettings: (masterVolumeDb: number) =>
     unwrapMutation(commands.updateAudioMixerSettings({ masterVolumeDb })),
-  getSceneAudioConfiguration: (sceneId: string) =>
+  getSceneAudioConfiguration: (sceneId: SceneId) =>
     unwrapQuery(commands.getSceneAudioConfiguration(sceneId)),
   updateSceneAudioConfiguration: (
-    sceneId: string,
-    audioObjectIds: string[],
-    audioListIds: string[],
-    audioCompositionIds: string[],
+    sceneId: SceneId,
+    audioObjectIds: AudioObjectId[],
+    audioListIds: AudioListId[],
+    audioCompositionIds: AudioCompositionId[],
   ) =>
     unwrapMutation(
       commands.updateSceneAudioConfiguration(
@@ -148,11 +170,11 @@ export const api = {
         audioCompositionIds,
       ),
     ),
-  getSceneLevelAudioConfiguration: (sceneLevelId: string) =>
+  getSceneLevelAudioConfiguration: (sceneLevelId: SceneLevelId) =>
     unwrapQuery(commands.getSceneLevelAudioConfiguration(sceneLevelId)),
   updateSceneLevelAudioConfiguration: (
-    sceneLevelId: string,
-    disabledLayerIds: string[],
+    sceneLevelId: SceneLevelId,
+    disabledLayerIds: CompositionLayerId[],
   ) =>
     unwrapMutation(
       commands.updateSceneLevelAudioConfiguration(
@@ -162,34 +184,4 @@ export const api = {
     ),
 };
 
-export type {
-  AppErrorDto,
-  AppSettingsDto,
-  AudioAssetDto,
-  AudioCompositionDto,
-  AudioCompositionInputDto,
-  AudioLibraryDto,
-  AudioListDto,
-  AudioListEntryDto,
-  AudioListEntryInputDto,
-  AudioListInputDto,
-  AudioListSelectionModeDto,
-  AudioMixerSettingsDto,
-  AudioObjectDto,
-  AudioObjectInputDto,
-  CampaignDto,
-  CompositionLayerDto,
-  CompositionLayerInputDto,
-  CompositionLayerSourceDto,
-  CompositionLayerSourceInputDto,
-  CoreSnapshotDto,
-  DisableBehaviorDto,
-  LayerExecutionDto,
-  LayerExecutionInputDto,
-  SceneAudioConfigurationDto,
-  SceneDto,
-  SceneLevelAudioConfigurationDto,
-  SceneLevelDto,
-  SessionDto,
-  SessionSceneDto,
-} from "./bindings";
+export type * from "./types";

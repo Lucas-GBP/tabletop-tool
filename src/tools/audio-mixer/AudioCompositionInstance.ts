@@ -3,6 +3,7 @@ import { RuntimeError, normalizeRuntimeError } from "@/runtime";
 import { AudioMixer } from "./AudioMixer";
 import { browserTimer } from "./types";
 import type { AudioCueReference, TimerDriver } from "./types";
+import type { CompositionLayerId, PlaybackId } from "@/types";
 
 interface AudioCompositionInstanceOptions {
   definition: AudioCompositionDto;
@@ -16,7 +17,7 @@ interface LayerState {
   enabled: boolean;
   generation: number;
   timerId: number | null;
-  playbackIds: Set<string>;
+  playbackIds: Set<PlaybackId>;
 }
 
 export class AudioCompositionInstance {
@@ -25,7 +26,7 @@ export class AudioCompositionInstance {
   readonly #onError: (error: RuntimeError) => void;
   readonly #random: () => number;
   readonly #timer: TimerDriver;
-  readonly #layers = new Map<string, LayerState>();
+  readonly #layers = new Map<CompositionLayerId, LayerState>();
   #disposed = false;
 
   constructor({
@@ -50,11 +51,11 @@ export class AudioCompositionInstance {
     }
   }
 
-  isEnabled(layerId: string) {
+  isEnabled(layerId: CompositionLayerId) {
     return this.#state(layerId).enabled;
   }
 
-  setEnabled(layerId: string, enabled: boolean) {
+  setEnabled(layerId: CompositionLayerId, enabled: boolean) {
     this.#ensureActive();
     const layer = this.#layer(layerId);
     const state = this.#state(layerId);
@@ -159,7 +160,7 @@ export class AudioCompositionInstance {
     }
   }
 
-  #layer(id: string) {
+  #layer(id: CompositionLayerId) {
     const layer = this.definition.layers.find(
       (candidate) => candidate.id === id,
     );
@@ -175,7 +176,7 @@ export class AudioCompositionInstance {
     return layer;
   }
 
-  #state(id: string) {
+  #state(id: CompositionLayerId) {
     const state = this.#layers.get(id);
     if (!state) {
       throw new RuntimeError({

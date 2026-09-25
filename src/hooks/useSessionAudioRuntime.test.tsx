@@ -8,6 +8,7 @@ import type {
   SessionDto,
 } from "@/api";
 import { api } from "@/api";
+import { testId } from "@/test/ids";
 import { useSessionAudioRuntime } from "./useSessionAudioRuntime";
 
 vi.mock("@/api", () => ({
@@ -31,26 +32,38 @@ const library: AudioLibraryDto = {
 };
 const scenes: SceneDto[] = [
   {
-    id: "scene-1",
+    id: testId.scene("scene-1"),
     name: "Bar",
     levels: [
-      { id: "level-1", sceneId: "scene-1", name: "Térreo", position: 0 },
+      {
+        id: testId.sceneLevel("level-1"),
+        sceneId: testId.scene("scene-1"),
+        name: "Térreo",
+        position: 0,
+      },
     ],
   },
   {
-    id: "scene-2",
+    id: testId.scene("scene-2"),
     name: "Rua",
-    levels: [{ id: "level-2", sceneId: "scene-2", name: "Noite", position: 0 }],
+    levels: [
+      {
+        id: testId.sceneLevel("level-2"),
+        sceneId: testId.scene("scene-2"),
+        name: "Noite",
+        position: 0,
+      },
+    ],
   },
 ];
 const session: SessionDto = {
-  id: "session-1",
-  campaignId: "campaign-1",
+  id: testId.session("session-1"),
+  campaignId: testId.campaign("campaign-1"),
   name: "Sessão",
   position: 0,
   scenes: scenes.map((scene, position) => ({
-    id: `link-${position}`,
-    sessionId: "session-1",
+    id: testId.sessionScene(`link-${position}`),
+    sessionId: testId.session("session-1"),
     sceneId: scene.id,
     position,
   })),
@@ -109,7 +122,12 @@ describe("useSessionAudioRuntime", () => {
     const { result, rerender } = renderHook(
       ({ sceneId, levelId }) =>
         useSessionAudioRuntime(session, scenes, sceneId, levelId),
-      { initialProps: { sceneId: "scene-1", levelId: "level-1" } },
+      {
+        initialProps: {
+          sceneId: testId.scene("scene-1"),
+          levelId: testId.sceneLevel("level-1"),
+        },
+      },
     );
 
     await waitFor(() => expect(result.current.loading).toBe(false));
@@ -119,7 +137,10 @@ describe("useSessionAudioRuntime", () => {
     await expect(result.current.activate()).resolves.toBe(true);
     await waitFor(() => expect(result.current.snapshot?.started).toBe(true));
 
-    rerender({ sceneId: "scene-2", levelId: "level-2" });
+    rerender({
+      sceneId: testId.scene("scene-2"),
+      levelId: testId.sceneLevel("level-2"),
+    });
     await waitFor(() =>
       expect(result.current.snapshot).toMatchObject({
         sceneId: "scene-2",
@@ -132,7 +153,12 @@ describe("useSessionAudioRuntime", () => {
   it("reports a configuration load failure without constructing a runtime", async () => {
     vi.mocked(api.listAudioLibrary).mockRejectedValueOnce(new Error("offline"));
     const { result } = renderHook(() =>
-      useSessionAudioRuntime(session, scenes, "scene-1", "level-1"),
+      useSessionAudioRuntime(
+        session,
+        scenes,
+        testId.scene("scene-1"),
+        testId.sceneLevel("level-1"),
+      ),
     );
 
     await waitFor(() => expect(result.current.loading).toBe(false));
@@ -145,7 +171,12 @@ describe("useSessionAudioRuntime", () => {
 
   it("applies volume changes immediately and persists only the settled value", async () => {
     const { result } = renderHook(() =>
-      useSessionAudioRuntime(session, scenes, "scene-1", "level-1"),
+      useSessionAudioRuntime(
+        session,
+        scenes,
+        testId.scene("scene-1"),
+        testId.sceneLevel("level-1"),
+      ),
     );
     await waitFor(() => expect(result.current.loading).toBe(false));
     await waitFor(() => expect(result.current.snapshot).not.toBeNull());

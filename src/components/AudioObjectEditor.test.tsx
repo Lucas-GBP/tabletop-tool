@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AudioLibraryDto } from "@/api";
 import { api } from "@/api";
+import { testId } from "@/test/ids";
 import { AudioObjectEditor } from "./AudioObjectEditor";
 
 vi.mock("@tauri-apps/api/core", () => ({
@@ -29,7 +30,7 @@ const library: AudioLibraryDto = {
   scanWarnings: [],
   objects: [
     {
-      id: "audio-1",
+      id: testId.audioObject("audio-1"),
       name: "Rain",
       assetPath: "rain.wav",
       volumeDb: 0,

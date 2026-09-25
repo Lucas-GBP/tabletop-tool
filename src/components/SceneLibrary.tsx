@@ -1,4 +1,5 @@
 import type { SceneDto } from "@/api";
+import type { SceneId } from "@/types";
 import { Button, EmptyState, Input, Panel, SectionHeading } from "./primitives";
 import { formValue } from "@/lib";
 import { SceneCard } from "./SceneCard";
@@ -8,8 +9,8 @@ interface SceneLibraryProps {
   scenes: SceneDto[];
   totalSceneCount?: number;
   disabled: boolean;
-  onCreateScene: (name: string) => Promise<string | undefined>;
-  onOpenScene: (sceneId: string) => void;
+  onCreateScene: (name: string) => Promise<SceneId | undefined>;
+  onOpenScene: (sceneId: SceneId) => void;
 }
 
 export function SceneLibrary({

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { SceneDto, SessionDto } from "@/api";
+import type { SceneId } from "@/types";
 import { formValue } from "@/lib";
 import {
   Button,
@@ -16,17 +17,17 @@ import styles from "./SessionEditor.module.scss";
 interface SessionEditorProps {
   session: SessionDto;
   scenes: SceneDto[];
-  sceneNames: ReadonlyMap<string, string>;
+  sceneNames: ReadonlyMap<SceneId, string>;
   disabled: boolean;
   canDelete: boolean;
   onManageScenes: () => void;
-  onOpenScene: (sceneId: string) => void;
+  onOpenScene: (sceneId: SceneId) => void;
   onStart: () => void;
   onRename: (name: string) => Promise<boolean>;
   onDelete: () => Promise<boolean>;
-  onAssociate: (sceneId: string) => Promise<boolean>;
-  onMoveScene: (sceneId: string, position: number) => Promise<boolean>;
-  onRemoveScene: (sceneId: string) => Promise<boolean>;
+  onAssociate: (sceneId: SceneId) => Promise<boolean>;
+  onMoveScene: (sceneId: SceneId, position: number) => Promise<boolean>;
+  onRemoveScene: (sceneId: SceneId) => Promise<boolean>;
 }
 
 export function SessionEditor({
@@ -44,7 +45,7 @@ export function SessionEditor({
   onMoveScene,
   onRemoveScene,
 }: SessionEditorProps) {
-  const [draggedSceneId, setDraggedSceneId] = useState<string | null>(null);
+  const [draggedSceneId, setDraggedSceneId] = useState<SceneId | null>(null);
   const availableScenes = scenes.filter(
     (scene) => !session.scenes.some((link) => link.sceneId === scene.id),
   );
@@ -178,9 +179,14 @@ export function SessionEditor({
             onSubmit={(event) => {
               event.preventDefault();
               const form = event.currentTarget;
-              void onAssociate(
-                formValue(new FormData(form), "associatedScene"),
-              ).then((associated) => associated && form.reset());
+              const sceneId = formValue(new FormData(form), "associatedScene");
+              const scene = availableScenes.find(
+                (candidate) => candidate.id === sceneId,
+              );
+              if (!scene) return;
+              void onAssociate(scene.id).then(
+                (associated) => associated && form.reset(),
+              );
             }}
           >
             <SceneSelect

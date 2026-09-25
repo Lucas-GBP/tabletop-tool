@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { AudioAssetDto, AudioObjectDto } from "@/api";
+import { testId } from "@/test/ids";
 import { AudioMixer } from "./AudioMixer";
 import type { AudioBufferLoader } from "./AudioBufferLoader";
 
@@ -28,7 +29,7 @@ describe("AudioMixer", () => {
     });
 
     await expect(
-      mixer.play({ kind: "audioObject", id: "audio-1" }),
+      mixer.play({ kind: "audioObject", id: testId.audioObject("audio-1") }),
     ).rejects.toMatchObject({
       code: "AUDIO_ASSET_CHANGED",
       operation: "play_audio_cue",
@@ -41,7 +42,10 @@ describe("AudioMixer", () => {
   it("releases pinned buffers when the mixer is disposed", async () => {
     const release = vi.fn();
     const { mixer, loader } = createFixture({ release });
-    await mixer.play({ kind: "audioObject", id: "audio-1" });
+    await mixer.play({
+      kind: "audioObject",
+      id: testId.audioObject("audio-1"),
+    });
 
     mixer.dispose();
 
@@ -148,7 +152,7 @@ function audioFile(overrides: Partial<AudioAssetDto> = {}): AudioAssetDto {
 
 function audioObject(overrides: Partial<AudioObjectDto> = {}): AudioObjectDto {
   return {
-    id: "audio-1",
+    id: testId.audioObject("audio-1"),
     name: "Rain",
     assetPath: "rain.wav",
     volumeDb: 0,

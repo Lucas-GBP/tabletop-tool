@@ -26,6 +26,7 @@ import {
   audioObjectMissing,
   classNames,
 } from "@/lib";
+import type { AudioCompositionId, AudioListId, AudioObjectId } from "@/types";
 import styles from "./AudioLibraryPage.module.scss";
 
 interface AudioLibraryPageProps {
@@ -72,11 +73,15 @@ export function AudioLibraryPage({ onOpenSettings }: AudioLibraryPageProps) {
   const [section, setSection] = useState<ResourceSection>("objects");
   const [query, setQuery] = useState("");
   const [selectingAsset, setSelectingAsset] = useState(false);
-  const [editingObject, setEditingObject] = useState<string | null>(null);
-  const [editingList, setEditingList] = useState<string | null>(null);
-  const [editingComposition, setEditingComposition] = useState<string | null>(
+  const [editingObject, setEditingObject] = useState<AudioObjectId | null>(
     null,
   );
+  const [editingList, setEditingList] = useState<AudioListId | "new" | null>(
+    null,
+  );
+  const [editingComposition, setEditingComposition] = useState<
+    AudioCompositionId | "new" | null
+  >(null);
 
   if (audio.loading) {
     return (
@@ -145,10 +150,10 @@ export function AudioLibraryPage({ onOpenSettings }: AudioLibraryPageProps) {
     else setEditingComposition("new");
   }
 
-  function editDefinition(id: string) {
-    if (section === "objects") setEditingObject(id);
-    else if (section === "lists") setEditingList(id);
-    else setEditingComposition(id);
+  function editDefinition(item: ResourceSummary) {
+    if (item.section === "objects") setEditingObject(item.id);
+    else if (item.section === "lists") setEditingList(item.id);
+    else setEditingComposition(item.id);
   }
 
   const editor = activeObject ? (
@@ -286,7 +291,7 @@ export function AudioLibraryPage({ onOpenSettings }: AudioLibraryPageProps) {
                         ? "true"
                         : undefined
                     }
-                    onClick={() => editDefinition(item.id)}
+                    onClick={() => editDefinition(item)}
                   >
                     <strong>{item.name}</strong>
                     <small>{item.detail}</small>
@@ -298,7 +303,7 @@ export function AudioLibraryPage({ onOpenSettings }: AudioLibraryPageProps) {
                       </AssetWarning>
                     ) : null}
                   </button>
-                  {section === "objects" ? (
+                  {item.section === "objects" ? (
                     <ActionMenu label={`Mais ações para ${item.name}`}>
                       <Button
                         tone="danger"
@@ -414,9 +419,29 @@ function AudioOperations({
   );
 }
 
-function resourceSummaries(section: ResourceSection, library: AudioLibraryDto) {
+type ResourceSummary =
+  | ResourceSummaryOf<"objects", AudioObjectId>
+  | ResourceSummaryOf<"lists", AudioListId>
+  | ResourceSummaryOf<"compositions", AudioCompositionId>;
+
+interface ResourceSummaryOf<
+  TSection extends ResourceSection,
+  TId extends string,
+> {
+  section: TSection;
+  id: TId;
+  name: string;
+  detail: string;
+  missing: boolean;
+}
+
+function resourceSummaries(
+  section: ResourceSection,
+  library: AudioLibraryDto,
+): ResourceSummary[] {
   if (section === "objects") {
     return library.objects.map((item) => ({
+      section,
       id: item.id,
       name: item.name,
       detail:
@@ -427,6 +452,7 @@ function resourceSummaries(section: ResourceSection, library: AudioLibraryDto) {
   }
   if (section === "lists") {
     return library.lists.map((item) => ({
+      section,
       id: item.id,
       name: item.name,
       detail: `${item.entries.length} objetos`,
@@ -434,6 +460,7 @@ function resourceSummaries(section: ResourceSection, library: AudioLibraryDto) {
     }));
   }
   return library.compositions.map((item) => ({
+    section,
     id: item.id,
     name: item.name,
     detail: `${item.layers.length} camadas`,

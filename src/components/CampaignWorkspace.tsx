@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { CampaignDto, SceneDto } from "@/api";
+import type { SceneId, SessionId } from "@/types";
 import { SessionEditor } from "./SessionEditor";
 import { SessionList } from "./SessionList";
 import styles from "./CampaignWorkspace.module.scss";
@@ -7,22 +8,25 @@ import styles from "./CampaignWorkspace.module.scss";
 interface CampaignWorkspaceProps {
   campaign: CampaignDto;
   scenes: SceneDto[];
-  sceneNames: Map<string, string>;
+  sceneNames: Map<SceneId, string>;
   disabled: boolean;
   onManageScenes: () => void;
-  onOpenScene: (sceneId: string) => void;
-  onStartSession: (sessionId: string) => void;
-  onCreateSession: (name: string, sceneId: string) => Promise<boolean>;
-  onRenameSession: (sessionId: string, name: string) => Promise<boolean>;
-  onDeleteSession: (sessionId: string) => Promise<boolean>;
-  onMoveSession: (sessionId: string, position: number) => Promise<boolean>;
-  onAssociateScene: (sessionId: string, sceneId: string) => Promise<boolean>;
+  onOpenScene: (sceneId: SceneId) => void;
+  onStartSession: (sessionId: SessionId) => void;
+  onCreateSession: (name: string, sceneId: SceneId) => Promise<boolean>;
+  onRenameSession: (sessionId: SessionId, name: string) => Promise<boolean>;
+  onDeleteSession: (sessionId: SessionId) => Promise<boolean>;
+  onMoveSession: (sessionId: SessionId, position: number) => Promise<boolean>;
+  onAssociateScene: (
+    sessionId: SessionId,
+    sceneId: SceneId,
+  ) => Promise<boolean>;
   onMoveScene: (
-    sessionId: string,
-    sceneId: string,
+    sessionId: SessionId,
+    sceneId: SceneId,
     position: number,
   ) => Promise<boolean>;
-  onRemoveScene: (sessionId: string, sceneId: string) => Promise<boolean>;
+  onRemoveScene: (sessionId: SessionId, sceneId: SceneId) => Promise<boolean>;
 }
 
 export function CampaignWorkspace({

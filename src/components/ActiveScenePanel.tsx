@@ -1,13 +1,14 @@
 import type { SceneDto } from "@/api";
+import type { SceneLevelId } from "@/types";
 import { Button, Panel, SectionHeading } from "./primitives";
 import styles from "./ActiveScenePanel.module.scss";
 
 interface ActiveScenePanelProps {
   scene: SceneDto;
-  currentLevelId: string;
+  currentLevelId: SceneLevelId;
   currentIndex: number;
   sceneCount: number;
-  onSelectLevel: (levelId: string) => void;
+  onSelectLevel: (levelId: SceneLevelId) => void;
   onPreviousScene: () => void;
   onNextScene: () => void;
 }

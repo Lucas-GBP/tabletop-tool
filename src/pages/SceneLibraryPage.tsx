@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Input, SceneLibrary, WorkspaceFeedback } from "@/components";
 import type { CoreWorkspace } from "@/hooks";
+import type { SceneId } from "@/types";
 import styles from "./SceneLibraryPage.module.scss";
 
 interface SceneLibraryPageProps {
   workspace: CoreWorkspace;
-  onOpenScene: (sceneId: string) => void;
+  onOpenScene: (sceneId: SceneId) => void;
 }
 
 export function SceneLibraryPage({

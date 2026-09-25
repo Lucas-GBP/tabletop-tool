@@ -14,18 +14,24 @@ import type {
   PlaybackInfo,
   SceneAudioRuntimeSnapshot,
 } from "@/tools/audio-mixer";
+import type {
+  CompositionLayerId,
+  PlaybackId,
+  SceneId,
+  SceneLevelId,
+} from "@/types";
 
 interface LoadedAudio {
   library: AudioLibraryDto;
-  scenes: Map<string, SceneAudioConfigurationDto>;
-  levels: Map<string, SceneLevelAudioConfigurationDto>;
+  scenes: Map<SceneId, SceneAudioConfigurationDto>;
+  levels: Map<SceneLevelId, SceneLevelAudioConfigurationDto>;
 }
 
 export function useSessionAudioRuntime(
   session: SessionDto,
   scenes: readonly SceneDto[],
-  currentSceneId: string | undefined,
-  currentLevelId: string | undefined,
+  currentSceneId: SceneId | undefined,
+  currentLevelId: SceneLevelId | undefined,
 ) {
   const [loaded, setLoaded] = useState<LoadedAudio | null>(null);
   const [loading, setLoading] = useState(true);
@@ -335,19 +341,19 @@ export function useSessionAudioRuntime(
         (_sceneRuntime, mixer) => mixer.setMasterVolumeDb(value),
       );
     },
-    setLayerOverride: (layerId: string, enabled: boolean | null) =>
+    setLayerOverride: (layerId: CompositionLayerId, enabled: boolean | null) =>
       execute("set_audio_layer_override", layerId, (sceneRuntime) =>
         sceneRuntime.setLayerOverride(layerId, enabled),
       ),
-    pause: (id: string) =>
+    pause: (id: PlaybackId) =>
       execute("pause_playback", id, (_sceneRuntime, mixer) => mixer.pause(id)),
-    resume: (id: string) =>
+    resume: (id: PlaybackId) =>
       execute("resume_playback", id, (_sceneRuntime, mixer) =>
         mixer.resume(id),
       ),
-    stop: (id: string) =>
+    stop: (id: PlaybackId) =>
       execute("stop_playback", id, (_sceneRuntime, mixer) => mixer.stop(id)),
-    finish: (id: string) =>
+    finish: (id: PlaybackId) =>
       execute("finish_playback", id, (_sceneRuntime, mixer) =>
         mixer.finish(id),
       ),

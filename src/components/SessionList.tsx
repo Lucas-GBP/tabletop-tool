@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { SceneDto, SessionDto } from "@/api";
+import type { SceneId, SessionId } from "@/types";
 import { classNames, formValue } from "@/lib";
 import { Button, Input, Panel, SectionHeading } from "./primitives";
 import { ReorderControls } from "./ReorderControls";
@@ -10,11 +11,11 @@ interface SessionListProps {
   campaignName: string;
   sessions: SessionDto[];
   scenes: SceneDto[];
-  selectedSessionId: string;
+  selectedSessionId: SessionId;
   disabled: boolean;
-  onSelect: (sessionId: string) => void;
-  onCreate: (name: string, sceneId: string) => Promise<boolean>;
-  onMove: (sessionId: string, position: number) => Promise<boolean>;
+  onSelect: (sessionId: SessionId) => void;
+  onCreate: (name: string, sceneId: SceneId) => Promise<boolean>;
+  onMove: (sessionId: SessionId, position: number) => Promise<boolean>;
 }
 
 export function SessionList({
@@ -27,7 +28,7 @@ export function SessionList({
   onCreate,
   onMove,
 }: SessionListProps) {
-  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [draggedId, setDraggedId] = useState<SessionId | null>(null);
 
   return (
     <Panel as="aside" className={styles.panel}>
@@ -87,10 +88,12 @@ export function SessionList({
           event.preventDefault();
           const form = event.currentTarget;
           const data = new FormData(form);
-          void onCreate(
-            formValue(data, "sessionName"),
-            formValue(data, "sessionScene"),
-          ).then((created) => created && form.reset());
+          const sceneId = formValue(data, "sessionScene");
+          const scene = scenes.find((candidate) => candidate.id === sceneId);
+          if (!scene) return;
+          void onCreate(formValue(data, "sessionName"), scene.id).then(
+            (created) => created && form.reset(),
+          );
         }}
       >
         <Input

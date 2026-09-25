@@ -1,24 +1,25 @@
 import { RuntimeError } from "./RuntimeError";
 import { SceneRuntime } from "./SceneRuntime";
+import type { SceneId, SceneLevelId, SessionId, SessionSceneId } from "@/types";
 
 export interface RuntimeScene {
-  readonly associationId: string;
+  readonly associationId: SessionSceneId;
   readonly position: number;
-  readonly sceneId: string;
+  readonly sceneId: SceneId;
 }
 
 export interface SessionRuntimeDefinition {
-  readonly id: string;
+  readonly id: SessionId;
   readonly scenes: readonly RuntimeScene[];
 }
 
 export interface SceneRuntimeDefinition {
-  readonly id: string;
-  readonly levelIds: readonly string[];
+  readonly id: SceneId;
+  readonly levelIds: readonly SceneLevelId[];
 }
 
 export interface SessionRuntimeSnapshot {
-  readonly sessionId: string;
+  readonly sessionId: SessionId;
   readonly scenes: readonly RuntimeScene[];
   readonly currentSceneIndex: number;
   readonly currentScene: RuntimeScene;
@@ -26,9 +27,9 @@ export interface SessionRuntimeSnapshot {
 }
 
 export class SessionRuntime {
-  readonly sessionId: string;
+  readonly sessionId: SessionId;
   readonly #scenes: readonly RuntimeScene[];
-  readonly #levelIdsByScene: ReadonlyMap<string, readonly string[]>;
+  readonly #levelIdsByScene: ReadonlyMap<SceneId, readonly SceneLevelId[]>;
   #currentSceneIndex = 0;
   #sceneRuntime: SceneRuntime;
   #disposed = false;
@@ -93,7 +94,7 @@ export class SessionRuntime {
     };
   }
 
-  switchScene(sceneId: string) {
+  switchScene(sceneId: SceneId) {
     this.#ensureActive();
     const nextIndex = this.#scenes.findIndex(
       (runtimeScene) => runtimeScene.sceneId === sceneId,
@@ -120,7 +121,7 @@ export class SessionRuntime {
     this.#sceneRuntime = nextRuntime;
   }
 
-  switchLevel(levelId: string) {
+  switchLevel(levelId: SceneLevelId) {
     this.#ensureActive();
     this.#sceneRuntime.switchLevel(levelId);
   }
@@ -131,7 +132,7 @@ export class SessionRuntime {
     this.#disposed = true;
   }
 
-  #levelsFor(sceneId: string) {
+  #levelsFor(sceneId: SceneId) {
     const levelIds = this.#levelIdsByScene.get(sceneId);
     if (!levelIds) {
       throw new RuntimeError({

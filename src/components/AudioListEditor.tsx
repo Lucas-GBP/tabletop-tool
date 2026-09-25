@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { AudioListDto, AudioListInputDto, AudioObjectDto } from "@/api";
+import type { AudioObjectId } from "@/types";
 import { ActionMenu } from "./ActionMenu";
 import { Button, Input, Select } from "./primitives";
 import { ReorderControls } from "./ReorderControls";
@@ -15,7 +16,7 @@ interface AudioListEditorProps {
 }
 
 interface EntryDraft {
-  audioObjectId: string;
+  audioObjectId: AudioObjectId;
   weight: number;
 }
 
@@ -38,7 +39,9 @@ export function AudioListEditor({
           .map(({ audioObjectId, weight }) => ({ audioObjectId, weight }))
       : [],
   );
-  const [selectedObjectId, setSelectedObjectId] = useState("");
+  const [selectedObjectId, setSelectedObjectId] = useState<AudioObjectId | "">(
+    "",
+  );
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   const available = objects.filter(
@@ -162,9 +165,12 @@ export function AudioListEditor({
             <Select
               value={selectedObjectId}
               disabled={disabled}
-              onChange={(event) =>
-                setSelectedObjectId(event.currentTarget.value)
-              }
+              onChange={(event) => {
+                const selected = objects.find(
+                  (object) => object.id === event.currentTarget.value,
+                );
+                setSelectedObjectId(selected?.id ?? "");
+              }}
             >
               <option value="">Selecione um objeto</option>
               {available.map((object) => (
@@ -177,9 +183,11 @@ export function AudioListEditor({
           <Button
             disabled={disabled || !selectedObjectId}
             onClick={() => {
+              const audioObjectId = selectedObjectId;
+              if (!audioObjectId) return;
               setEntries((current) => [
                 ...current,
-                { audioObjectId: selectedObjectId, weight: 1 },
+                { audioObjectId, weight: 1 },
               ]);
               setSelectedObjectId("");
             }}

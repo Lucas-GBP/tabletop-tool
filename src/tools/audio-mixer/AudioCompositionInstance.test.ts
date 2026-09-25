@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { AudioCompositionDto, CompositionLayerDto } from "@/api";
+import { testId } from "@/test/ids";
 import { AudioCompositionInstance } from "./AudioCompositionInstance";
 import type { AudioMixer } from "./AudioMixer";
 import type { TimerDriver } from "./types";
@@ -55,11 +56,11 @@ describe("AudioCompositionInstance", () => {
       onError: vi.fn(),
     });
 
-    instance.setEnabled("stop-layer", true);
-    instance.setEnabled("finish-layer", true);
+    instance.setEnabled(testId.compositionLayer("stop-layer"), true);
+    instance.setEnabled(testId.compositionLayer("finish-layer"), true);
     await Promise.resolve();
-    instance.setEnabled("stop-layer", false);
-    instance.setEnabled("finish-layer", false);
+    instance.setEnabled(testId.compositionLayer("stop-layer"), false);
+    instance.setEnabled(testId.compositionLayer("finish-layer"), false);
 
     expect(shape.stop).toHaveBeenCalledWith("playback-1");
     expect(shape.finish).toHaveBeenCalledWith("playback-2");
@@ -76,13 +77,15 @@ describe("AudioCompositionInstance", () => {
       random: () => 0,
     });
 
-    instance.setEnabled("interval", true);
+    instance.setEnabled(testId.compositionLayer("interval"), true);
     expect(timer.callbacks.size).toBe(1);
     instance.dispose();
     timer.runNext();
 
     expect(shape.play).not.toHaveBeenCalled();
-    expect(() => instance.setEnabled("interval", true)).toThrowError(
+    expect(() =>
+      instance.setEnabled(testId.compositionLayer("interval"), true),
+    ).toThrowError(
       expect.objectContaining({ code: "AUDIO_COMPOSITION_DISPOSED" }),
     );
   });
@@ -108,7 +111,7 @@ describe("AudioCompositionInstance", () => {
       random: () => 0,
     });
 
-    instance.setEnabled("interval", true);
+    instance.setEnabled(testId.compositionLayer("interval"), true);
     timer.runNext();
 
     expect(play).toHaveBeenCalledOnce();
@@ -134,7 +137,7 @@ describe("AudioCompositionInstance", () => {
       random: () => 0,
     });
 
-    instance.setEnabled("interval", true);
+    instance.setEnabled(testId.compositionLayer("interval"), true);
     timer.runNext();
     await Promise.resolve();
 
@@ -164,16 +167,16 @@ describe("AudioCompositionInstance", () => {
       random: () => 0,
     });
 
-    instance.setEnabled("interval", true);
+    instance.setEnabled(testId.compositionLayer("interval"), true);
     timer.runNext();
-    instance.setEnabled("interval", false);
+    instance.setEnabled(testId.compositionLayer("interval"), false);
     expect(timer.callbacks.size).toBe(0);
     late.resolve("playback-1");
     await late.promise;
     await Promise.resolve();
     expect(stop).toHaveBeenCalledWith("playback-1");
 
-    instance.setEnabled("interval", true);
+    instance.setEnabled(testId.compositionLayer("interval"), true);
     expect(timer.callbacks.size).toBe(1);
   });
 });
@@ -187,7 +190,11 @@ function deferred<T>() {
 }
 
 function composition(layers: CompositionLayerDto[]): AudioCompositionDto {
-  return { id: "composition-1", name: "Storm", layers };
+  return {
+    id: testId.audioComposition("composition-1"),
+    name: "Storm",
+    layers,
+  };
 }
 
 function layer(
@@ -196,10 +203,13 @@ function layer(
   interval = false,
 ): CompositionLayerDto {
   return {
-    id,
+    id: testId.compositionLayer(id),
     name: id,
     position: 0,
-    source: { kind: "audioObject", audioObjectId: "audio-1" },
+    source: {
+      kind: "audioObject",
+      audioObjectId: testId.audioObject("audio-1"),
+    },
     execution: interval
       ? {
           kind: "randomInterval",

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import type { AudioAssetDto, AudioObjectDto, AudioObjectInputDto } from "@/api";
 import { api } from "@/api";
+import { asAudioObjectId } from "@/types";
+import type { PlaybackId } from "@/types";
 import { AssetWarning } from "./AssetWarning";
 import { AudioAssetPicker } from "./AudioAssetPicker";
 import { Button, EmptyState, Input, Panel, SectionHeading } from "./primitives";
@@ -54,7 +56,7 @@ export function AudioObjectEditor({
   const [previewState, setPreviewState] = useState("Parado");
   const [selectingAsset, setSelectingAsset] = useState(false);
   const mixerRef = useRef<AudioMixer | null>(null);
-  const playbackIdRef = useRef<string | null>(null);
+  const playbackIdRef = useRef<PlaybackId | null>(null);
   const selectedFile = files.find(
     (file) => file.relativePath === draft.assetPath,
   );
@@ -231,7 +233,7 @@ export function AudioObjectEditor({
     );
     disposePreview(false);
     const previewObject: AudioObjectDto = {
-      id: "audio-object-preview",
+      id: asAudioObjectId("audio-object-preview"),
       ...draft,
     };
     const mixer = new AudioMixer({

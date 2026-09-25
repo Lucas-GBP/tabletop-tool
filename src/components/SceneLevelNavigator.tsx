@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { SceneDto } from "@/api";
+import type { SceneLevelId } from "@/types";
 import { classNames, formValue } from "@/lib";
 import { Button, Input, Panel, SectionHeading } from "./primitives";
 import { ReorderControls } from "./ReorderControls";
@@ -7,11 +8,11 @@ import styles from "./SceneLevelNavigator.module.scss";
 
 interface SceneLevelNavigatorProps {
   scene: SceneDto;
-  activeLevelId: string;
+  activeLevelId: SceneLevelId;
   disabled: boolean;
-  onSelect: (levelId: string) => void;
+  onSelect: (levelId: SceneLevelId) => void;
   onCreate: (name: string) => Promise<boolean>;
-  onMove: (levelId: string, position: number) => Promise<boolean>;
+  onMove: (levelId: SceneLevelId, position: number) => Promise<boolean>;
 }
 
 export function SceneLevelNavigator({
@@ -22,7 +23,7 @@ export function SceneLevelNavigator({
   onCreate,
   onMove,
 }: SceneLevelNavigatorProps) {
-  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [draggedId, setDraggedId] = useState<SceneLevelId | null>(null);
   const levels = [...scene.levels].sort(
     (left, right) => left.position - right.position,
   );

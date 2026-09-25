@@ -1,4 +1,5 @@
 import type { SceneDto, SceneLevelDto } from "@/api";
+import type { SceneLevelId } from "@/types";
 import { ActionMenu } from "./ActionMenu";
 import { Button, EditableText, Panel, SectionHeading } from "./primitives";
 import styles from "./SceneStructurePanel.module.scss";
@@ -7,8 +8,8 @@ interface SceneStructurePanelProps {
   scene: SceneDto;
   level: SceneLevelDto;
   disabled: boolean;
-  onRenameLevel: (levelId: string, name: string) => Promise<boolean>;
-  onDeleteLevel: (levelId: string) => Promise<boolean>;
+  onRenameLevel: (levelId: SceneLevelId, name: string) => Promise<boolean>;
+  onDeleteLevel: (levelId: SceneLevelId) => Promise<boolean>;
 }
 
 export function SceneStructurePanel({

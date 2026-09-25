@@ -5,6 +5,7 @@ import App from "@/App";
 import { api } from "@/api";
 import type { CoreSnapshotDto } from "@/api";
 import { campaignSnapshot, empty, initialScene } from "@/test/fixtures/core";
+import { testId } from "@/test/ids";
 
 vi.mock("@/api", () => ({
   api: {
@@ -187,12 +188,12 @@ describe("Core workspace", () => {
       scenes: [
         ...campaignSnapshot.scenes,
         {
-          id: "scene-2",
+          id: testId.scene("scene-2"),
           name: "Ruínas submersas",
           levels: [
             {
-              id: "level-2",
-              sceneId: "scene-2",
+              id: testId.sceneLevel("level-2"),
+              sceneId: testId.scene("scene-2"),
               name: "Nível 1",
               position: 0,
             },
@@ -228,10 +229,15 @@ describe("Core workspace", () => {
   it("adds another reusable scene to a session sequence", async () => {
     const user = userEvent.setup();
     const secondScene = {
-      id: "scene-2",
+      id: testId.scene("scene-2"),
       name: "Ruínas submersas",
       levels: [
-        { id: "level-2", sceneId: "scene-2", name: "Nível 1", position: 0 },
+        {
+          id: testId.sceneLevel("level-2"),
+          sceneId: testId.scene("scene-2"),
+          name: "Nível 1",
+          position: 0,
+        },
       ],
     };
     const initial: CoreSnapshotDto = {
@@ -249,9 +255,9 @@ describe("Core workspace", () => {
               scenes: [
                 ...initial.campaigns[0]!.sessions[0]!.scenes,
                 {
-                  id: "link-2",
-                  sessionId: "session-1",
-                  sceneId: "scene-2",
+                  id: testId.sessionScene("link-2"),
+                  sessionId: testId.session("session-1"),
+                  sceneId: testId.scene("scene-2"),
                   position: 1,
                 },
               ],
@@ -382,15 +388,15 @@ describe("Core workspace", () => {
     const user = userEvent.setup();
     vi.spyOn(window, "confirm").mockReturnValue(true);
     const secondSession = {
-      id: "session-2",
-      campaignId: "campaign-1",
+      id: testId.session("session-2"),
+      campaignId: testId.campaign("campaign-1"),
       name: "Sessão adicional",
       position: 1,
       scenes: [
         {
-          id: "link-2",
-          sessionId: "session-2",
-          sceneId: "scene-1",
+          id: testId.sessionScene("link-2"),
+          sessionId: testId.session("session-2"),
+          sceneId: testId.scene("scene-1"),
           position: 0,
         },
       ],
@@ -456,11 +462,21 @@ describe("Core workspace", () => {
     const user = userEvent.setup();
     vi.spyOn(window, "confirm").mockReturnValue(true);
     const secondScene = {
-      id: "scene-2",
+      id: testId.scene("scene-2"),
       name: "Ruínas",
       levels: [
-        { id: "level-2", sceneId: "scene-2", name: "Entrada", position: 0 },
-        { id: "level-3", sceneId: "scene-2", name: "Subsolo", position: 1 },
+        {
+          id: testId.sceneLevel("level-2"),
+          sceneId: testId.scene("scene-2"),
+          name: "Entrada",
+          position: 0,
+        },
+        {
+          id: testId.sceneLevel("level-3"),
+          sceneId: testId.scene("scene-2"),
+          name: "Subsolo",
+          position: 1,
+        },
       ],
     };
     const initial: CoreSnapshotDto = {
@@ -474,9 +490,9 @@ describe("Core workspace", () => {
               scenes: [
                 ...campaignSnapshot.campaigns[0]!.sessions[0]!.scenes,
                 {
-                  id: "link-2",
-                  sessionId: "session-1",
-                  sceneId: "scene-2",
+                  id: testId.sessionScene("link-2"),
+                  sessionId: testId.session("session-1"),
+                  sceneId: testId.scene("scene-2"),
                   position: 1,
                 },
               ],
