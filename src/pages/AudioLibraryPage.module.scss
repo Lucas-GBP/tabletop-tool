@@ -64,6 +64,10 @@
   }
 }
 
+.operations > .scan-warning {
+  color: var(--color-warning);
+}
+
 .volume {
   display: flex;
   gap: var(--space-small);

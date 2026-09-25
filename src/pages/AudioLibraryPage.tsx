@@ -363,6 +363,17 @@ function AudioOperations({
         <strong>{audio.library.files.length}</strong>
         <span> arquivos disponíveis</span>
       </div>
+      {audio.library.scanWarnings.length > 0 ? (
+        <div
+          className={styles.scanWarning}
+          title={audio.library.scanWarnings
+            .map((warning) => warning.path)
+            .join("\n")}
+          role="status"
+        >
+          ⚠ {audio.library.scanWarnings.length} arquivo(s) não puderam ser lidos
+        </div>
+      ) : null}
       <Button
         size="compact"
         disabled={audio.busy || !audio.library.assetDirectory}

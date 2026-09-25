@@ -1,8 +1,10 @@
 # Audio Mixer
 
-The **Audio Mixer** is the single global runtime service responsible for executing playable audio and managing active playback instances.
+The **Audio Mixer** is a runtime service responsible for executing playable
+audio and managing active playback instances for one owning context.
 
-It is not a persistent domain entity. It exists once while the application is running.
+It is not a persistent domain entity. A running Session and an editor preview
+may own separate mixers so their playbacks and disposal remain isolated.
 
 ```text
 Application
@@ -26,7 +28,7 @@ The Audio Mixer has a deliberately small set of responsibilities:
 - remove playback instances after they finish;
 - control individual playbacks through `PlaybackId`;
 - provide aggregate operations over active playbacks;
-- hold global audio-output settings such as master volume.
+- apply application audio-output settings such as master volume.
 
 The Audio Mixer does **not** own scene logic, composition scheduling, or Scene Level state.
 
@@ -154,7 +156,8 @@ PlaybackInfo
 
 ## Relationship with Audio Composition
 
-An `Audio Composition Instance` is a higher-level runtime object that coordinates layers and sends playback commands to the global Mixer.
+An `Audio Composition Instance` is a higher-level runtime object that coordinates
+layers and sends playback commands to the Mixer owned by the same runtime context.
 
 ```text
 AudioCompositionInstance
@@ -170,9 +173,9 @@ The IDs do not keep playback instances alive.
 
 RandomInterval scheduling, enabled/disabled layers, and composition reconciliation remain responsibilities of the composition runtime, not the Mixer.
 
-## Global Audio Settings
+## Application Audio Settings
 
-The Mixer owns global audio-output settings.
+Application settings provide the initial configuration for each Mixer.
 
 Initial settings include:
 
@@ -200,10 +203,14 @@ AudioMixer
 ```
 
 Changes to master volume must update both the active Mixer state and persisted settings.
+Interactive changes update the active gain immediately. Persistence is debounced
+until the value settles, avoiding an IPC write for every slider pixel. Runtime
+UI exposes the current value and the last persisted default separately while a
+save is pending.
 
 ### Output Device
 
-The selected output device belongs to global Mixer configuration.
+The selected output device belongs to application audio configuration.
 
 The concrete device identifier may depend on the audio backend and operating system, so the domain-facing representation must not unnecessarily expose backend-specific types.
 
@@ -234,10 +241,11 @@ The selected output-device persistence policy remains undecided.
 
 ## Lifetime
 
-Exactly one global Audio Mixer exists during normal application execution.
+Each active audio context owns one Audio Mixer. Creating a Session runtime or an
+isolated preview may therefore create a separate Mixer.
 
 ```text
-Application startup
+Owning context starts
     ↓
 create AudioMixer
     ↓
@@ -245,7 +253,7 @@ load persistent settings
     ↓
 run application
     ↓
-application shutdown
+owning context ends
     ↓
 destroy AudioMixer and runtime playback state
 ```
@@ -254,7 +262,7 @@ Playback state is not restored after application restart.
 
 ## Architectural Boundary
 
-The global Mixer is intentionally a low-level runtime service.
+The Mixer is intentionally a low-level runtime service.
 
 It should remain unaware of:
 
@@ -285,7 +293,7 @@ The initial Mixer model does not define:
 - persisted playback state;
 - playback handles that own or retain instances;
 - web/network audio synchronization;
-- audio-bus/group architecture beyond the global master output.
+- audio-bus/group architecture beyond a Mixer's master output.
 
 ## Direct Command Model
 
@@ -313,7 +321,7 @@ If event-to-audio mappings later become user-configurable and persistent — for
 
 ## Relationship with Scene Runtime
 
-The global `AudioMixer` is lower-level than Scene execution.
+An `AudioMixer` is lower-level than Scene execution.
 
 ```text
 SceneRuntime
@@ -353,6 +361,15 @@ The TypeScript Mixer receives the information required to execute an `AudioCue` 
 
 This decision keeps high-frequency runtime operations such as pause, resume, gain changes, scheduling, and playback cleanup inside the frontend runtime instead of performing an IPC round-trip for each operation.
 
+## Decoded Audio Cache
+
+Each Mixer owns a cache of decoded `AudioBuffer`s. The cache has an explicit
+byte limit calculated from decoded PCM size and evicts the least recently used
+buffers first. A buffer used by an active Playback Instance stays pinned until
+that playback finishes, so eviction never invalidates active audio. Streaming
+and peak extraction outside the WebView remain future options that require
+measurement before implementation.
+
 ## Loop Crossfade
 
 Loop crossfade is required in the initial implementation.
@@ -360,6 +377,12 @@ Loop crossfade is required in the initial implementation.
 When `loop_crossfade_duration_us` is zero or absent, normal Web Audio loop behavior may be used.
 
 When crossfade is enabled, `PlaybackInstance` may schedule overlapping `AudioBufferSourceNode`s and automate their gains so that the outgoing loop iteration fades out while the next iteration begins at the loop start and fades in.
+
+Scheduling and logical playback position use the same effective cycle:
+
+```text
+effective_loop_cycle = loop_region_duration - loop_crossfade_duration
+```
 
 This implementation detail is hidden from Mixer consumers.
 

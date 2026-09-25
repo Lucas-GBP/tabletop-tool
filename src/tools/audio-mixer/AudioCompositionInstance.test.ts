@@ -86,7 +86,105 @@ describe("AudioCompositionInstance", () => {
       expect.objectContaining({ code: "AUDIO_COMPOSITION_DISPOSED" }),
     );
   });
+
+  it("schedules the next random interval before playback resolves", () => {
+    const timer = new FakeTimer();
+    const first = deferred<string>();
+    const play = vi
+      .fn<() => Promise<string>>()
+      .mockReturnValueOnce(first.promise)
+      .mockResolvedValueOnce("playback-2");
+    const audioMixer = {
+      play,
+      hasPlayback: vi.fn(() => true),
+      stop: vi.fn(),
+      finish: vi.fn(),
+    } as unknown as AudioMixer;
+    const instance = new AudioCompositionInstance({
+      definition: composition([layer("interval", "stop", true)]),
+      mixer: audioMixer,
+      onError: vi.fn(),
+      timer,
+      random: () => 0,
+    });
+
+    instance.setEnabled("interval", true);
+    timer.runNext();
+
+    expect(play).toHaveBeenCalledOnce();
+    expect(timer.callbacks.size).toBe(1);
+    timer.runNext();
+    expect(play).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps scheduling after a random playback failure", async () => {
+    const timer = new FakeTimer();
+    const onError = vi.fn();
+    const audioMixer = {
+      play: vi.fn(() => Promise.reject(new Error("decode failed"))),
+      hasPlayback: vi.fn(() => false),
+      stop: vi.fn(),
+      finish: vi.fn(),
+    } as unknown as AudioMixer;
+    const instance = new AudioCompositionInstance({
+      definition: composition([layer("interval", "stop", true)]),
+      mixer: audioMixer,
+      onError,
+      timer,
+      random: () => 0,
+    });
+
+    instance.setEnabled("interval", true);
+    timer.runNext();
+    await Promise.resolve();
+
+    expect(onError).toHaveBeenCalledOnce();
+    expect(timer.callbacks.size).toBe(1);
+  });
+
+  it("stops a late playback after disable and can be enabled again", async () => {
+    const timer = new FakeTimer();
+    const late = deferred<string>();
+    const play = vi
+      .fn<() => Promise<string>>()
+      .mockReturnValueOnce(late.promise)
+      .mockResolvedValueOnce("playback-2");
+    const stop = vi.fn();
+    const audioMixer = {
+      play,
+      hasPlayback: vi.fn(() => true),
+      stop,
+      finish: vi.fn(),
+    } as unknown as AudioMixer;
+    const instance = new AudioCompositionInstance({
+      definition: composition([layer("interval", "stop", true)]),
+      mixer: audioMixer,
+      onError: vi.fn(),
+      timer,
+      random: () => 0,
+    });
+
+    instance.setEnabled("interval", true);
+    timer.runNext();
+    instance.setEnabled("interval", false);
+    expect(timer.callbacks.size).toBe(0);
+    late.resolve("playback-1");
+    await late.promise;
+    await Promise.resolve();
+    expect(stop).toHaveBeenCalledWith("playback-1");
+
+    instance.setEnabled("interval", true);
+    expect(timer.callbacks.size).toBe(1);
+  });
 });
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((complete) => {
+    resolve = complete;
+  });
+  return { promise, resolve };
+}
 
 function composition(layers: CompositionLayerDto[]): AudioCompositionDto {
   return { id: "composition-1", name: "Storm", layers };

@@ -48,6 +48,7 @@ describe("Application navigation", () => {
     vi.mocked(api.listAudioLibrary).mockResolvedValue({
       assetDirectory: null,
       files: [],
+      scanWarnings: [],
       objects: [],
       lists: [],
       compositions: [],

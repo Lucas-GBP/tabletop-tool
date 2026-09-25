@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   AudioLibraryDto,
@@ -16,12 +16,14 @@ vi.mock("@/api", () => ({
     getSceneAudioConfiguration: vi.fn(),
     getSceneLevelAudioConfiguration: vi.fn(),
     resolveAssetPath: vi.fn(),
+    updateAudioMixerSettings: vi.fn(),
   },
 }));
 
 const library: AudioLibraryDto = {
   assetDirectory: null,
   files: [],
+  scanWarnings: [],
   objects: [],
   lists: [],
   compositions: [],
@@ -89,6 +91,13 @@ describe("useSessionAudioRuntime", () => {
       (sceneLevelId): Promise<SceneLevelAudioConfigurationDto> =>
         Promise.resolve({ sceneLevelId, disabledLayerIds: [] }),
     );
+    vi.mocked(api.updateAudioMixerSettings).mockImplementation(
+      (masterVolumeDb) =>
+        Promise.resolve({
+          ...library,
+          settings: { masterVolumeDb },
+        }),
+    );
   });
 
   afterEach(() => {
@@ -132,5 +141,30 @@ describe("useSessionAudioRuntime", () => {
     expect(result.current.error).toMatchObject({
       code: "AUDIO_CONFIGURATION_LOAD_FAILED",
     });
+  });
+
+  it("applies volume changes immediately and persists only the settled value", async () => {
+    const { result } = renderHook(() =>
+      useSessionAudioRuntime(session, scenes, "scene-1", "level-1"),
+    );
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => expect(result.current.snapshot).not.toBeNull());
+    vi.useFakeTimers();
+
+    act(() => {
+      result.current.changeMasterVolume(-8);
+      result.current.changeMasterVolume(-12);
+    });
+
+    expect(result.current.masterVolumeDb).toBe(-12);
+    expect(result.current.persistedMasterVolumeDb).toBe(-3);
+    expect(api.updateAudioMixerSettings).not.toHaveBeenCalled();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
+    expect(api.updateAudioMixerSettings).toHaveBeenCalledOnce();
+    expect(api.updateAudioMixerSettings).toHaveBeenCalledWith(-12);
+    expect(result.current.persistedMasterVolumeDb).toBe(-12);
+    vi.useRealTimers();
   });
 });

@@ -142,7 +142,9 @@ execute source
 ...
 ```
 
-The interval is measured from the moment the previous execution begins, not from when that playback ends.
+The next interval is scheduled when the current timer fires, before loading,
+decoding, or starting the requested playback. It is therefore measured from the
+requested execution time rather than Promise completion or playback end.
 
 Therefore, random-interval executions may overlap.
 
@@ -484,11 +486,12 @@ The initial Audio Composition model does not include:
 
 These may be added only if concrete use cases justify them.
 
-## Relationship with the Global Audio Mixer
+## Relationship with Audio Mixer
 
 The runtime composition does not render audio itself.
 
-When a layer needs to execute its source, the active `Audio Composition Instance` sends the source as an `AudioCue` to the global `AudioMixer`:
+When a layer needs to execute its source, the active `Audio Composition Instance`
+sends the source as an `AudioCue` to the Mixer owned by the same runtime context:
 
 ```text
 AudioCompositionInstance
@@ -500,7 +503,7 @@ PlaybackId
 
 The composition runtime may retain returned `PlaybackId`s when later control is necessary.
 
-The global Mixer remains the owner of the actual `Playback Instance`s.
+That Mixer remains the owner of the actual `Playback Instance`s.
 
 ## Persistent Definition and Runtime Instance
 
@@ -524,7 +527,8 @@ AudioCompositionInstance
 └── commands sent to AudioMixer
 ```
 
-The runtime instance does not render audio itself. It coordinates composition behavior and delegates actual playback control to the global `AudioMixer`.
+The runtime instance does not render audio itself. It coordinates composition
+behavior and delegates actual playback control to its context's `AudioMixer`.
 
 The initial architecture does not use an `AudioTrigger` between a composition and the Mixer.
 

@@ -1,7 +1,7 @@
 use super::error::{audio_application_error, parse_audio_id, AppErrorDto};
 use crate::{
     application::{self, AppState},
-    assets::AudioAsset,
+    assets::{AudioAsset, AudioAssetScanWarning},
     audio::{
         AudioComposition, AudioList, AudioListSelectionMode, AudioObject, AudioObjectDefinition,
         CompositionLayerDefinition, DisableBehavior, LayerExecution, LayerSource, LoopRegion,
@@ -17,10 +17,18 @@ use tauri::State;
 pub struct AudioLibraryDto {
     pub asset_directory: Option<String>,
     pub files: Vec<AudioAssetDto>,
+    pub scan_warnings: Vec<AudioAssetScanWarningDto>,
     pub objects: Vec<AudioObjectDto>,
     pub lists: Vec<AudioListDto>,
     pub compositions: Vec<AudioCompositionDto>,
     pub settings: AudioMixerSettingsDto,
+}
+
+#[derive(Clone, Debug, Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct AudioAssetScanWarningDto {
+    pub code: String,
+    pub path: String,
 }
 
 #[derive(Clone, Debug, Serialize, Type)]
@@ -598,6 +606,11 @@ fn library_dto(library: AudioLibrary) -> AudioLibraryDto {
     AudioLibraryDto {
         asset_directory: library.asset_directory,
         files: library.files.into_iter().map(file_dto).collect(),
+        scan_warnings: library
+            .scan_warnings
+            .into_iter()
+            .map(scan_warning_dto)
+            .collect(),
         objects: library.objects.into_iter().map(object_dto).collect(),
         lists: library.lists.into_iter().map(list_dto).collect(),
         compositions: library
@@ -608,6 +621,13 @@ fn library_dto(library: AudioLibrary) -> AudioLibraryDto {
         settings: AudioMixerSettingsDto {
             master_volume_db: library.settings.master_volume_db,
         },
+    }
+}
+
+fn scan_warning_dto(warning: AudioAssetScanWarning) -> AudioAssetScanWarningDto {
+    AudioAssetScanWarningDto {
+        code: warning.code.to_owned(),
+        path: warning.path,
     }
 }
 

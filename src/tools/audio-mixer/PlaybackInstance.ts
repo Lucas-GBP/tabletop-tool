@@ -34,6 +34,7 @@ export class PlaybackInstance {
   readonly #onFinished: (id: PlaybackId) => void;
   readonly #timer: TimerDriver;
   readonly #sources = new Set<AudioBufferSourceNode>();
+  readonly #sourceGains = new Map<AudioBufferSourceNode, GainNode>();
   readonly #timers = new Set<number>();
   #state: PlaybackState = "playing";
   #resumeIntent: ResumeIntent = "playing";
@@ -84,6 +85,14 @@ export class PlaybackInstance {
     return this.#positionAt(this.#context.currentTime);
   }
 
+  get resourceCounts() {
+    return {
+      sources: this.#sources.size,
+      sourceGains: this.#sourceGains.size,
+      timers: this.#timers.size,
+    } as const;
+  }
+
   start() {
     this.#ensureActive("start_playback");
     this.#state = "playing";
@@ -108,6 +117,7 @@ export class PlaybackInstance {
     this.#schedule(fadeSeconds, () => {
       if (this.#disposed || this.#state !== "pausing") return;
       this.#pausedPositionSeconds = this.#positionAt(finishAt);
+      this.#clearTimers();
       this.#stopSources();
       this.#state = "paused";
     });
@@ -163,12 +173,12 @@ export class PlaybackInstance {
       return;
     }
     if (this.#state === "finishing") return;
+    const position = this.currentPositionSeconds;
     this.#state = "finishing";
     this.#resumeIntent = "finishing";
     if (!this.#hasLoop()) return;
 
     const loopEnd = microsecondsToSeconds(this.definition.endLoopTimeUs!);
-    const position = this.currentPositionSeconds;
     const secondsToLoopEnd = Math.max(0, loopEnd - position);
     const outroAt = this.#context.currentTime + secondsToLoopEnd;
     this.#clearTimers();
@@ -192,7 +202,9 @@ export class PlaybackInstance {
   #beginFrom(position: number, intent: ResumeIntent) {
     this.#stopSources();
     this.#clearTimers();
-    this.#anchorPositionSeconds = position;
+    const scheduledPosition =
+      intent === "playing" ? this.#normalizeLoopPosition(position) : position;
+    this.#anchorPositionSeconds = scheduledPosition;
     this.#anchorContextTime = this.#context.currentTime;
     const targetGain = decibelsToGain(this.definition.volumeDb);
     const fadeSeconds = microsecondsToSeconds(this.definition.fadeInDurationUs);
@@ -204,13 +216,13 @@ export class PlaybackInstance {
     );
 
     if (intent === "finishing" || !this.#hasLoop()) {
-      this.#startTerminalSource(position, this.#context.currentTime);
+      this.#startTerminalSource(scheduledPosition, this.#context.currentTime);
       return;
     }
     if ((this.definition.loopCrossfadeDurationUs ?? 0) > 0) {
-      this.#startCrossfadeLoop(position);
+      this.#startCrossfadeLoop(scheduledPosition);
     } else {
-      this.#startNativeLoop(position);
+      this.#startNativeLoop(scheduledPosition);
     }
   }
 
@@ -283,7 +295,7 @@ export class PlaybackInstance {
     }
     sourceGain.gain.setValueAtTime(1, startAt + duration - crossfade);
     sourceGain.gain.linearRampToValueAtTime(0, startAt + duration);
-    const source = this.#createSource(sourceGain);
+    const source = this.#createSource(sourceGain, false, sourceGain);
     source.start(startAt, offset, duration);
   }
 
@@ -309,14 +321,16 @@ export class PlaybackInstance {
     source.start(startAt, position, duration);
   }
 
-  #createSource(output: AudioNode, terminal = false) {
+  #createSource(output: AudioNode, terminal = false, ownedGain?: GainNode) {
     const source = this.#context.createBufferSource();
     source.buffer = this.#buffer;
     source.connect(output);
     this.#sources.add(source);
+    if (ownedGain) this.#sourceGains.set(source, ownedGain);
     source.onended = () => {
       this.#sources.delete(source);
       source.disconnect();
+      this.#disconnectSourceGain(source);
       if (terminal && !this.#disposed && this.#state !== "pausing") {
         this.#finishNow();
       }
@@ -331,9 +345,9 @@ export class PlaybackInstance {
       this.#anchorPositionSeconds + (contextTime - this.#anchorContextTime);
     if (this.#resumeIntent === "playing" && this.#hasLoop()) {
       const loopStart = microsecondsToSeconds(this.definition.startLoopTimeUs!);
-      const loopEnd = microsecondsToSeconds(this.definition.endLoopTimeUs!);
       if (raw >= loopStart) {
-        return loopStart + ((raw - loopStart) % (loopEnd - loopStart));
+        const cycle = this.#loopCycleSeconds();
+        return loopStart + ((raw - loopStart) % cycle);
       }
     }
     return Math.min(end, Math.max(start, raw));
@@ -353,7 +367,26 @@ export class PlaybackInstance {
         ? microsecondsToSeconds(this.definition.endLoopTimeUs!)
         : microsecondsToSeconds(this.definition.endTimeUs);
     const end = Math.max(start, configuredEnd - 0.000001);
-    return Math.min(end, Math.max(start, position));
+    return this.#normalizeLoopPosition(
+      Math.min(end, Math.max(start, position)),
+    );
+  }
+
+  #normalizeLoopPosition(position: number) {
+    if (this.#resumeIntent !== "playing" || !this.#hasLoop()) return position;
+    const loopStart = microsecondsToSeconds(this.definition.startLoopTimeUs!);
+    if (position < loopStart) return position;
+    const cycle = this.#loopCycleSeconds();
+    return loopStart + ((position - loopStart) % cycle);
+  }
+
+  #loopCycleSeconds() {
+    const loopStart = microsecondsToSeconds(this.definition.startLoopTimeUs!);
+    const loopEnd = microsecondsToSeconds(this.definition.endLoopTimeUs!);
+    const crossfade = microsecondsToSeconds(
+      this.definition.loopCrossfadeDurationUs ?? 0,
+    );
+    return Math.max(0.000001, loopEnd - loopStart - crossfade);
   }
 
   #fadeToZero(finishAt: number) {
@@ -388,8 +421,16 @@ export class PlaybackInstance {
         // Stopping is idempotent at the runtime boundary.
       }
       source.disconnect();
+      this.#disconnectSourceGain(source);
     }
     this.#sources.clear();
+  }
+
+  #disconnectSourceGain(source: AudioBufferSourceNode) {
+    const gain = this.#sourceGains.get(source);
+    if (!gain) return;
+    this.#sourceGains.delete(source);
+    gain.disconnect();
   }
 
   #finishNow() {

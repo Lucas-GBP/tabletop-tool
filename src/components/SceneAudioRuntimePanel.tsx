@@ -77,7 +77,10 @@ export function SceneAudioRuntimePanel({ audio }: SceneAudioRuntimePanelProps) {
           Parar tudo
         </Button>
         <label className={styles.volume}>
-          <span>Volume da sessão</span>
+          <span>
+            Volume geral
+            <small>Padrão salvo: {audio.persistedMasterVolumeDb} dB</small>
+          </span>
           <input
             type="range"
             min={-60}

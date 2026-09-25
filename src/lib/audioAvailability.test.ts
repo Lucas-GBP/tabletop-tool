@@ -19,6 +19,7 @@ const library: AudioLibraryDto = {
       sizeBytes: 100,
     },
   ],
+  scanWarnings: [],
   objects: [
     object("available", "weather/rain.ogg"),
     object("missing", "weather/wind.ogg"),

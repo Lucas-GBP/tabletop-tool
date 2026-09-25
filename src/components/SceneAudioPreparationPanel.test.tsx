@@ -25,6 +25,7 @@ const scene: SceneDto = {
 const library: AudioLibraryDto = {
   assetDirectory: "C:/assets",
   files: [],
+  scanWarnings: [],
   objects: [
     {
       id: "object-1",

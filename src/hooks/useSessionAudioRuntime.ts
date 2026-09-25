@@ -36,6 +36,7 @@ export function useSessionAudioRuntime(
   const [error, setError] = useState<RuntimeError | null>(null);
   const [diagnostics, setDiagnostics] = useState<RuntimeError[]>([]);
   const [masterVolumeDb, setMasterVolumeDb] = useState(0);
+  const [persistedMasterVolumeDb, setPersistedMasterVolumeDb] = useState(0);
   const mixerRef = useRef<AudioMixer | null>(null);
   const sceneRuntimeRef = useRef<SceneAudioRuntime | null>(null);
   const startedRef = useRef(false);
@@ -96,6 +97,7 @@ export function useSessionAudioRuntime(
           ),
         });
         setMasterVolumeDb(library.settings.masterVolumeDb);
+        setPersistedMasterVolumeDb(library.settings.masterVolumeDb);
         setError(null);
       })
       .catch((cause: unknown) => {
@@ -201,6 +203,44 @@ export function useSessionAudioRuntime(
   }, []);
 
   useEffect(() => {
+    if (!loaded || masterVolumeDb === persistedMasterVolumeDb) return;
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      void api
+        .updateAudioMixerSettings(masterVolumeDb)
+        .then((library) => {
+          if (cancelled || !mountedRef.current) return;
+          setPersistedMasterVolumeDb(library.settings.masterVolumeDb);
+          setLoaded((current) =>
+            current
+              ? {
+                  ...current,
+                  library: {
+                    ...current.library,
+                    settings: library.settings,
+                  },
+                }
+              : current,
+          );
+        })
+        .catch((cause: unknown) => {
+          if (cancelled) return;
+          report(cause, {
+            code: "AUDIO_SETTINGS_SAVE_FAILED",
+            message: "Não foi possível salvar o volume geral.",
+            operation: "save_master_volume",
+            entityId: session.id,
+            recoverable: true,
+          });
+        });
+    }, 500);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [loaded, masterVolumeDb, persistedMasterVolumeDb, report, session.id]);
+
+  useEffect(() => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
@@ -284,6 +324,7 @@ export function useSessionAudioRuntime(
     error,
     diagnostics,
     masterVolumeDb,
+    persistedMasterVolumeDb,
     activate,
     playCue,
     changeMasterVolume: (value: number) => {

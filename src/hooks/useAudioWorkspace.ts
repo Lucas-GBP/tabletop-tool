@@ -12,6 +12,7 @@ import { useNotifications } from "./useNotifications";
 const emptyLibrary: AudioLibraryDto = {
   assetDirectory: null,
   files: [],
+  scanWarnings: [],
   objects: [],
   lists: [],
   compositions: [],
@@ -48,7 +49,11 @@ export function useAudioWorkspace() {
     return () => window.clearTimeout(timer);
   }, [load]);
 
-  async function mutate(success: string, action: Mutation) {
+  async function mutate(
+    success: string,
+    action: Mutation,
+    preserveDiscovery = true,
+  ) {
     setBusy(true);
     setError("");
     try {
@@ -57,9 +62,14 @@ export function useAudioWorkspace() {
         ...updated,
         assetDirectory: updated.assetDirectory ?? current.assetDirectory,
         files:
-          updated.files.length === 0 && current.files.length > 0
+          preserveDiscovery &&
+          updated.files.length === 0 &&
+          current.files.length > 0
             ? current.files
             : updated.files,
+        scanWarnings: preserveDiscovery
+          ? current.scanWarnings
+          : updated.scanWarnings,
       }));
       notify(success);
       return updated;
@@ -82,7 +92,10 @@ export function useAudioWorkspace() {
     reload: load,
     busy,
     error,
-    rescanFiles: () => save("Diretório verificado.", api.listAudioLibrary),
+    rescanFiles: () =>
+      mutate("Diretório verificado.", api.listAudioLibrary, false).then(
+        Boolean,
+      ),
     createAudioObject: async (input: AudioObjectInputDto) => {
       const previous = new Set(library.objects.map((object) => object.id));
       const updated = await mutate("Objeto de áudio criado.", () =>

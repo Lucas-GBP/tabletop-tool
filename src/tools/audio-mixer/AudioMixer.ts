@@ -87,24 +87,31 @@ export class AudioMixer {
           recoverable: true,
         });
       }
-      const buffer = await this.#loader!.load(file);
+      const lease = await this.#loader!.acquire(file);
+      const buffer = lease.buffer;
       const id = crypto.randomUUID();
-      const playback = new PlaybackInstance({
-        id,
-        context: this.#context!,
-        output: this.#masterGain!,
-        buffer,
-        definition: fitAudioObjectToDuration(
-          object,
-          audioBufferDurationUs(buffer),
-        ),
-        onFinished: (finishedId) => {
-          this.#playbacks.delete(finishedId);
-        },
-      });
-      this.#playbacks.set(id, playback);
-      playback.start();
-      return id;
+      try {
+        const decodedDurationUs = audioBufferDurationUs(buffer);
+        assertAssetDuration(file, object.endTimeUs, decodedDurationUs);
+        const playback = new PlaybackInstance({
+          id,
+          context: this.#context!,
+          output: this.#masterGain!,
+          buffer,
+          definition: fitAudioObjectToDuration(object, decodedDurationUs),
+          onFinished: (finishedId) => {
+            this.#playbacks.delete(finishedId);
+            lease.release();
+          },
+        });
+        this.#playbacks.set(id, playback);
+        playback.start();
+        return id;
+      } catch (cause) {
+        this.#playbacks.delete(id);
+        lease.release();
+        throw cause;
+      }
     } catch (cause) {
       throw normalizeRuntimeError(cause, {
         code: "PLAYBACK_FAILED",
@@ -256,6 +263,29 @@ export class AudioMixer {
       });
     }
   }
+}
+
+const assetDurationToleranceUs = 50_000;
+
+function assertAssetDuration(
+  file: AudioDefinitions["files"][number],
+  configuredEndUs: number,
+  decodedDurationUs: number,
+) {
+  const scannerMismatch =
+    Math.abs(file.durationUs - decodedDurationUs) > assetDurationToleranceUs;
+  const configuredRegionMissing =
+    configuredEndUs - decodedDurationUs > assetDurationToleranceUs;
+  if (!scannerMismatch && !configuredRegionMissing) return;
+
+  throw new RuntimeError({
+    code: "AUDIO_ASSET_CHANGED",
+    message: `O arquivo ${file.name} mudou e não corresponde mais à configuração salva.`,
+    operation: "play_audio_cue",
+    entityId: file.relativePath,
+    details: `Scanned duration: ${file.durationUs} µs; decoded duration: ${decodedDurationUs} µs; configured end: ${configuredEndUs} µs.`,
+    recoverable: true,
+  });
 }
 
 function defaultContextFactory() {

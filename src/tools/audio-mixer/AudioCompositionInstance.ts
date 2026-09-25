@@ -99,15 +99,8 @@ export class AudioCompositionInstance {
       state.timerId = null;
       if (!state.enabled || state.generation !== generation || this.#disposed)
         return;
-      void this.#execute(layer, generation).finally(() => {
-        if (
-          state.enabled &&
-          state.generation === generation &&
-          !this.#disposed
-        ) {
-          this.#schedule(layer, generation);
-        }
-      });
+      this.#schedule(layer, generation);
+      void this.#execute(layer, generation);
     }, delayMs);
   }
 

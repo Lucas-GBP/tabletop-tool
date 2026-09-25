@@ -26,6 +26,7 @@ const library: AudioLibraryDto = {
       sizeBytes: 100,
     },
   ],
+  scanWarnings: [],
   objects: [
     {
       id: "audio-1",
