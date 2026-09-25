@@ -3,8 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { AudioLibraryDto } from "@/api";
 import { api } from "@/api";
-import { useAudioWorkspace } from "@/hooks";
-import { AudioObjectEditorPage } from "./AudioObjectEditorPage";
+import { testId } from "@/test/ids";
+import { AudioObjectEditor } from "./AudioObjectEditor";
 
 vi.mock("@tauri-apps/api/core", () => ({
   convertFileSrc: vi.fn(() => "asset://rain"),
@@ -14,7 +14,6 @@ vi.mock("@/api", () => ({
   ApplicationError: class extends Error {},
   ApplicationTimeoutError: class extends Error {},
 }));
-vi.mock("@/hooks", () => ({ useAudioWorkspace: vi.fn() }));
 
 const library: AudioLibraryDto = {
   assetDirectory: "C:/assets",
@@ -28,9 +27,10 @@ const library: AudioLibraryDto = {
       sizeBytes: 100,
     },
   ],
+  scanWarnings: [],
   objects: [
     {
-      id: "audio-1",
+      id: testId.audioObject("audio-1"),
       name: "Rain",
       assetPath: "rain.wav",
       volumeDb: 0,
@@ -61,13 +61,13 @@ class DecodeAudioContext {
   }
 }
 
-describe("AudioObjectEditorPage", () => {
-  const updateAudioObject = vi.fn().mockResolvedValue(true);
-  const onBack = vi.fn();
+describe("AudioObjectEditor", () => {
+  const save = vi.fn().mockResolvedValue(undefined);
+  const close = vi.fn();
 
   beforeEach(() => {
-    updateAudioObject.mockClear();
-    onBack.mockClear();
+    save.mockClear();
+    close.mockClear();
     vi.stubGlobal("AudioContext", DecodeAudioContext);
     vi.stubGlobal(
       "fetch",
@@ -79,35 +79,29 @@ describe("AudioObjectEditorPage", () => {
       ),
     );
     vi.mocked(api.resolveAssetPath).mockResolvedValue("C:/assets/rain.wav");
-    vi.mocked(useAudioWorkspace).mockReturnValue({
-      library,
-      loading: false,
-      loaded: true,
-      loadError: "",
-      reload: vi.fn(),
-      busy: false,
-      error: "",
-      rescanFiles: vi.fn().mockResolvedValue(true),
-      createAudioObject: vi.fn(),
-      updateAudioObject,
-      deleteAudioObject: vi.fn().mockResolvedValue(true),
-      createAudioList: vi.fn().mockResolvedValue(true),
-      updateAudioList: vi.fn().mockResolvedValue(true),
-      deleteAudioList: vi.fn().mockResolvedValue(true),
-      createAudioComposition: vi.fn().mockResolvedValue(true),
-      updateAudioComposition: vi.fn().mockResolvedValue(true),
-      deleteAudioComposition: vi.fn().mockResolvedValue(true),
-      updateMasterVolume: vi.fn().mockResolvedValue(true),
-    });
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
   });
 
-  it("saves the edited draft and returns to the library", async () => {
+  function renderEditor() {
+    render(
+      <AudioObjectEditor
+        object={library.objects[0]!}
+        files={library.files}
+        busy={false}
+        error=""
+        onClose={close}
+        onSave={save}
+        onRefresh={vi.fn()}
+      />,
+    );
+  }
+
+  it("saves the edited draft", async () => {
     const user = userEvent.setup();
-    render(<AudioObjectEditorPage audioObjectId="audio-1" onBack={onBack} />);
+    renderEditor();
     await waitFor(() => expect(screen.getByLabelText("Nome")).toBeEnabled());
 
     const name = screen.getByLabelText("Nome");
@@ -116,12 +110,10 @@ describe("AudioObjectEditorPage", () => {
     await user.click(screen.getByRole("button", { name: "Salvar" }));
 
     await waitFor(() =>
-      expect(updateAudioObject).toHaveBeenCalledWith(
-        "audio-1",
+      expect(save).toHaveBeenCalledWith(
         expect.objectContaining({ name: "Heavy rain" }),
       ),
     );
-    expect(onBack).toHaveBeenCalledOnce();
   });
 
   it("keeps a waveform decode failure visible beside the editor", async () => {
@@ -129,7 +121,7 @@ describe("AudioObjectEditorPage", () => {
       "fetch",
       vi.fn(() => Promise.reject(new Error("decode failed"))),
     );
-    render(<AudioObjectEditorPage audioObjectId="audio-1" onBack={onBack} />);
+    renderEditor();
 
     await waitFor(() =>
       expect(screen.getByRole("alert")).toHaveTextContent(

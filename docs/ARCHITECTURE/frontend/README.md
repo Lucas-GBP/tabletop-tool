@@ -53,6 +53,33 @@ Feature components may control layout and composition, but should reuse an
 existing primitive when that primitive already represents the intended visual
 role.
 
+## Workspace-first UI
+
+Preparation uses persistent workspaces organized around the user's current
+task. Global reusable resources, such as Scenes and audio definitions, live in
+libraries. Configuration that belongs to a Scene or SceneLevel stays in that
+Scene workspace, even when a Tool owns the underlying persistence and runtime.
+
+Resource libraries follow a consistent interaction model:
+
+```text
+resource type or navigation
+   │
+   ▼
+resource list
+   │
+   ▼
+selected resource editor
+```
+
+Frequently used actions remain visible. Rare, destructive, or administrative
+actions use contextual menus and do not compete with the primary workflow.
+
+Planning edits persistent definitions. Runtime operates transient state and
+uses a separate interface focused on current state and immediate actions. A
+Runtime screen should expose configuration details only when they are needed to
+operate the active Session.
+
 ## Rust ↔ TypeScript Contracts
 
 Rust is the source of truth for the Tauri IPC contract.

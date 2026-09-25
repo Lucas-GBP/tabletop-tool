@@ -1,16 +1,17 @@
 import { describe, expect, it } from "vitest";
 import type { AudioListDto } from "@/api";
 import { RuntimeError } from "@/runtime";
+import { testId } from "@/test/ids";
 import { AudioListSelector } from "./AudioListSelector";
 
 function list(selectionMode: AudioListDto["selectionMode"]): AudioListDto {
   return {
-    id: "list-1",
+    id: testId.audioList("list-1"),
     name: "Passos",
     selectionMode,
     entries: [
-      { audioObjectId: "second", position: 1, weight: 3 },
-      { audioObjectId: "first", position: 0, weight: 1 },
+      { audioObjectId: testId.audioObject("second"), position: 1, weight: 3 },
+      { audioObjectId: testId.audioObject("first"), position: 0, weight: 1 },
     ],
   };
 }

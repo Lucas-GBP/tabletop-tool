@@ -267,6 +267,11 @@ pending.
 does not imply persistence or retention of the instance after playback has
 ended.
 
+Every completed or cancelled Web Audio source is disconnected together with
+any gain node owned only by that source. Timers are cancelled on pause, stop,
+finish, or disposal as appropriate, preventing nodes and callbacks from growing
+without bound during long-running crossfade loops.
+
 ## Scope Boundary
 
 A Playback Instance controls exactly one execution of one Audio Object.

@@ -5,10 +5,12 @@ import type {
   AudioObjectInputDto,
 } from "@/api";
 import {
+  ActionMenu,
   AssetWarning,
   AudioAssetPicker,
   AudioCompositionEditor,
   AudioListEditor,
+  AudioObjectEditor,
   Button,
   EmptyState,
   Input,
@@ -22,23 +24,21 @@ import {
   audioCompositionMissing,
   audioListMissing,
   audioObjectMissing,
+  classNames,
 } from "@/lib";
+import type { AudioCompositionId, AudioListId, AudioObjectId } from "@/types";
 import styles from "./AudioLibraryPage.module.scss";
 
 interface AudioLibraryPageProps {
-  onBack: () => void;
   onOpenSettings: () => void;
-  onEditObject: (audioObjectId: string) => void;
 }
 
-type LibrarySection = "objects" | "lists" | "compositions" | "settings";
-type DefinitionSection = Exclude<LibrarySection, "settings">;
+type ResourceSection = "objects" | "lists" | "compositions";
 
-const sections: readonly { id: LibrarySection; label: string }[] = [
+const sections: readonly { id: ResourceSection; label: string }[] = [
   { id: "objects", label: "Objetos" },
   { id: "lists", label: "Listas" },
   { id: "compositions", label: "Composições" },
-  { id: "settings", label: "Arquivos e volume" },
 ];
 
 const sectionCopy = {
@@ -67,20 +67,21 @@ const sectionCopy = {
   },
 } as const;
 
-export function AudioLibraryPage({
-  onBack,
-  onOpenSettings,
-  onEditObject,
-}: AudioLibraryPageProps) {
+export function AudioLibraryPage({ onOpenSettings }: AudioLibraryPageProps) {
   const audio = useAudioWorkspace();
   const { library } = audio;
-  const [section, setSection] = useState<LibrarySection>("objects");
+  const [section, setSection] = useState<ResourceSection>("objects");
   const [query, setQuery] = useState("");
   const [selectingAsset, setSelectingAsset] = useState(false);
-  const [editingList, setEditingList] = useState<string | null>(null);
-  const [editingComposition, setEditingComposition] = useState<string | null>(
+  const [editingObject, setEditingObject] = useState<AudioObjectId | null>(
     null,
   );
+  const [editingList, setEditingList] = useState<AudioListId | "new" | null>(
+    null,
+  );
+  const [editingComposition, setEditingComposition] = useState<
+    AudioCompositionId | "new" | null
+  >(null);
 
   if (audio.loading) {
     return (
@@ -99,8 +100,17 @@ export function AudioLibraryPage({
     );
   }
 
-  const definitionSection = section === "settings" ? null : section;
-  const copy = definitionSection ? sectionCopy[definitionSection] : null;
+  const copy = sectionCopy[section];
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+  const allSummaries = resourceSummaries(section, library);
+  const summaries = allSummaries.filter(
+    (item) =>
+      !normalizedQuery ||
+      item.name.toLocaleLowerCase().includes(normalizedQuery),
+  );
+  const activeObject = editingObject
+    ? library.objects.find((item) => item.id === editingObject)
+    : undefined;
   const activeList =
     editingList && editingList !== "new"
       ? library.lists.find((item) => item.id === editingList)
@@ -109,24 +119,20 @@ export function AudioLibraryPage({
     editingComposition && editingComposition !== "new"
       ? library.compositions.find((item) => item.id === editingComposition)
       : undefined;
-  const editingCurrentSection =
-    (section === "lists" && editingList !== null) ||
-    (section === "compositions" && editingComposition !== null);
-  const normalizedQuery = query.trim().toLocaleLowerCase();
-  const allSummaries = definitionSection
-    ? resourceSummaries(definitionSection, library)
-    : [];
-  const summaries = allSummaries.filter(
-    (item) =>
-      !normalizedQuery ||
-      item.name.toLocaleLowerCase().includes(normalizedQuery),
-  );
+
+  function selectSection(next: ResourceSection) {
+    setSection(next);
+    setQuery("");
+    setEditingObject(null);
+    setEditingList(null);
+    setEditingComposition(null);
+  }
 
   async function createObject(asset: AudioAssetDto) {
     const id = await audio.createAudioObject(defaultAudioObject(asset));
     if (!id) return;
     setSelectingAsset(false);
-    onEditObject(id);
+    setEditingObject(id);
   }
 
   async function closeEditorWhen(operation: Promise<boolean>) {
@@ -141,231 +147,199 @@ export function AudioLibraryPage({
   function createDefinition() {
     if (section === "objects") setSelectingAsset(true);
     else if (section === "lists") setEditingList("new");
-    else if (section === "compositions") setEditingComposition("new");
+    else setEditingComposition("new");
   }
 
-  function editDefinition(id: string) {
-    if (section === "objects") onEditObject(id);
-    else if (section === "lists") setEditingList(id);
-    else if (section === "compositions") setEditingComposition(id);
+  function editDefinition(item: ResourceSummary) {
+    if (item.section === "objects") setEditingObject(item.id);
+    else if (item.section === "lists") setEditingList(item.id);
+    else setEditingComposition(item.id);
   }
 
-  const editor =
-    section === "lists" && editingList ? (
-      <AudioListEditor
-        key={editingList}
-        list={activeList}
-        objects={library.objects}
-        disabled={audio.busy}
-        onCancel={() => setEditingList(null)}
-        onSave={(input) =>
-          closeEditorWhen(
-            activeList
-              ? audio.updateAudioList(activeList.id, input)
-              : audio.createAudioList(input),
-          )
+  const editor = activeObject ? (
+    <AudioObjectEditor
+      key={activeObject.id}
+      object={activeObject}
+      files={library.files}
+      busy={audio.busy}
+      error={audio.error}
+      onClose={() => setEditingObject(null)}
+      onSave={async (input) => {
+        if (await audio.updateAudioObject(activeObject.id, input)) {
+          setEditingObject(null);
         }
-        onDelete={
+      }}
+      onRefresh={() => void audio.rescanFiles()}
+    />
+  ) : section === "lists" && editingList ? (
+    <AudioListEditor
+      key={editingList}
+      list={activeList}
+      objects={library.objects}
+      disabled={audio.busy}
+      onCancel={() => setEditingList(null)}
+      onSave={(input) =>
+        closeEditorWhen(
           activeList
-            ? () => closeEditorWhen(audio.deleteAudioList(activeList.id))
-            : undefined
-        }
-      />
-    ) : section === "compositions" && editingComposition ? (
-      <AudioCompositionEditor
-        key={editingComposition}
-        composition={activeComposition}
-        objects={library.objects}
-        lists={library.lists}
-        disabled={audio.busy}
-        onCancel={() => setEditingComposition(null)}
-        onSave={(input) =>
-          closeEditorWhen(
-            activeComposition
-              ? audio.updateAudioComposition(activeComposition.id, input)
-              : audio.createAudioComposition(input),
-          )
-        }
-        onDelete={
+            ? audio.updateAudioList(activeList.id, input)
+            : audio.createAudioList(input),
+        )
+      }
+      onDelete={
+        activeList
+          ? () => closeEditorWhen(audio.deleteAudioList(activeList.id))
+          : undefined
+      }
+    />
+  ) : section === "compositions" && editingComposition ? (
+    <AudioCompositionEditor
+      key={editingComposition}
+      composition={activeComposition}
+      objects={library.objects}
+      lists={library.lists}
+      disabled={audio.busy}
+      onCancel={() => setEditingComposition(null)}
+      onSave={(input) =>
+        closeEditorWhen(
           activeComposition
-            ? () =>
-                closeEditorWhen(
-                  audio.deleteAudioComposition(activeComposition.id),
-                )
-            : undefined
-        }
-      />
-    ) : null;
+            ? audio.updateAudioComposition(activeComposition.id, input)
+            : audio.createAudioComposition(input),
+        )
+      }
+      onDelete={
+        activeComposition
+          ? () =>
+              closeEditorWhen(
+                audio.deleteAudioComposition(activeComposition.id),
+              )
+          : undefined
+      }
+    />
+  ) : null;
 
   return (
     <main className={styles.shell}>
       <header className={styles.header}>
-        <Button tone="subtle" onClick={onBack}>
-          ← Início
-        </Button>
         <div>
           <p>Ferramenta global</p>
           <h1>Audio Mixer</h1>
           <span>Prepare o áudio reutilizável das suas cenas.</span>
         </div>
+        <AudioOperations audio={audio} onOpenSettings={onOpenSettings} />
       </header>
 
       <WorkspaceFeedback error={audio.error} />
 
-      <nav className={styles.tabs} aria-label="Seções da biblioteca de áudio">
-        {sections.map((item) => (
-          <Button
-            key={item.id}
-            size="compact"
-            tone={section === item.id ? "primary" : "subtle"}
-            aria-current={section === item.id ? "page" : undefined}
-            onClick={() => {
-              setSection(item.id);
-              setQuery("");
-            }}
-          >
-            {item.label}
-          </Button>
-        ))}
-      </nav>
+      <div className={styles.workspace}>
+        <nav className={styles.types} aria-label="Tipos de recurso de áudio">
+          <SectionHeading eyebrow="Biblioteca" title="Recursos" />
+          {sections.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={classNames(
+                styles.type,
+                section === item.id && styles.active,
+              )}
+              aria-current={section === item.id ? "page" : undefined}
+              onClick={() => selectSection(item.id)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
 
-      {definitionSection && copy ? (
-        <>
+        <Panel as="section" className={styles.library}>
+          <div className={styles["section-header"]}>
+            <SectionHeading eyebrow={copy.eyebrow} title={copy.title} />
+            <Button
+              tone="primary"
+              disabled={
+                section === "objects" && (audio.busy || !library.assetDirectory)
+              }
+              onClick={createDefinition}
+            >
+              {copy.create}
+            </Button>
+          </div>
           <Input
-            className={styles.search}
             type="search"
             aria-label={`Buscar em ${copy.title}`}
             placeholder="Buscar por nome"
             value={query}
             onChange={(event) => setQuery(event.currentTarget.value)}
           />
-          <Panel as="section" className={styles.panel}>
-            <div className={styles["section-header"]}>
-              <SectionHeading eyebrow={copy.eyebrow} title={copy.title} />
-              {!editingCurrentSection ? (
-                <Button
-                  tone="primary"
-                  disabled={
-                    section === "objects" &&
-                    (audio.busy || !library.assetDirectory)
-                  }
-                  onClick={createDefinition}
-                >
-                  {copy.create}
-                </Button>
-              ) : null}
-            </div>
-
-            {editor ??
-              (allSummaries.length === 0 ? (
-                <EmptyState title={copy.emptyTitle}>
-                  {copy.emptyDescription}
-                </EmptyState>
-              ) : (
-                <ul className={styles.resources}>
-                  {summaries.map((item) => (
-                    <li key={item.id}>
-                      <div className={styles["definition-with-warning"]}>
-                        <strong>{item.name}</strong>
-                        <small>{item.detail}</small>
-                        {item.missing ? (
-                          <AssetWarning>
-                            {section === "objects"
-                              ? "Arquivo não encontrado"
-                              : "Contém arquivo não encontrado"}
-                          </AssetWarning>
-                        ) : null}
-                      </div>
-                      <div className={styles.actions}>
-                        <Button
-                          size="compact"
-                          onClick={() => editDefinition(item.id)}
-                        >
-                          Editar
-                        </Button>
-                        {section === "objects" ? (
-                          <Button
-                            size="compact"
-                            tone="danger"
-                            disabled={audio.busy}
-                            onClick={() => {
-                              if (!window.confirm(`Excluir ${item.name}?`))
-                                return;
-                              void audio.deleteAudioObject(item.id);
-                            }}
-                          >
-                            Excluir
-                          </Button>
-                        ) : null}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+          {allSummaries.length === 0 ? (
+            <EmptyState title={copy.emptyTitle}>
+              {copy.emptyDescription}
+            </EmptyState>
+          ) : summaries.length === 0 ? (
+            <EmptyState title="Nenhum resultado">
+              Tente buscar por outro nome.
+            </EmptyState>
+          ) : (
+            <ul className={styles.resources}>
+              {summaries.map((item) => (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    className={styles.resource}
+                    aria-current={
+                      item.id === editingObject ||
+                      item.id === editingList ||
+                      item.id === editingComposition
+                        ? "true"
+                        : undefined
+                    }
+                    onClick={() => editDefinition(item)}
+                  >
+                    <strong>{item.name}</strong>
+                    <small>{item.detail}</small>
+                    {item.missing ? (
+                      <AssetWarning>
+                        {section === "objects"
+                          ? "Arquivo não encontrado"
+                          : "Contém arquivo não encontrado"}
+                      </AssetWarning>
+                    ) : null}
+                  </button>
+                  {item.section === "objects" ? (
+                    <ActionMenu label={`Mais ações para ${item.name}`}>
+                      <Button
+                        tone="danger"
+                        disabled={audio.busy}
+                        onClick={() => {
+                          if (window.confirm(`Excluir ${item.name}?`)) {
+                            void audio
+                              .deleteAudioObject(item.id)
+                              .then((deleted) => {
+                                if (deleted && editingObject === item.id) {
+                                  setEditingObject(null);
+                                }
+                              });
+                          }
+                        }}
+                      >
+                        Excluir objeto
+                      </Button>
+                    </ActionMenu>
+                  ) : null}
+                </li>
               ))}
-          </Panel>
-        </>
-      ) : (
-        <div className={styles.settings}>
-          <Panel as="section" className={styles.panel}>
-            <SectionHeading eyebrow="Arquivos" title="Pasta de assets" />
-            <div className={styles["source-controls"]}>
-              <Button tone="primary" onClick={onOpenSettings}>
-                Configurar pasta
-              </Button>
-              <Button
-                disabled={audio.busy || !library.assetDirectory}
-                onClick={() => void audio.rescanFiles()}
-              >
-                Atualizar arquivos
-              </Button>
-            </div>
-            {library.assetDirectory ? (
-              <>
-                <small className={styles.directory}>
-                  {library.assetDirectory}
-                </small>
-                <p className={styles.summary}>
-                  {library.files.length} arquivos de áudio disponíveis
-                </p>
-              </>
-            ) : (
-              <EmptyState title="Pasta de assets não configurada">
-                Escolha a raiz dos arquivos nas configurações gerais.
-              </EmptyState>
-            )}
-          </Panel>
+            </ul>
+          )}
+        </Panel>
 
-          <Panel as="section" className={styles.panel}>
-            <SectionHeading eyebrow="Saída" title="Volume geral" />
-            <form
-              className={styles.volume}
-              onSubmit={(event) => {
-                event.preventDefault();
-                const input = event.currentTarget.elements.namedItem(
-                  "masterVolume",
-                ) as HTMLInputElement;
-                void audio.updateMasterVolume(input.valueAsNumber);
-              }}
-            >
-              <label>
-                Volume (dB)
-                <Input
-                  name="masterVolume"
-                  type="number"
-                  min={-60}
-                  max={6}
-                  step={0.5}
-                  defaultValue={library.settings.masterVolumeDb}
-                  disabled={audio.busy}
-                />
-              </label>
-              <Button tone="primary" type="submit" disabled={audio.busy}>
-                Salvar volume
-              </Button>
-            </form>
-          </Panel>
-        </div>
-      )}
+        <section className={styles.editor} aria-label="Editor do recurso">
+          {editor ?? (
+            <Panel className={styles.placeholder}>
+              <EmptyState title="Selecione um recurso">
+                Escolha um item da biblioteca ou crie um novo para editar.
+              </EmptyState>
+            </Panel>
+          )}
+        </section>
+      </div>
 
       {selectingAsset ? (
         <AudioAssetPicker
@@ -381,12 +355,93 @@ export function AudioLibraryPage({
   );
 }
 
+function AudioOperations({
+  audio,
+  onOpenSettings,
+}: {
+  audio: ReturnType<typeof useAudioWorkspace>;
+  onOpenSettings: () => void;
+}) {
+  return (
+    <aside className={styles.operations} aria-label="Operações do Audio Mixer">
+      <div>
+        <strong>{audio.library.files.length}</strong>
+        <span> arquivos disponíveis</span>
+      </div>
+      {audio.library.scanWarnings.length > 0 ? (
+        <div
+          className={styles.scanWarning}
+          title={audio.library.scanWarnings
+            .map((warning) => warning.path)
+            .join("\n")}
+          role="status"
+        >
+          ⚠ {audio.library.scanWarnings.length} arquivo(s) não puderam ser lidos
+        </div>
+      ) : null}
+      <Button
+        size="compact"
+        disabled={audio.busy || !audio.library.assetDirectory}
+        onClick={() => void audio.rescanFiles()}
+      >
+        Atualizar
+      </Button>
+      <Button size="compact" tone="subtle" onClick={onOpenSettings}>
+        Pasta de assets
+      </Button>
+      <form
+        className={styles.volume}
+        onSubmit={(event) => {
+          event.preventDefault();
+          const input = event.currentTarget.elements.namedItem(
+            "masterVolume",
+          ) as HTMLInputElement;
+          void audio.updateMasterVolume(input.valueAsNumber);
+        }}
+      >
+        <label>
+          Volume padrão
+          <Input
+            name="masterVolume"
+            type="number"
+            min={-60}
+            max={6}
+            step={0.5}
+            defaultValue={audio.library.settings.masterVolumeDb}
+            disabled={audio.busy}
+          />
+        </label>
+        <Button size="compact" type="submit" disabled={audio.busy}>
+          Salvar
+        </Button>
+      </form>
+    </aside>
+  );
+}
+
+type ResourceSummary =
+  | ResourceSummaryOf<"objects", AudioObjectId>
+  | ResourceSummaryOf<"lists", AudioListId>
+  | ResourceSummaryOf<"compositions", AudioCompositionId>;
+
+interface ResourceSummaryOf<
+  TSection extends ResourceSection,
+  TId extends string,
+> {
+  section: TSection;
+  id: TId;
+  name: string;
+  detail: string;
+  missing: boolean;
+}
+
 function resourceSummaries(
-  section: DefinitionSection,
+  section: ResourceSection,
   library: AudioLibraryDto,
-) {
+): ResourceSummary[] {
   if (section === "objects") {
     return library.objects.map((item) => ({
+      section,
       id: item.id,
       name: item.name,
       detail:
@@ -397,6 +452,7 @@ function resourceSummaries(
   }
   if (section === "lists") {
     return library.lists.map((item) => ({
+      section,
       id: item.id,
       name: item.name,
       detail: `${item.entries.length} objetos`,
@@ -404,6 +460,7 @@ function resourceSummaries(
     }));
   }
   return library.compositions.map((item) => ({
+    section,
     id: item.id,
     name: item.name,
     detail: `${item.layers.length} camadas`,

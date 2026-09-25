@@ -1,4 +1,5 @@
 import type { SceneDto } from "@/api";
+import type { SceneId } from "@/types";
 import { Button, EmptyState, Input, Panel, SectionHeading } from "./primitives";
 import { formValue } from "@/lib";
 import { SceneCard } from "./SceneCard";
@@ -6,20 +7,22 @@ import styles from "./SceneLibrary.module.scss";
 
 interface SceneLibraryProps {
   scenes: SceneDto[];
+  totalSceneCount?: number;
   disabled: boolean;
-  onCreateScene: (name: string) => Promise<string | undefined>;
-  onOpenScene: (sceneId: string) => void;
+  onCreateScene: (name: string) => Promise<SceneId | undefined>;
+  onOpenScene: (sceneId: SceneId) => void;
 }
 
 export function SceneLibrary({
   scenes,
+  totalSceneCount = scenes.length,
   disabled,
   onCreateScene,
   onOpenScene,
 }: SceneLibraryProps) {
   return (
     <Panel as="section" className={styles.panel}>
-      <SectionHeading title="Cenas" />
+      <SectionHeading eyebrow="Biblioteca" title="Cenas reutilizáveis" />
 
       <form
         className={styles["creation-form"]}
@@ -46,8 +49,15 @@ export function SceneLibrary({
       </form>
 
       {scenes.length === 0 ? (
-        <EmptyState title="Nenhuma cena" className={styles.empty}>
-          Crie uma cena para começar.
+        <EmptyState
+          title={
+            totalSceneCount === 0 ? "Nenhuma cena" : "Nenhuma cena encontrada"
+          }
+          className={styles.empty}
+        >
+          {totalSceneCount === 0
+            ? "Crie uma cena para começar."
+            : "Tente buscar por outro nome."}
         </EmptyState>
       ) : (
         <div className={styles["scene-list"]}>

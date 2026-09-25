@@ -14,13 +14,35 @@
   max-width: 1400px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(210px, 0.55fr) minmax(0, 2fr);
+  grid-template-columns:
+    minmax(12rem, 0.55fr)
+    minmax(18rem, 0.85fr)
+    minmax(24rem, 1.6fr);
   gap: var(--space-medium);
   align-items: start;
 }
 
-@media (width <= 900px) {
+.tools {
+  min-width: 0;
+  padding: var(--space-medium);
+}
+
+@media (width <= 1150px) {
+  .workspace {
+    grid-template-columns: minmax(12rem, 0.55fr) minmax(0, 1.45fr);
+  }
+
+  .tools {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (width <= 760px) {
   .workspace {
     grid-template-columns: 1fr;
+  }
+
+  .tools {
+    grid-column: auto;
   }
 }

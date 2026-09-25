@@ -65,6 +65,11 @@ export type AudioAssetDto = {
 	sizeBytes: number,
 };
 
+export type AudioAssetScanWarningDto = {
+	code: string,
+	path: string,
+};
+
 export type AudioCompositionDto = {
 	id: string,
 	name: string,
@@ -79,6 +84,7 @@ export type AudioCompositionInputDto = {
 export type AudioLibraryDto = {
 	assetDirectory: string | null,
 	files: AudioAssetDto[],
+	scanWarnings: AudioAssetScanWarningDto[],
 	objects: AudioObjectDto[],
 	lists: AudioListDto[],
 	compositions: AudioCompositionDto[],

@@ -1,5 +1,7 @@
 import type { AudioLibraryDto } from "@/api";
 import type { SessionAudioRuntimeController } from "@/hooks/useSessionAudioRuntime";
+import type { AudioCueReference } from "@/tools/audio-mixer";
+import type { AudioCompositionId } from "@/types";
 import {
   audioCompositionMissing,
   audioListMissing,
@@ -25,10 +27,10 @@ export function SceneAudioRuntimePanel({ audio }: SceneAudioRuntimePanelProps) {
   const library = audio.library;
   const snapshot = audio.snapshot;
 
-  const cueName = (kind: "audioObject" | "audioList", id: string) =>
-    kind === "audioObject"
-      ? library.objects.find((item) => item.id === id)?.name
-      : library.lists.find((item) => item.id === id)?.name;
+  const cueName = (cue: AudioCueReference) =>
+    cue.kind === "audioObject"
+      ? library.objects.find((item) => item.id === cue.id)?.name
+      : library.lists.find((item) => item.id === cue.id)?.name;
   const hasConfiguration =
     snapshot.cues.length > 0 || snapshot.compositions.length > 0;
   const hasPlaying = audio.playbacks.some(
@@ -77,7 +79,10 @@ export function SceneAudioRuntimePanel({ audio }: SceneAudioRuntimePanelProps) {
           Parar tudo
         </Button>
         <label className={styles.volume}>
-          <span>Volume</span>
+          <span>
+            Volume geral
+            <small>Padrão salvo: {audio.persistedMasterVolumeDb} dB</small>
+          </span>
           <input
             type="range"
             min={-60}
@@ -94,14 +99,14 @@ export function SceneAudioRuntimePanel({ audio }: SceneAudioRuntimePanelProps) {
 
       {snapshot.cues.length > 0 && (
         <section>
-          <h4>Sons</h4>
+          <h4>Sons rápidos</h4>
           <div className={styles.cues}>
             {snapshot.cues.map((cue) => (
               <div key={`${cue.kind}:${cue.id}`} className={styles.cue}>
                 <Button tone="primary" onClick={() => void audio.playCue(cue)}>
-                  ▶ {cueName(cue.kind, cue.id) ?? "Áudio indisponível"}
+                  ▶ {cueName(cue) ?? "Áudio indisponível"}
                 </Button>
-                {cueMissing(library, cue.kind, cue.id) ? (
+                {cueMissing(library, cue) ? (
                   <AssetWarning>Arquivo não encontrado</AssetWarning>
                 ) : null}
               </div>
@@ -136,25 +141,23 @@ export function SceneAudioRuntimePanel({ audio }: SceneAudioRuntimePanelProps) {
               <div className={styles.actions}>
                 <Button
                   size="compact"
-                  aria-pressed={layer.runtimeOverride === null}
-                  onClick={() => audio.setLayerOverride(layer.id, null)}
+                  tone={layer.enabled ? "primary" : "default"}
+                  aria-pressed={layer.enabled}
+                  onClick={() =>
+                    audio.setLayerOverride(layer.id, !layer.enabled)
+                  }
                 >
-                  Padrão
+                  {layer.enabled ? "Ligada" : "Desligada"}
                 </Button>
-                <Button
-                  size="compact"
-                  aria-pressed={layer.runtimeOverride === true}
-                  onClick={() => audio.setLayerOverride(layer.id, true)}
-                >
-                  Ligar
-                </Button>
-                <Button
-                  size="compact"
-                  aria-pressed={layer.runtimeOverride === false}
-                  onClick={() => audio.setLayerOverride(layer.id, false)}
-                >
-                  Desligar
-                </Button>
+                {layer.runtimeOverride !== null ? (
+                  <Button
+                    size="compact"
+                    tone="subtle"
+                    onClick={() => audio.setLayerOverride(layer.id, null)}
+                  >
+                    Restaurar padrão
+                  </Button>
+                ) : null}
               </div>
             </div>
           ))}
@@ -162,8 +165,8 @@ export function SceneAudioRuntimePanel({ audio }: SceneAudioRuntimePanelProps) {
       ))}
 
       {audio.playbacks.length > 0 && (
-        <section>
-          <h4>Reproduções</h4>
+        <details className={styles["now-playing"]}>
+          <summary>Agora tocando ({audio.playbacks.length})</summary>
           <ul className={styles.playbacks}>
             {audio.playbacks.map((playback) => (
               <li key={playback.id}>
@@ -206,26 +209,22 @@ export function SceneAudioRuntimePanel({ audio }: SceneAudioRuntimePanelProps) {
               </li>
             ))}
           </ul>
-        </section>
+        </details>
       )}
     </div>
   );
 }
 
-function cueMissing(
-  library: AudioLibraryDto,
-  kind: "audioObject" | "audioList",
-  id: string,
-) {
-  if (kind === "audioObject") {
-    const object = library.objects.find((candidate) => candidate.id === id);
+function cueMissing(library: AudioLibraryDto, cue: AudioCueReference) {
+  if (cue.kind === "audioObject") {
+    const object = library.objects.find((candidate) => candidate.id === cue.id);
     return !object || audioObjectMissing(library, object);
   }
-  const list = library.lists.find((candidate) => candidate.id === id);
+  const list = library.lists.find((candidate) => candidate.id === cue.id);
   return !list || audioListMissing(library, list);
 }
 
-function compositionMissing(library: AudioLibraryDto, id: string) {
+function compositionMissing(library: AudioLibraryDto, id: AudioCompositionId) {
   const composition = library.compositions.find(
     (candidate) => candidate.id === id,
   );

@@ -23,6 +23,10 @@ files. Each scan derives:
 This catalog exists only in the application response. SQLite does not contain an
 `AudioFile` table or mirror every file found on disk.
 
+A scan is partially successful when possible. An unreadable directory, invalid
+supported file, or metadata failure produces a warning tied to its relative
+path while other valid assets remain available.
+
 ## Persistent references
 
 An [Audio Object](./audio-object.md) stores the asset's relative path. The
@@ -59,8 +63,10 @@ root, or replace the object's file.
 
 Replacing the bytes at an existing relative path may change duration and other
 derived metadata. Any later edit is validated against the currently discovered
-duration. Runtime failure remains recoverable if external changes make a saved
-region impossible to play.
+duration. Playback tolerates only small decoder/metadata rounding differences.
+A material mismatch or a saved region beyond the decoded duration produces the
+structured, recoverable `AUDIO_ASSET_CHANGED` error. The failed cue remains
+isolated from the Scene runtime and unrelated playbacks.
 
 ## Architectural boundary
 

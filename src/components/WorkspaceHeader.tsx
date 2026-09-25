@@ -2,13 +2,9 @@
 
 interface WorkspaceHeaderProps {
   campaignCount: number;
-  sceneCount: number;
 }
 
-export function WorkspaceHeader({
-  campaignCount,
-  sceneCount,
-}: WorkspaceHeaderProps) {
+export function WorkspaceHeader({ campaignCount }: WorkspaceHeaderProps) {
   return (
     <header className={styles.hero}>
       <div>
@@ -19,11 +15,9 @@ export function WorkspaceHeader({
           cenas e ferramentas.
         </p>
       </div>
-      <div className={styles.summary} aria-label="Resumo do projeto">
+      <div className={styles.summary} aria-label="Resumo de campanhas">
         <strong>{campaignCount}</strong>
         <span>campanhas</span>
-        <strong>{sceneCount}</strong>
-        <span>cenas preparadas</span>
       </div>
     </header>
   );

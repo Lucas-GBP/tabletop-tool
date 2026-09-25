@@ -3,7 +3,7 @@ use super::entities::{
     audio_object, scene, scene_audio_composition, scene_audio_list, scene_audio_object,
     scene_level, scene_level_audio_disabled_layer,
 };
-use crate::assets::AudioAsset;
+use crate::assets::{AudioAsset, AudioAssetScanWarning};
 use crate::audio::{
     AudioComposition, AudioCompositionId, AudioList, AudioListId, AudioListSelectionMode,
     AudioMixerSettings, AudioObject, AudioObjectDefinition, AudioObjectId, AudioValidationError,
@@ -68,6 +68,7 @@ impl From<AudioValidationError> for AudioRepositoryError {
 pub struct AudioLibrary {
     pub asset_directory: Option<String>,
     pub files: Vec<AudioAsset>,
+    pub scan_warnings: Vec<AudioAssetScanWarning>,
     pub objects: Vec<AudioObject>,
     pub lists: Vec<AudioList>,
     pub compositions: Vec<AudioComposition>,
@@ -160,6 +161,7 @@ pub async fn load_library(
     Ok(AudioLibrary {
         asset_directory: None,
         files: Vec::new(),
+        scan_warnings: Vec::new(),
         objects,
         lists,
         compositions,

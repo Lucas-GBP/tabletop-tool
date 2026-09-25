@@ -91,7 +91,8 @@ Layers transitioning OFF → ON activate according to their layer activation pol
 
 ## Relationship with AudioMixer
 
-`SceneAudioRuntime` coordinates Scene-specific audio behavior. The global `AudioMixer` remains responsible for actual playback instances.
+`SceneAudioRuntime` coordinates Scene-specific audio behavior. Its owning
+context's `AudioMixer` remains responsible for actual playback instances.
 
 ```text
 SceneAudioRuntime

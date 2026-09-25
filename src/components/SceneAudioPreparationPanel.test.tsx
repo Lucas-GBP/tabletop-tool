@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AudioLibraryDto, SceneDto } from "@/api";
 import { useSceneAudioConfiguration } from "@/hooks/useSceneAudioConfiguration";
+import { testId } from "@/test/ids";
 import { SceneAudioPreparationPanel } from "./SceneAudioPreparationPanel";
 
 vi.mock("@/hooks/useSceneAudioConfiguration", () => ({
@@ -11,12 +12,12 @@ vi.mock("@/hooks/useSceneAudioConfiguration", () => ({
 
 const saveScene = vi.fn();
 const scene: SceneDto = {
-  id: "scene-1",
+  id: testId.scene("scene-1"),
   name: "Forest",
   levels: [
     {
-      id: "level-1",
-      sceneId: "scene-1",
+      id: testId.sceneLevel("level-1"),
+      sceneId: testId.scene("scene-1"),
       name: "Ground",
       position: 0,
     },
@@ -25,9 +26,10 @@ const scene: SceneDto = {
 const library: AudioLibraryDto = {
   assetDirectory: "C:/assets",
   files: [],
+  scanWarnings: [],
   objects: [
     {
-      id: "object-1",
+      id: testId.audioObject("object-1"),
       name: "Rain",
       assetPath: "rain.ogg",
       volumeDb: 0,
@@ -43,14 +45,17 @@ const library: AudioLibraryDto = {
   lists: [],
   compositions: [
     {
-      id: "composition-1",
+      id: testId.audioComposition("composition-1"),
       name: "Storm",
       layers: [
         {
-          id: "layer-1",
+          id: testId.compositionLayer("layer-1"),
           name: "Rain bed",
           position: 0,
-          source: { kind: "audioObject", audioObjectId: "object-1" },
+          source: {
+            kind: "audioObject",
+            audioObjectId: testId.audioObject("object-1"),
+          },
           execution: { kind: "continuous" },
           disableBehavior: "stop",
         },
@@ -71,7 +76,9 @@ describe("SceneAudioPreparationPanel", () => {
         audioListIds: [],
         audioCompositionIds: [],
       },
-      levels: [{ sceneLevelId: "level-1", disabledLayerIds: [] }],
+      levels: [
+        { sceneLevelId: testId.sceneLevel("level-1"), disabledLayerIds: [] },
+      ],
       loading: false,
       loaded: true,
       loadError: "",
@@ -85,7 +92,12 @@ describe("SceneAudioPreparationPanel", () => {
 
   it("saves selected objects and compositions before exposing level controls", async () => {
     const user = userEvent.setup();
-    render(<SceneAudioPreparationPanel scene={scene} />);
+    render(
+      <SceneAudioPreparationPanel
+        scene={scene}
+        activeLevelId={scene.levels[0]!.id}
+      />,
+    );
 
     await user.click(screen.getByRole("checkbox", { name: "Rain" }));
     await user.click(screen.getByRole("checkbox", { name: "Storm" }));

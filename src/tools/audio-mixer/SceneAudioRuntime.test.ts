@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { RuntimeError } from "@/runtime";
+import { testId } from "@/test/ids";
 import { AudioMixer } from "./AudioMixer";
 import { SceneAudioRuntime } from "./SceneAudioRuntime";
 
@@ -13,14 +14,14 @@ function createRuntime() {
   const runtime = new SceneAudioRuntime({
     definition: {
       scene: {
-        sceneId: "scene-1",
+        sceneId: testId.scene("scene-1"),
         audioObjectIds: [],
         audioListIds: [],
         audioCompositionIds: [],
       },
       levels: [
-        { sceneLevelId: "level-1", disabledLayerIds: [] },
-        { sceneLevelId: "level-2", disabledLayerIds: [] },
+        { sceneLevelId: testId.sceneLevel("level-1"), disabledLayerIds: [] },
+        { sceneLevelId: testId.sceneLevel("level-2"), disabledLayerIds: [] },
       ],
       definitions: { files: [], objects: [], lists: [], compositions: [] },
     },
@@ -34,8 +35,8 @@ describe("SceneAudioRuntime", () => {
   it("keeps its identity and runtime state while switching levels", () => {
     const { runtime } = createRuntime();
 
-    runtime.start("level-1");
-    runtime.switchLevel("level-2");
+    runtime.start(testId.sceneLevel("level-1"));
+    runtime.switchLevel(testId.sceneLevel("level-2"));
 
     expect(runtime.snapshot).toMatchObject({
       sceneId: "scene-1",
@@ -47,15 +48,20 @@ describe("SceneAudioRuntime", () => {
 
   it("rejects unavailable levels and cues without ending the scene", async () => {
     const { runtime, onError } = createRuntime();
-    runtime.start("level-1");
+    runtime.start(testId.sceneLevel("level-1"));
 
-    expect(() => runtime.switchLevel("missing")).toThrowError(
+    expect(() =>
+      runtime.switchLevel(testId.sceneLevel("missing")),
+    ).toThrowError(
       expect.objectContaining({
         code: "AUDIO_LEVEL_CONFIGURATION_NOT_FOUND",
       }),
     );
     await expect(
-      runtime.playCue({ kind: "audioObject", id: "missing" }),
+      runtime.playCue({
+        kind: "audioObject",
+        id: testId.audioObject("missing"),
+      }),
     ).rejects.toMatchObject({ code: "AUDIO_CUE_NOT_IN_SCENE" });
     expect(runtime.snapshot.disposed).toBe(false);
     expect(onError).not.toHaveBeenCalled();
@@ -83,24 +89,26 @@ describe("SceneAudioRuntime", () => {
     const runtime = new SceneAudioRuntime({
       definition: {
         scene: {
-          sceneId: "scene-1",
-          audioObjectIds: ["cue"],
+          sceneId: testId.scene("scene-1"),
+          audioObjectIds: [testId.audioObject("cue")],
           audioListIds: [],
           audioCompositionIds: [],
         },
-        levels: [{ sceneLevelId: "level-1", disabledLayerIds: [] }],
+        levels: [
+          { sceneLevelId: testId.sceneLevel("level-1"), disabledLayerIds: [] },
+        ],
         definitions: { files: [], objects: [], lists: [], compositions: [] },
       },
       mixer,
       onError,
     });
-    runtime.start("level-1");
+    runtime.start(testId.sceneLevel("level-1"));
 
     await expect(
-      runtime.playCue({ kind: "audioObject", id: "cue" }),
+      runtime.playCue({ kind: "audioObject", id: testId.audioObject("cue") }),
     ).rejects.toMatchObject({ code: "AUDIO_FILE_NOT_FOUND" });
     await expect(
-      runtime.playCue({ kind: "audioObject", id: "cue" }),
+      runtime.playCue({ kind: "audioObject", id: testId.audioObject("cue") }),
     ).resolves.toBe("playback-2");
 
     expect(runtime.snapshot.disposed).toBe(false);
@@ -109,12 +117,14 @@ describe("SceneAudioRuntime", () => {
 
   it("disposes once and blocks later commands", () => {
     const { runtime, mixer } = createRuntime();
-    runtime.start("level-1");
+    runtime.start(testId.sceneLevel("level-1"));
     runtime.dispose();
     runtime.dispose();
 
     expect(runtime.snapshot.disposed).toBe(true);
-    expect(() => runtime.switchLevel("level-2")).toThrowError(
+    expect(() =>
+      runtime.switchLevel(testId.sceneLevel("level-2")),
+    ).toThrowError(
       expect.objectContaining({ code: "SCENE_AUDIO_RUNTIME_DISPOSED" }),
     );
     mixer.dispose();

@@ -1,12 +1,13 @@
 import { Panel, SectionHeading } from "./primitives";
 import type { RuntimeScene } from "@/runtime";
+import type { SceneId } from "@/types";
 import styles from "./SceneSequence.module.scss";
 
 interface SceneSequenceProps {
   scenes: readonly RuntimeScene[];
-  sceneNames: ReadonlyMap<string, string>;
-  currentSceneId: string;
-  onSelect: (sceneId: string) => void;
+  sceneNames: ReadonlyMap<SceneId, string>;
+  currentSceneId: SceneId;
+  onSelect: (sceneId: SceneId) => void;
 }
 
 export function SceneSequence({

@@ -6,6 +6,13 @@ import type {
   SceneAudioRuntimeDefinition,
   SceneAudioRuntimeSnapshot,
 } from "./types";
+import type {
+  AudioCompositionId,
+  CompositionLayerId,
+  PlaybackId,
+  SceneId,
+  SceneLevelId,
+} from "@/types";
 
 interface SceneAudioRuntimeOptions {
   definition: SceneAudioRuntimeDefinition;
@@ -14,19 +21,33 @@ interface SceneAudioRuntimeOptions {
 }
 
 export class SceneAudioRuntime {
-  readonly sceneId: string;
+  readonly sceneId: SceneId;
   readonly #definition: SceneAudioRuntimeDefinition;
   readonly #mixer: AudioMixer;
   readonly #onError: (error: RuntimeError) => void;
-  readonly #compositions = new Map<string, AudioCompositionInstance>();
-  readonly #overrides = new Map<string, boolean>();
-  readonly #directPlaybackIds = new Set<string>();
-  #currentLevelId = "";
+  readonly #compositions = new Map<
+    AudioCompositionId,
+    AudioCompositionInstance
+  >();
+  readonly #overrides = new Map<CompositionLayerId, boolean>();
+  readonly #directPlaybackIds = new Set<PlaybackId>();
+  #currentLevelId: SceneLevelId;
   #started = false;
   #disposed = false;
 
   constructor({ definition, mixer, onError }: SceneAudioRuntimeOptions) {
+    const initialLevel = definition.levels[0];
+    if (!initialLevel) {
+      throw new RuntimeError({
+        code: "AUDIO_LEVEL_CONFIGURATION_NOT_FOUND",
+        message: "A configuração de nível de áudio não está disponível.",
+        operation: "start_scene_audio",
+        entityId: definition.scene.sceneId,
+        recoverable: false,
+      });
+    }
     this.sceneId = definition.scene.sceneId;
+    this.#currentLevelId = initialLevel.sceneLevelId;
     this.#definition = definition;
     this.#mixer = mixer;
     this.#onError = onError;
@@ -90,7 +111,7 @@ export class SceneAudioRuntime {
     };
   }
 
-  start(levelId: string) {
+  start(levelId: SceneLevelId) {
     this.#ensureActive("start_scene_audio");
     this.#ensureLevel(levelId);
     this.#currentLevelId = levelId;
@@ -98,14 +119,14 @@ export class SceneAudioRuntime {
     this.#reconcile();
   }
 
-  switchLevel(levelId: string) {
+  switchLevel(levelId: SceneLevelId) {
     this.#ensureActive("switch_scene_audio_level");
     this.#ensureLevel(levelId);
     this.#currentLevelId = levelId;
     if (this.#started) this.#reconcile();
   }
 
-  setLayerOverride(layerId: string, enabled: boolean | null) {
+  setLayerOverride(layerId: CompositionLayerId, enabled: boolean | null) {
     this.#ensureActive("set_audio_layer_override");
     this.#compositionForLayer(layerId);
     if (enabled === null) this.#overrides.delete(layerId);
@@ -184,18 +205,21 @@ export class SceneAudioRuntime {
     }
   }
 
-  #disabledLayersFor(levelId: string) {
+  #disabledLayersFor(levelId: SceneLevelId) {
     const configuration = this.#definition.levels.find(
       (level) => level.sceneLevelId === levelId,
     );
     return new Set(configuration?.disabledLayerIds ?? []);
   }
 
-  #effectiveState(layerId: string, persistentDisabled: ReadonlySet<string>) {
+  #effectiveState(
+    layerId: CompositionLayerId,
+    persistentDisabled: ReadonlySet<CompositionLayerId>,
+  ) {
     return this.#overrides.get(layerId) ?? !persistentDisabled.has(layerId);
   }
 
-  #compositionForLayer(layerId: string) {
+  #compositionForLayer(layerId: CompositionLayerId) {
     const composition = [...this.#compositions.values()].find((candidate) =>
       candidate.definition.layers.some((layer) => layer.id === layerId),
     );
@@ -246,7 +270,7 @@ export class SceneAudioRuntime {
     }
   }
 
-  #ensureLevel(levelId: string) {
+  #ensureLevel(levelId: SceneLevelId) {
     if (
       this.#definition.levels.some((level) => level.sceneLevelId === levelId)
     ) {

@@ -92,6 +92,19 @@ Tauri IPC
 This keeps IPC details out of visual components and gives the frontend one
 consistent application-facing interface.
 
+Persistent identifiers receive a nominal TypeScript overlay at this frontend
+API boundary. For example, `CampaignId`, `SceneId`, and `AudioObjectId` are
+distinct branded strings after a successful IPC response. Components, hooks,
+and runtimes can therefore express which identity they accept, while Tauri
+continues to serialize the same strings on the wire.
+
+The overlay in `src/api/types.ts` is derived from the generated DTOs and only
+replaces identifier fields. It does not duplicate validation rules or create a
+second transport schema. `src/api/bindings.ts` remains the generated raw
+contract and Rust remains its source of truth. Unchecked conversion is confined
+to the API boundary; frontend-generated runtime identities use explicit local
+factories.
+
 ## Generated Code
 
 Generated TypeScript bindings are build artifacts derived from the Rust
