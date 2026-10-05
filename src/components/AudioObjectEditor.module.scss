@@ -1,17 +1,12 @@
-@use "workspace-page";
-
-.shell,
-.loading {
-  @include workspace-page.shell(1.5rem clamp(1rem, 4vw, 4rem) 3rem);
-}
-
-.loading {
-  @include workspace-page.loading;
-}
+﻿@use "@/styles/workspace-page";
 
 .header,
 .workspace {
-  @include workspace-page.container(1400px);
+  width: 100%;
+}
+
+.editor {
+  min-width: 0;
 }
 
 .header {
@@ -24,7 +19,7 @@
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(18rem, 0.8fr);
+  grid-template-columns: 1fr;
   gap: var(--space-large);
   align-items: start;
 }

@@ -1,30 +1,38 @@
 import type { CoreSnapshotDto } from "@/api";
+import { testId } from "@/test/ids";
 
 export const empty: CoreSnapshotDto = { campaigns: [], scenes: [] };
 
 export const initialScene: CoreSnapshotDto["scenes"][number] = {
-  id: "scene-1",
+  id: testId.scene("scene-1"),
   name: "Cena inicial",
-  levels: [{ id: "level-1", sceneId: "scene-1", name: "Nível 1", position: 0 }],
+  levels: [
+    {
+      id: testId.sceneLevel("level-1"),
+      sceneId: testId.scene("scene-1"),
+      name: "Nível 1",
+      position: 0,
+    },
+  ],
 };
 
 export const campaignSnapshot: CoreSnapshotDto = {
   scenes: [initialScene],
   campaigns: [
     {
-      id: "campaign-1",
+      id: testId.campaign("campaign-1"),
       name: "Sombras do Norte",
       sessions: [
         {
-          id: "session-1",
-          campaignId: "campaign-1",
+          id: testId.session("session-1"),
+          campaignId: testId.campaign("campaign-1"),
           name: "Sessão 1",
           position: 0,
           scenes: [
             {
-              id: "link-1",
-              sessionId: "session-1",
-              sceneId: "scene-1",
+              id: testId.sessionScene("link-1"),
+              sessionId: testId.session("session-1"),
+              sceneId: testId.scene("scene-1"),
               position: 0,
             },
           ],

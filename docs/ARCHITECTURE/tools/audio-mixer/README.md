@@ -89,7 +89,7 @@ The following concepts have an initial specification sufficient for implementati
 - `Audio List`
 - `Audio Composition`
 - `Audio Composition Instance`
-- global `Audio Mixer`
+- context-owned `Audio Mixer`
 
 Persistent definitions have stable UUID identities and user-facing names. Those
 fields are required to reference and manage reusable definitions even when a
@@ -97,7 +97,8 @@ conceptual diagram focuses only on playback behavior.
 
 `Audio Trigger` is not part of the initial architecture.
 
-Application events, UI handlers, and runtime components call the global `AudioMixer` directly when they need to execute an `AudioCue`.
+Application events, UI handlers, and runtime components call their context's
+`AudioMixer` directly when they need to execute an `AudioCue`.
 
 A future binding abstraction should only be introduced if event-to-audio associations become user-configurable and persistent.
 

@@ -1,10 +1,12 @@
 import type { CampaignDto, SceneDto, SessionDto } from "@/api";
 import {
   ActiveScenePanel,
+  Panel,
   RuntimeFeedback,
   SceneAudioRuntimePanel,
   SceneSequence,
   SessionRuntimeHeader,
+  SectionHeading,
 } from "@/components";
 import { useSessionAudioRuntime, useSessionRuntime } from "@/hooks";
 import { RuntimeError } from "@/runtime";
@@ -85,8 +87,11 @@ export function SessionRuntimePage({
             onNextScene={() =>
               nextScene && runtime.switchScene(nextScene.sceneId)
             }
-            tools={<SceneAudioRuntimePanel audio={audio} />}
           />
+          <Panel as="section" className={styles.tools}>
+            <SectionHeading eyebrow="Ferramenta" title="Áudio da cena" />
+            <SceneAudioRuntimePanel audio={audio} />
+          </Panel>
         </div>
       )}
     </main>

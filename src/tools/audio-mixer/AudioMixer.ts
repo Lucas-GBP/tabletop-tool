@@ -12,6 +12,8 @@ import {
 import { AudioBufferLoader } from "./AudioBufferLoader";
 import { AudioListSelector } from "./AudioListSelector";
 import { PlaybackInstance } from "./PlaybackInstance";
+import { asPlaybackId } from "@/types";
+import type { AudioListId, PlaybackId } from "@/types";
 
 interface AudioMixerOptions {
   definitions: AudioDefinitions;
@@ -29,7 +31,7 @@ export class AudioMixer {
   readonly #selector: AudioListSelector;
   readonly #loaderFactory:
     ((context: AudioContext) => AudioBufferLoader) | undefined;
-  readonly #playbacks = new Map<string, PlaybackInstance>();
+  readonly #playbacks = new Map<PlaybackId, PlaybackInstance>();
   #context: AudioContext | null = null;
   #masterGain: GainNode | null = null;
   #loader: AudioBufferLoader | null = null;
@@ -60,7 +62,7 @@ export class AudioMixer {
     return [...this.#playbacks.values()].map((playback) => playback.info);
   }
 
-  hasPlayback(id: string) {
+  hasPlayback(id: PlaybackId) {
     return this.#playbacks.has(id);
   }
 
@@ -87,24 +89,31 @@ export class AudioMixer {
           recoverable: true,
         });
       }
-      const buffer = await this.#loader!.load(file);
-      const id = crypto.randomUUID();
-      const playback = new PlaybackInstance({
-        id,
-        context: this.#context!,
-        output: this.#masterGain!,
-        buffer,
-        definition: fitAudioObjectToDuration(
-          object,
-          audioBufferDurationUs(buffer),
-        ),
-        onFinished: (finishedId) => {
-          this.#playbacks.delete(finishedId);
-        },
-      });
-      this.#playbacks.set(id, playback);
-      playback.start();
-      return id;
+      const lease = await this.#loader!.acquire(file);
+      const buffer = lease.buffer;
+      const id = asPlaybackId(crypto.randomUUID());
+      try {
+        const decodedDurationUs = audioBufferDurationUs(buffer);
+        assertAssetDuration(file, object.endTimeUs, decodedDurationUs);
+        const playback = new PlaybackInstance({
+          id,
+          context: this.#context!,
+          output: this.#masterGain!,
+          buffer,
+          definition: fitAudioObjectToDuration(object, decodedDurationUs),
+          onFinished: (finishedId) => {
+            this.#playbacks.delete(finishedId);
+            lease.release();
+          },
+        });
+        this.#playbacks.set(id, playback);
+        playback.start();
+        return id;
+      } catch (cause) {
+        this.#playbacks.delete(id);
+        lease.release();
+        throw cause;
+      }
     } catch (cause) {
       throw normalizeRuntimeError(cause, {
         code: "PLAYBACK_FAILED",
@@ -116,23 +125,23 @@ export class AudioMixer {
     }
   }
 
-  pause(id: string) {
+  pause(id: PlaybackId) {
     this.#playback(id, "pause_playback").pause();
   }
 
-  resume(id: string) {
+  resume(id: PlaybackId) {
     this.#playback(id, "resume_playback").resume();
   }
 
-  seek(id: string, positionUs: number) {
+  seek(id: PlaybackId, positionUs: number) {
     this.#playback(id, "seek_playback").seek(positionUs);
   }
 
-  stop(id: string) {
+  stop(id: PlaybackId) {
     this.#playback(id, "stop_playback").stop();
   }
 
-  finish(id: string) {
+  finish(id: PlaybackId) {
     this.#playback(id, "finish_playback").finish();
   }
 
@@ -166,7 +175,7 @@ export class AudioMixer {
     }
   }
 
-  resetListCursors(listIds?: Iterable<string>) {
+  resetListCursors(listIds?: Iterable<AudioListId>) {
     this.#selector.reset(listIds);
   }
 
@@ -207,7 +216,7 @@ export class AudioMixer {
     });
   }
 
-  #playback(id: string, operation: string) {
+  #playback(id: PlaybackId, operation: string) {
     this.#ensureActive(operation);
     const playback = this.#playbacks.get(id);
     if (!playback) {
@@ -256,6 +265,29 @@ export class AudioMixer {
       });
     }
   }
+}
+
+const assetDurationToleranceUs = 50_000;
+
+function assertAssetDuration(
+  file: AudioDefinitions["files"][number],
+  configuredEndUs: number,
+  decodedDurationUs: number,
+) {
+  const scannerMismatch =
+    Math.abs(file.durationUs - decodedDurationUs) > assetDurationToleranceUs;
+  const configuredRegionMissing =
+    configuredEndUs - decodedDurationUs > assetDurationToleranceUs;
+  if (!scannerMismatch && !configuredRegionMissing) return;
+
+  throw new RuntimeError({
+    code: "AUDIO_ASSET_CHANGED",
+    message: `O arquivo ${file.name} mudou e não corresponde mais à configuração salva.`,
+    operation: "play_audio_cue",
+    entityId: file.relativePath,
+    details: `Scanned duration: ${file.durationUs} µs; decoded duration: ${decodedDurationUs} µs; configured end: ${configuredEndUs} µs.`,
+    recoverable: true,
+  });
 }
 
 function defaultContextFactory() {

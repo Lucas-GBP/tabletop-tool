@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AudioLibraryDto } from "@/api";
+import { testId } from "@/test/ids";
 import {
   audioCompositionMissing,
   audioListMissing,
@@ -19,28 +20,35 @@ const library: AudioLibraryDto = {
       sizeBytes: 100,
     },
   ],
+  scanWarnings: [],
   objects: [
     object("available", "weather/rain.ogg"),
     object("missing", "weather/wind.ogg"),
   ],
   lists: [
     {
-      id: "list",
+      id: testId.audioList("list"),
       name: "Weather",
       selectionMode: "sequential",
-      entries: [{ audioObjectId: "missing", position: 0, weight: 1 }],
+      entries: [
+        {
+          audioObjectId: testId.audioObject("missing"),
+          position: 0,
+          weight: 1,
+        },
+      ],
     },
   ],
   compositions: [
     {
-      id: "composition",
+      id: testId.audioComposition("composition"),
       name: "Storm",
       layers: [
         {
-          id: "layer",
+          id: testId.compositionLayer("layer"),
           name: "Weather",
           position: 0,
-          source: { kind: "audioList", audioListId: "list" },
+          source: { kind: "audioList", audioListId: testId.audioList("list") },
           execution: { kind: "continuous" },
           disableBehavior: "stop",
         },
@@ -60,10 +68,10 @@ describe("audio availability", () => {
     );
     expect(
       sceneAudioMissing(library, {
-        sceneId: "scene",
+        sceneId: testId.scene("scene"),
         audioObjectIds: [],
         audioListIds: [],
-        audioCompositionIds: ["composition"],
+        audioCompositionIds: [testId.audioComposition("composition")],
       }),
     ).toBe(true);
   });
@@ -71,7 +79,7 @@ describe("audio availability", () => {
 
 function object(id: string, assetPath: string) {
   return {
-    id,
+    id: testId.audioObject(id),
     name: id,
     assetPath,
     volumeDb: 0,

@@ -5,6 +5,7 @@ import App from "@/App";
 import { api } from "@/api";
 import type { CoreSnapshotDto } from "@/api";
 import { campaignSnapshot, initialScene } from "@/test/fixtures/core";
+import { testId } from "@/test/ids";
 
 vi.mock("@/api", () => ({
   api: {
@@ -48,6 +49,7 @@ describe("Application navigation", () => {
     vi.mocked(api.listAudioLibrary).mockResolvedValue({
       assetDirectory: null,
       files: [],
+      scanWarnings: [],
       objects: [],
       lists: [],
       compositions: [],
@@ -64,6 +66,30 @@ describe("Application navigation", () => {
     vi.mocked(api.getSceneLevelAudioConfiguration).mockImplementation(
       (sceneLevelId) => Promise.resolve({ sceneLevelId, disabledLayerIds: [] }),
     );
+    vi.mocked(api.getAppSettings).mockResolvedValue({ assetDirectory: null });
+  });
+
+  it("keeps independent areas available while the core is loading", async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.listCore).mockReturnValue(
+      new Promise<CoreSnapshotDto>(() => undefined),
+    );
+    render(<App />);
+
+    expect(
+      await screen.findByText("Abrindo seu espaço de jogo…"),
+    ).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: "Configurações" }));
+    expect(
+      await screen.findByRole("heading", { name: "Configurações" }),
+    ).toBeVisible();
+
+    await user.click(screen.getByRole("button", { name: "Audio Mixer" }));
+    expect(
+      await screen.findByRole("heading", { name: "Audio Mixer" }),
+    ).toBeVisible();
+    expect(api.listAudioLibrary).toHaveBeenCalledOnce();
   });
 
   it("runs a session separately from persistent preparation", async () => {
@@ -79,20 +105,20 @@ describe("Application navigation", () => {
               name: "Portão",
             },
             {
-              id: "level-2",
-              sceneId: "scene-1",
+              id: testId.sceneLevel("level-2"),
+              sceneId: testId.scene("scene-1"),
               name: "Torre",
               position: 1,
             },
           ],
         },
         {
-          id: "scene-2",
+          id: testId.scene("scene-2"),
           name: "Cripta",
           levels: [
             {
-              id: "level-3",
-              sceneId: "scene-2",
+              id: testId.sceneLevel("level-3"),
+              sceneId: testId.scene("scene-2"),
               name: "Tumbas",
               position: 0,
             },
@@ -108,9 +134,9 @@ describe("Application navigation", () => {
               scenes: [
                 campaignSnapshot.campaigns[0]!.sessions[0]!.scenes[0]!,
                 {
-                  id: "link-2",
-                  sessionId: "session-1",
-                  sceneId: "scene-2",
+                  id: testId.sessionScene("link-2"),
+                  sessionId: testId.session("session-1"),
+                  sceneId: testId.scene("scene-2"),
                   position: 1,
                 },
               ],
@@ -176,7 +202,7 @@ describe("Application navigation", () => {
               scenes: [
                 {
                   ...campaignSnapshot.campaigns[0]!.sessions[0]!.scenes[0]!,
-                  sceneId: "missing-scene",
+                  sceneId: testId.scene("missing-scene"),
                 },
               ],
             },

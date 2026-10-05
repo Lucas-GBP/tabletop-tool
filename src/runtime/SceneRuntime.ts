@@ -1,18 +1,19 @@
 import { RuntimeError } from "./RuntimeError";
+import type { SceneId, SceneLevelId } from "@/types";
 
 export interface SceneRuntimeSnapshot {
-  sceneId: string;
-  currentLevelId: string;
+  sceneId: SceneId;
+  currentLevelId: SceneLevelId;
   disposed: boolean;
 }
 
 export class SceneRuntime {
-  readonly sceneId: string;
-  readonly #levelIds: readonly string[];
-  #currentLevelId: string;
+  readonly sceneId: SceneId;
+  readonly #levelIds: readonly SceneLevelId[];
+  #currentLevelId: SceneLevelId;
   #disposed = false;
 
-  constructor(sceneId: string, levelIds: readonly string[]) {
+  constructor(sceneId: SceneId, levelIds: readonly SceneLevelId[]) {
     const firstLevelId = levelIds[0];
     if (!firstLevelId) {
       throw new RuntimeError({
@@ -42,7 +43,7 @@ export class SceneRuntime {
     };
   }
 
-  switchLevel(levelId: string) {
+  switchLevel(levelId: SceneLevelId) {
     this.#ensureActive();
     if (!this.#levelIds.includes(levelId)) {
       throw new RuntimeError({

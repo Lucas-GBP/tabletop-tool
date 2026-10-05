@@ -1,0 +1,15 @@
+.layout {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 14rem minmax(0, 1fr);
+}
+
+.content {
+  min-width: 0;
+}
+
+@media (width <= 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}

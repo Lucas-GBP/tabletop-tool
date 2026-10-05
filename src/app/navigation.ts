@@ -1,8 +1,18 @@
-﻿export type AppRoute =
+import type { CampaignId, SceneId, SessionId } from "@/types";
+
+export type AppRoute =
   | { screen: "campaign-list" }
+  | { screen: "scene-library" }
   | { screen: "audio-library" }
   | { screen: "settings" }
-  | { screen: "audio-object-editor"; audioObjectId: string }
-  | { screen: "campaign-preparation"; campaignId: string }
-  | { screen: "scene-preparation"; sceneId: string; campaignId?: string }
-  | { screen: "session-runtime"; campaignId: string; sessionId: string };
+  | { screen: "campaign-preparation"; campaignId: CampaignId }
+  | {
+      screen: "scene-preparation";
+      sceneId: SceneId;
+      campaignId?: CampaignId;
+    }
+  | {
+      screen: "session-runtime";
+      campaignId: CampaignId;
+      sessionId: SessionId;
+    };

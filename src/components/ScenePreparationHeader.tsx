@@ -1,5 +1,6 @@
 import type { SceneDto } from "@/api";
 import { Button, EditableText } from "./primitives";
+import { ActionMenu } from "./ActionMenu";
 import styles from "./ScenePreparationHeader.module.scss";
 
 interface ScenePreparationHeaderProps {
@@ -32,23 +33,25 @@ export function ScenePreparationHeader({
         </Button>
         <div className={styles["navigation-actions"]}>
           <span className={styles.mode}>Preparação da cena</span>
-          <Button
-            tone="danger"
-            disabled={disabled}
-            aria-label={`Excluir cena ${scene.name}`}
-            onClick={() => {
-              if (
-                !window.confirm(
-                  `Excluir a cena ${scene.name}? Seus níveis e associações serão removidos.`,
-                )
-              ) {
-                return;
-              }
-              void onDelete().then((deleted) => deleted && onBack());
-            }}
-          >
-            Excluir cena
-          </Button>
+          <ActionMenu label={`Mais ações para ${scene.name}`}>
+            <Button
+              tone="danger"
+              disabled={disabled}
+              aria-label={`Excluir cena ${scene.name}`}
+              onClick={() => {
+                if (
+                  !window.confirm(
+                    `Excluir a cena ${scene.name}? Seus níveis e associações serão removidos.`,
+                  )
+                ) {
+                  return;
+                }
+                void onDelete().then((deleted) => deleted && onBack());
+              }}
+            >
+              Excluir cena
+            </Button>
+          </ActionMenu>
         </div>
       </div>
       <div className={styles.content}>

@@ -1,0 +1,42 @@
+﻿@use "@/styles/workspace-page";
+
+.shell {
+  @include workspace-page.shell(2rem clamp(1rem, 4vw, 4rem) 4rem);
+}
+
+.header,
+.search {
+  @include workspace-page.container(1100px);
+}
+
+.header {
+  margin-bottom: var(--space-large);
+
+  p,
+  h1,
+  span {
+    margin: 0;
+  }
+
+  p {
+    color: var(--color-accent);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    font-family: var(--font-family-display);
+    font-size: clamp(2rem, 5vw, 3.5rem);
+  }
+
+  span {
+    color: var(--color-text-muted);
+  }
+}
+
+.search {
+  margin-bottom: var(--space-medium);
+  display: block;
+}

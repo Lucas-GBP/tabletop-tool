@@ -9,11 +9,7 @@ import {
 import { useAppSettings } from "@/hooks";
 import styles from "./SettingsPage.module.scss";
 
-interface SettingsPageProps {
-  onBack: () => void;
-}
-
-export function SettingsPage({ onBack }: SettingsPageProps) {
+export function SettingsPage() {
   const app = useAppSettings();
   if (app.loading) {
     return <main className={styles.loading}>Abrindo configurações…</main>;
@@ -31,7 +27,6 @@ export function SettingsPage({ onBack }: SettingsPageProps) {
   return (
     <main className={styles.shell}>
       <header className={styles.header}>
-        <Button onClick={onBack}>← Início</Button>
         <div>
           <p>Aplicativo</p>
           <h1>Configurações</h1>

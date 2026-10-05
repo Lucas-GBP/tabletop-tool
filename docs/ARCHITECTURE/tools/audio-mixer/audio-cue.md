@@ -8,7 +8,7 @@ AudioCue
 └── AudioList
 ```
 
-The global `AudioMixer` accepts an `AudioCue` directly:
+The active context's `AudioMixer` accepts an `AudioCue` directly:
 
 ```text
 consumer
@@ -34,7 +34,8 @@ A consumer should only care about the concrete type when the distinction is intr
 
 The initial architecture does not define a persistent or runtime `AudioTrigger` abstraction.
 
-When application logic, UI, or another runtime component wants to execute playable audio, it calls the global Mixer directly:
+When application logic, UI, or another runtime component wants to execute
+playable audio, it calls its context's Mixer directly:
 
 ```text
 UI / Application Logic / Runtime Component

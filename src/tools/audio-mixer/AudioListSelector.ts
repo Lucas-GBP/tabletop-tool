@@ -1,8 +1,9 @@
 import type { AudioListDto } from "@/api";
 import { RuntimeError } from "@/runtime";
+import type { AudioListId } from "@/types";
 
 export class AudioListSelector {
-  readonly #cursors = new Map<string, number>();
+  readonly #cursors = new Map<AudioListId, number>();
   readonly #random: () => number;
 
   constructor(random: () => number = Math.random) {
@@ -46,7 +47,7 @@ export class AudioListSelector {
     return entries.at(-1)!.audioObjectId;
   }
 
-  reset(listIds?: Iterable<string>) {
+  reset(listIds?: Iterable<AudioListId>) {
     if (!listIds) {
       this.#cursors.clear();
       return;

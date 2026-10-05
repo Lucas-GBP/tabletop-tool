@@ -6,23 +6,32 @@ import type {
   SceneAudioConfigurationDto,
   SceneLevelAudioConfigurationDto,
 } from "@/api";
+import type {
+  AudioCompositionId,
+  AudioListId,
+  AudioObjectId,
+  CompositionLayerId,
+  PlaybackId,
+  SceneId,
+  SceneLevelId,
+} from "@/types";
 
-export type PlaybackId = string;
+export type { PlaybackId } from "@/types";
 
 export type PlaybackState =
   "playing" | "pausing" | "paused" | "finishing" | "stopping" | "finished";
 
 export interface PlaybackInfo {
   readonly id: PlaybackId;
-  readonly audioObjectId: string;
+  readonly audioObjectId: AudioObjectId;
   readonly name: string;
   readonly state: PlaybackState;
   readonly positionUs: number;
 }
 
 export type AudioCueReference =
-  | { readonly kind: "audioObject"; readonly id: string }
-  | { readonly kind: "audioList"; readonly id: string };
+  | { readonly kind: "audioObject"; readonly id: AudioObjectId }
+  | { readonly kind: "audioList"; readonly id: AudioListId };
 
 export interface AudioDefinitions {
   readonly files: readonly AudioAssetDto[];
@@ -38,7 +47,7 @@ export interface SceneAudioRuntimeDefinition {
 }
 
 export interface LayerRuntimeInfo {
-  readonly id: string;
+  readonly id: CompositionLayerId;
   readonly name: string;
   readonly enabled: boolean;
   readonly persistentEnabled: boolean;
@@ -46,14 +55,14 @@ export interface LayerRuntimeInfo {
 }
 
 export interface CompositionRuntimeInfo {
-  readonly id: string;
+  readonly id: AudioCompositionId;
   readonly name: string;
   readonly layers: readonly LayerRuntimeInfo[];
 }
 
 export interface SceneAudioRuntimeSnapshot {
-  readonly sceneId: string;
-  readonly currentLevelId: string;
+  readonly sceneId: SceneId;
+  readonly currentLevelId: SceneLevelId;
   readonly started: boolean;
   readonly disposed: boolean;
   readonly cues: readonly AudioCueReference[];

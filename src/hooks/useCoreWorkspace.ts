@@ -3,6 +3,7 @@ import { api } from "@/api";
 import type { CoreSnapshotDto } from "@/api";
 import { coreErrorMessage } from "@/lib";
 import { useNotifications } from "./useNotifications";
+import type { CampaignId, SceneId, SceneLevelId, SessionId } from "@/types";
 
 const emptySnapshot: CoreSnapshotDto = { campaigns: [], scenes: [] };
 
@@ -86,41 +87,41 @@ export function useCoreWorkspace() {
         (campaign) => !previousIds.has(campaign.id),
       )?.id;
     },
-    createSession: (campaignId: string, name: string, sceneId: string) =>
+    createSession: (campaignId: CampaignId, name: string, sceneId: SceneId) =>
       save("Sessão criada.", () =>
         api.createSession(campaignId, name, sceneId),
       ),
-    createSceneLevel: (sceneId: string, name: string) =>
+    createSceneLevel: (sceneId: SceneId, name: string) =>
       save("Nível adicionado.", () => api.createSceneLevel(sceneId, name)),
-    renameCampaign: (campaignId: string, name: string) =>
+    renameCampaign: (campaignId: CampaignId, name: string) =>
       save("Campanha renomeada.", () => api.renameCampaign(campaignId, name)),
-    renameSession: (sessionId: string, name: string) =>
+    renameSession: (sessionId: SessionId, name: string) =>
       save("Sessão renomeada.", () => api.renameSession(sessionId, name)),
-    renameScene: (sceneId: string, name: string) =>
+    renameScene: (sceneId: SceneId, name: string) =>
       save("Cena renomeada.", () => api.renameScene(sceneId, name)),
-    renameSceneLevel: (levelId: string, name: string) =>
+    renameSceneLevel: (levelId: SceneLevelId, name: string) =>
       save("Nível renomeado.", () => api.renameSceneLevel(levelId, name)),
-    moveSession: (sessionId: string, position: number) =>
+    moveSession: (sessionId: SessionId, position: number) =>
       save("Sessão reordenada.", () => api.moveSession(sessionId, position)),
-    moveScene: (sessionId: string, sceneId: string, position: number) =>
+    moveScene: (sessionId: SessionId, sceneId: SceneId, position: number) =>
       save("Cena reordenada.", () =>
         api.moveScene(sessionId, sceneId, position),
       ),
-    moveSceneLevel: (levelId: string, position: number) =>
+    moveSceneLevel: (levelId: SceneLevelId, position: number) =>
       save("Nível reordenado.", () => api.moveSceneLevel(levelId, position)),
-    associateScene: (sessionId: string, sceneId: string) =>
+    associateScene: (sessionId: SessionId, sceneId: SceneId) =>
       save("Cena adicionada à sessão.", () =>
         api.associateScene(sessionId, sceneId),
       ),
-    deleteCampaign: (campaignId: string) =>
+    deleteCampaign: (campaignId: CampaignId) =>
       save("Campanha excluída.", () => api.deleteCampaign(campaignId)),
-    deleteSession: (sessionId: string) =>
+    deleteSession: (sessionId: SessionId) =>
       save("Sessão excluída.", () => api.deleteSession(sessionId)),
-    deleteScene: (sceneId: string) =>
+    deleteScene: (sceneId: SceneId) =>
       save("Cena excluída.", () => api.deleteScene(sceneId)),
-    deleteSceneLevel: (levelId: string) =>
+    deleteSceneLevel: (levelId: SceneLevelId) =>
       save("Nível excluído.", () => api.deleteSceneLevel(levelId)),
-    removeSceneFromSession: (sessionId: string, sceneId: string) =>
+    removeSceneFromSession: (sessionId: SessionId, sceneId: SceneId) =>
       save("Cena removida da sessão.", () =>
         api.removeSceneFromSession(sessionId, sceneId),
       ),

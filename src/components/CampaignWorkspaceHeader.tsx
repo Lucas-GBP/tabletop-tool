@@ -1,5 +1,6 @@
 import type { CampaignDto } from "@/api";
 import { Button, EditableText } from "./primitives";
+import { ActionMenu } from "./ActionMenu";
 import styles from "./CampaignWorkspaceHeader.module.scss";
 
 interface CampaignWorkspaceHeaderProps {
@@ -31,23 +32,25 @@ export function CampaignWorkspaceHeader({
         </Button>
         <div className={styles["navigation-actions"]}>
           <span className={styles.mode}>Modo de preparação</span>
-          <Button
-            tone="danger"
-            disabled={disabled}
-            aria-label={`Excluir campanha ${campaign.name}`}
-            onClick={() => {
-              if (
-                !window.confirm(
-                  `Excluir a campanha ${campaign.name}? As cenas reutilizáveis serão mantidas.`,
-                )
-              ) {
-                return;
-              }
-              void onDelete().then((deleted) => deleted && onBack());
-            }}
-          >
-            Excluir campanha
-          </Button>
+          <ActionMenu label={`Mais ações para ${campaign.name}`}>
+            <Button
+              tone="danger"
+              disabled={disabled}
+              aria-label={`Excluir campanha ${campaign.name}`}
+              onClick={() => {
+                if (
+                  !window.confirm(
+                    `Excluir a campanha ${campaign.name}? As cenas reutilizáveis serão mantidas.`,
+                  )
+                ) {
+                  return;
+                }
+                void onDelete().then((deleted) => deleted && onBack());
+              }}
+            >
+              Excluir campanha
+            </Button>
+          </ActionMenu>
         </div>
       </div>
       <div className={styles.content}>

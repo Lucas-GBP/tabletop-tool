@@ -6,7 +6,10 @@ import type {
   AudioListDto,
   AudioObjectDto,
   CompositionLayerInputDto,
+  CompositionLayerSourceInputDto,
 } from "@/api";
+import type { CompositionLayerId } from "@/types";
+import { ActionMenu } from "./ActionMenu";
 import { Button, Input, Select } from "./primitives";
 import styles from "./AudioCompositionEditor.module.scss";
 
@@ -22,9 +25,9 @@ interface AudioCompositionEditorProps {
 
 interface LayerDraft {
   key: string;
-  id: string | null;
+  id: CompositionLayerId | null;
   name: string;
-  sourceValue: string;
+  source: CompositionLayerSourceInputDto;
   execution: "continuous" | "randomInterval";
   minIntervalSeconds: number;
   maxIntervalSeconds: number;
@@ -48,10 +51,12 @@ export function AudioCompositionEditor({
   const sources = [
     ...objects.map((object) => ({
       value: `audioObject:${object.id}`,
+      source: { kind: "audioObject" as const, audioObjectId: object.id },
       label: `Objeto · ${object.name}`,
     })),
     ...lists.map((list) => ({
       value: `audioList:${list.id}`,
+      source: { kind: "audioList" as const, audioListId: list.id },
       label: `Lista · ${list.name}`,
     })),
   ];
@@ -101,13 +106,18 @@ export function AudioCompositionEditor({
               <label className={styles.field}>
                 Fonte
                 <Select
-                  value={layer.sourceValue}
+                  value={sourceValue(layer.source)}
                   disabled={disabled}
-                  onChange={(event) =>
-                    updateLayer(setLayers, index, {
-                      sourceValue: event.currentTarget.value,
-                    })
-                  }
+                  onChange={(event) => {
+                    const selected = sources.find(
+                      (source) => source.value === event.currentTarget.value,
+                    );
+                    if (selected) {
+                      updateLayer(setLayers, index, {
+                        source: selected.source,
+                      });
+                    }
+                  }}
                 >
                   {sources.map((source) => (
                     <option key={source.value} value={source.value}>
@@ -231,7 +241,7 @@ export function AudioCompositionEditor({
                 key: crypto.randomUUID(),
                 id: null,
                 name: `Camada ${current.length + 1}`,
-                sourceValue: sources[0]?.value ?? "",
+                source: sources[0]!.source,
                 execution: "continuous",
                 minIntervalSeconds: 5,
                 maxIntervalSeconds: 15,
@@ -250,17 +260,21 @@ export function AudioCompositionEditor({
           {composition ? "Salvar composição" : "Criar composição"}
         </Button>
         {composition && onDelete && (
-          <Button
-            tone="danger"
-            disabled={disabled}
-            onClick={() => {
-              if (!window.confirm(`Excluir a composição ${composition.name}?`))
-                return;
-              void onDelete();
-            }}
-          >
-            Excluir composição
-          </Button>
+          <ActionMenu label={`Mais ações para ${composition.name}`}>
+            <Button
+              tone="danger"
+              disabled={disabled}
+              onClick={() => {
+                if (
+                  !window.confirm(`Excluir a composição ${composition.name}?`)
+                )
+                  return;
+                void onDelete();
+              }}
+            >
+              Excluir composição
+            </Button>
+          </ActionMenu>
         )}
         {onCancel ? (
           <Button tone="subtle" disabled={disabled} onClick={onCancel}>
@@ -279,10 +293,7 @@ function layerDrafts(composition: AudioCompositionDto): LayerDraft[] {
       key: layer.id,
       id: layer.id,
       name: layer.name,
-      sourceValue:
-        layer.source.kind === "audioObject"
-          ? `audioObject:${layer.source.audioObjectId}`
-          : `audioList:${layer.source.audioListId}`,
+      source: layer.source,
       execution: layer.execution.kind,
       minIntervalSeconds:
         layer.execution.kind === "randomInterval"
@@ -297,11 +308,6 @@ function layerDrafts(composition: AudioCompositionDto): LayerDraft[] {
 }
 
 function layerInput(layer: LayerDraft): CompositionLayerInputDto {
-  const [kind, id] = layer.sourceValue.split(":", 2);
-  const source =
-    kind === "audioList"
-      ? { kind: "audioList" as const, audioListId: id ?? "" }
-      : { kind: "audioObject" as const, audioObjectId: id ?? "" };
   const execution =
     layer.execution === "randomInterval"
       ? {
@@ -313,10 +319,16 @@ function layerInput(layer: LayerDraft): CompositionLayerInputDto {
   return {
     id: layer.id,
     name: layer.name,
-    source,
+    source: layer.source,
     execution,
     disableBehavior: layer.disableBehavior,
   };
+}
+
+function sourceValue(source: CompositionLayerSourceInputDto) {
+  return source.kind === "audioObject"
+    ? `audioObject:${source.audioObjectId}`
+    : `audioList:${source.audioListId}`;
 }
 
 function updateLayer(

@@ -1,4 +1,5 @@
 import type { CampaignDto } from "@/api";
+import type { CampaignId } from "@/types";
 import { Button, EmptyState, Input, Panel, SectionHeading } from "./primitives";
 import { formValue } from "@/lib";
 import { CampaignSummaryCard } from "./CampaignSummaryCard";
@@ -7,8 +8,8 @@ import styles from "./CampaignHome.module.scss";
 interface CampaignHomeProps {
   campaigns: CampaignDto[];
   disabled: boolean;
-  onCreateCampaign: (name: string) => Promise<string | undefined>;
-  onOpenCampaign: (campaignId: string) => void;
+  onCreateCampaign: (name: string) => Promise<CampaignId | undefined>;
+  onOpenCampaign: (campaignId: CampaignId) => void;
 }
 
 export function CampaignHome({

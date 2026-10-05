@@ -5,6 +5,7 @@ import {
   WorkspaceFeedback,
 } from "@/components";
 import type { CoreWorkspace } from "@/hooks";
+import type { SceneId, SessionId } from "@/types";
 import styles from "./CampaignPreparationPage.module.scss";
 
 interface CampaignPreparationPageProps {
@@ -12,8 +13,8 @@ interface CampaignPreparationPageProps {
   workspace: CoreWorkspace;
   onBack: () => void;
   onManageScenes: () => void;
-  onOpenScene: (sceneId: string) => void;
-  onStartSession: (sessionId: string) => void;
+  onOpenScene: (sceneId: SceneId) => void;
+  onStartSession: (sessionId: SessionId) => void;
 }
 
 export function CampaignPreparationPage({

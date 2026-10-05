@@ -90,15 +90,17 @@ pub async fn list(state: &AppState) -> Result<AudioLibrary, AudioApplicationErro
         .await
         .map_err(AudioRepositoryError::Database)?
         .asset_directory;
-    library.files = match library.asset_directory.as_deref() {
-        Some(directory) if Path::new(directory).is_dir() => {
+    let scan = match library.asset_directory.as_deref() {
+        Some(directory) => {
             let root = PathBuf::from(directory);
             tokio::task::spawn_blocking(move || assets::scan_audio_directory(&root))
                 .await
-                .map_err(|error| io::Error::other(format!("asset scan task failed: {error}")))??
+                .map_err(|error| io::Error::other(format!("asset scan task failed: {error}")))?
         }
-        _ => Vec::new(),
+        _ => assets::AudioAssetScanResult::default(),
     };
+    library.files = scan.assets;
+    library.scan_warnings = scan.warnings;
     Ok(library)
 }
 
@@ -180,6 +182,7 @@ async fn reload_with_assets(
     let mut updated = load_cached(connection).await?;
     updated.asset_directory = current.asset_directory;
     updated.files = current.files;
+    updated.scan_warnings = current.scan_warnings;
     Ok(updated)
 }
 

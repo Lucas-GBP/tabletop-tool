@@ -5,6 +5,7 @@ import App from "@/App";
 import { api } from "@/api";
 import type { CoreSnapshotDto } from "@/api";
 import { campaignSnapshot, empty, initialScene } from "@/test/fixtures/core";
+import { testId } from "@/test/ids";
 
 vi.mock("@/api", () => ({
   api: {
@@ -43,13 +44,10 @@ async function openSceneFromLibrary(
   user: ReturnType<typeof userEvent.setup>,
   sceneName = "Cena inicial",
 ) {
-  const libraryHeading = await screen.findByRole("heading", {
-    name: "Cenas",
-  });
-  const library = libraryHeading.closest("section");
-  expect(library).not.toBeNull();
+  await user.click(screen.getByRole("button", { name: "Cenas" }));
+  await screen.findByRole("heading", { name: "Cenas", level: 1 });
   await user.click(
-    within(library!).getByRole("button", {
+    screen.getByRole("button", {
       name: `Editar cena ${sceneName}`,
     }),
   );
@@ -62,6 +60,7 @@ describe("Core workspace", () => {
     vi.mocked(api.listAudioLibrary).mockResolvedValue({
       assetDirectory: null,
       files: [],
+      scanWarnings: [],
       objects: [],
       lists: [],
       compositions: [],
@@ -124,7 +123,8 @@ describe("Core workspace", () => {
     expect(
       await screen.findByRole("heading", { name: "Suas campanhas" }),
     ).toBeVisible();
-    expect(screen.getByRole("heading", { name: "Cenas" })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "Cenas" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Cenas" })).toBeVisible();
     expect(screen.queryByRole("heading", { name: "Sessão 1" })).toBeNull();
 
     await openCampaign(user);
@@ -188,12 +188,12 @@ describe("Core workspace", () => {
       scenes: [
         ...campaignSnapshot.scenes,
         {
-          id: "scene-2",
+          id: testId.scene("scene-2"),
           name: "Ruínas submersas",
           levels: [
             {
-              id: "level-2",
-              sceneId: "scene-2",
+              id: testId.sceneLevel("level-2"),
+              sceneId: testId.scene("scene-2"),
               name: "Nível 1",
               position: 0,
             },
@@ -205,7 +205,8 @@ describe("Core workspace", () => {
     vi.mocked(api.createScene).mockResolvedValue(created);
     render(<App />);
 
-    await screen.findByRole("heading", { name: "Cenas" });
+    await user.click(screen.getByRole("button", { name: "Cenas" }));
+    await screen.findByRole("heading", { name: "Cenas", level: 1 });
 
     await user.type(
       screen.getByRole("textbox", { name: "Nome da nova cena" }),
@@ -218,9 +219,9 @@ describe("Core workspace", () => {
       await screen.findByRole("heading", { name: "Ruínas submersas" }),
     ).toBeVisible();
     expect(screen.getByText("Prepara\u00e7\u00e3o da cena")).toBeVisible();
-    expect(screen.getByRole("button", { name: "← Início" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "← Cenas" })).toBeVisible();
     expect(
-      screen.getByRole("heading", { name: "Áudio da cena" }),
+      screen.getByRole("heading", { name: "Configuração do nível" }),
     ).toBeVisible();
     expect(screen.getByText("Cena criada.")).toBeVisible();
   });
@@ -228,10 +229,15 @@ describe("Core workspace", () => {
   it("adds another reusable scene to a session sequence", async () => {
     const user = userEvent.setup();
     const secondScene = {
-      id: "scene-2",
+      id: testId.scene("scene-2"),
       name: "Ruínas submersas",
       levels: [
-        { id: "level-2", sceneId: "scene-2", name: "Nível 1", position: 0 },
+        {
+          id: testId.sceneLevel("level-2"),
+          sceneId: testId.scene("scene-2"),
+          name: "Nível 1",
+          position: 0,
+        },
       ],
     };
     const initial: CoreSnapshotDto = {
@@ -249,9 +255,9 @@ describe("Core workspace", () => {
               scenes: [
                 ...initial.campaigns[0]!.sessions[0]!.scenes,
                 {
-                  id: "link-2",
-                  sessionId: "session-1",
-                  sceneId: "scene-2",
+                  id: testId.sessionScene("link-2"),
+                  sessionId: testId.session("session-1"),
+                  sceneId: testId.scene("scene-2"),
                   position: 1,
                 },
               ],
@@ -307,17 +313,13 @@ describe("Core workspace", () => {
     const sessionCard = sessionHeading.closest("section");
     expect(sessionCard).not.toBeNull();
     await user.click(
-      within(sessionCard!).getByRole("button", {
-        name: "Editar cena Cena inicial",
-      }),
+      within(sessionCard!).getByRole("button", { name: "Cena inicial" }),
     );
 
     expect(
       await screen.findByText("Prepara\u00e7\u00e3o da cena"),
     ).toBeVisible();
-    expect(
-      screen.getByRole("heading", { name: "N\u00edveis da cena" }),
-    ).toBeVisible();
+    expect(screen.getByRole("heading", { name: "N\u00edveis" })).toBeVisible();
     await user.click(
       screen.getByRole("button", { name: "\u2190 Sombras do Norte" }),
     );
@@ -365,7 +367,7 @@ describe("Core workspace", () => {
       await screen.findByRole("heading", { name: "Templo esquecido" }),
     ).toBeVisible();
 
-    await user.dblClick(screen.getByText("Nível 1"));
+    await user.dblClick(screen.getByRole("heading", { name: "Nível 1" }));
     const levelName = screen.getByRole("textbox", {
       name: "Novo nome do nível Nível 1 da cena Templo esquecido",
     });
@@ -377,22 +379,24 @@ describe("Core workspace", () => {
       "level-1",
       "Cripta inferior",
     );
-    expect(await screen.findByText("Cripta inferior")).toBeVisible();
+    expect(
+      await screen.findByRole("heading", { name: "Cripta inferior" }),
+    ).toBeVisible();
   });
 
   it("renames and deletes an additional session", async () => {
     const user = userEvent.setup();
     vi.spyOn(window, "confirm").mockReturnValue(true);
     const secondSession = {
-      id: "session-2",
-      campaignId: "campaign-1",
+      id: testId.session("session-2"),
+      campaignId: testId.campaign("campaign-1"),
       name: "Sessão adicional",
       position: 1,
       scenes: [
         {
-          id: "link-2",
-          sessionId: "session-2",
-          sceneId: "scene-1",
+          id: testId.sessionScene("link-2"),
+          sessionId: testId.session("session-2"),
+          sceneId: testId.scene("scene-1"),
           position: 0,
         },
       ],
@@ -424,6 +428,9 @@ describe("Core workspace", () => {
     render(<App />);
     await openCampaign(user);
 
+    await user.click(
+      screen.getByRole("button", { name: /^2Sessão adicional/ }),
+    );
     await user.dblClick(
       screen.getByRole("heading", { name: "Sessão adicional" }),
     );
@@ -438,10 +445,9 @@ describe("Core workspace", () => {
       "session-2",
       "Sessão final",
     );
+    await user.click(screen.getByLabelText("Mais ações para Sessão final"));
     await user.click(
-      await screen.findByRole("button", {
-        name: "Excluir sessão Sessão final",
-      }),
+      screen.getByRole("button", { name: "Excluir sessão Sessão final" }),
     );
     expect(api.deleteSession).toHaveBeenCalledExactlyOnceWith("session-2");
     expect(
@@ -456,11 +462,21 @@ describe("Core workspace", () => {
     const user = userEvent.setup();
     vi.spyOn(window, "confirm").mockReturnValue(true);
     const secondScene = {
-      id: "scene-2",
+      id: testId.scene("scene-2"),
       name: "Ruínas",
       levels: [
-        { id: "level-2", sceneId: "scene-2", name: "Entrada", position: 0 },
-        { id: "level-3", sceneId: "scene-2", name: "Subsolo", position: 1 },
+        {
+          id: testId.sceneLevel("level-2"),
+          sceneId: testId.scene("scene-2"),
+          name: "Entrada",
+          position: 0,
+        },
+        {
+          id: testId.sceneLevel("level-3"),
+          sceneId: testId.scene("scene-2"),
+          name: "Subsolo",
+          position: 1,
+        },
       ],
     };
     const initial: CoreSnapshotDto = {
@@ -474,9 +490,9 @@ describe("Core workspace", () => {
               scenes: [
                 ...campaignSnapshot.campaigns[0]!.sessions[0]!.scenes,
                 {
-                  id: "link-2",
-                  sessionId: "session-1",
-                  sceneId: "scene-2",
+                  id: testId.sessionScene("link-2"),
+                  sessionId: testId.session("session-1"),
+                  sceneId: testId.scene("scene-2"),
                   position: 1,
                 },
               ],
@@ -507,6 +523,7 @@ describe("Core workspace", () => {
     render(<App />);
     await openCampaign(user);
 
+    await user.click(screen.getByLabelText("Mais ações para Ruínas"));
     await user.click(
       screen.getByRole("button", {
         name: "Remover cena Ruínas da sessão Sessão 1",
@@ -518,16 +535,18 @@ describe("Core workspace", () => {
     );
     await screen.findByText("Cena removida da sessão.");
 
-    await user.click(
-      screen.getByRole("button", { name: "← Todas as campanhas" }),
-    );
     await openSceneFromLibrary(user, "Ruínas");
+    await user.click(screen.getByRole("button", { name: /^2Subsolo$/ }));
+    await user.click(screen.getByLabelText("Mais ações para o nível Subsolo"));
     await user.click(
       screen.getByRole("button", { name: "Excluir nível Subsolo" }),
     );
     expect(api.deleteSceneLevel).toHaveBeenCalledExactlyOnceWith("level-3");
-    expect(await screen.findByText("Entrada")).toBeVisible();
+    expect(
+      await screen.findByRole("heading", { name: "Entrada" }),
+    ).toBeVisible();
 
+    await user.click(screen.getByLabelText("Mais ações para Ruínas"));
     await user.click(
       screen.getByRole("button", { name: "Excluir cena Ruínas" }),
     );
@@ -549,6 +568,7 @@ describe("Core workspace", () => {
     render(<App />);
     await openCampaign(user);
 
+    await user.click(screen.getByLabelText("Mais ações para Sombras do Norte"));
     await user.click(
       screen.getByRole("button", {
         name: "Excluir campanha Sombras do Norte",
@@ -557,6 +577,7 @@ describe("Core workspace", () => {
 
     expect(api.deleteCampaign).toHaveBeenCalledExactlyOnceWith("campaign-1");
     expect(await screen.findByText("Crie sua primeira campanha")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Cenas" }));
     expect(
       screen.getByRole("button", { name: "Editar cena Cena inicial" }),
     ).toBeVisible();
